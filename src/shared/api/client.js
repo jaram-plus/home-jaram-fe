@@ -13,7 +13,8 @@ import { useAuthStore } from '@/shared/auth/auth.store';
  * Backend not built yet — base URL is the Spring default port. Move this to an
  * env var (e.g. VITE_API_BASE_URL) once the deploy targets are known.
  */
-export const API_BASE_URL = 'http://localhost:8080';
+export const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080';
 
 export const client = axios.create({
   baseURL: API_BASE_URL,
