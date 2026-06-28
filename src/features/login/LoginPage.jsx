@@ -5,6 +5,7 @@ import { useForm } from './useForm';
 import { MESSAGES, LOGIN_ERROR, TOAST } from './login.data';
 import { isEmail, isHanyang, isStudentId, isStrongPw } from './login.validation';
 import * as api from './login.api';
+import { useLoginMutation } from './useLoginMutation';
 import {
   AuthHeader,
   Toast,
@@ -38,27 +39,36 @@ export default function LoginPage({ initialView = 'login' }) {
   const reset = useForm({ email: '' });
   const newPw = useForm({ pw: '', pw2: '' });
 
-  const go = useCallback(
-    (next) => {
-      setView(next);
-      setFormError('');
-      setLoading(false);
-      login.setErrors({});
-      signup.setErrors({});
-      reset.setErrors({});
-      newPw.setErrors({});
-    },
-    [login, signup, reset, newPw],
-  );
-
   const showToast = useCallback((msg) => {
     setToast(msg);
     clearTimeout(toastTimer.current);
     toastTimer.current = setTimeout(() => setToast(null), 2800);
   }, []);
 
+  const loginMutation = useLoginMutation({
+    onSuccess: () => {
+      showToast(TOAST.login);
+      // TODO: redirect into the authenticated area, e.g. navigate('/');
+    },
+    onError: (err) => setFormError(LOGIN_ERROR[err && err.code] || LOGIN_ERROR.SERVER),
+  });
+
+  const go = useCallback(
+    (next) => {
+      setView(next);
+      setFormError('');
+      setLoading(false);
+      loginMutation.reset();
+      login.setErrors({});
+      signup.setErrors({});
+      reset.setErrors({});
+      newPw.setErrors({});
+    },
+    [login, signup, reset, newPw, loginMutation],
+  );
+
   // --- login ---
-  async function submitLogin() {
+  function submitLogin() {
     const v = login.values;
     const e = {};
     if (!v.email.trim()) e.email = MESSAGES.emailRequired;
@@ -71,16 +81,7 @@ export default function LoginPage({ initialView = 'login' }) {
     }
     login.setErrors({});
     setFormError('');
-    setLoading(true);
-    try {
-      await api.login({ email: v.email, password: v.pw });
-      showToast(TOAST.login);
-      // TODO: redirect into the authenticated area, e.g. navigate('/');
-    } catch (err) {
-      setFormError(LOGIN_ERROR[err && err.code] || LOGIN_ERROR.SERVER);
-    } finally {
-      setLoading(false);
-    }
+    loginMutation.mutate({ email: v.email, password: v.pw });
   }
 
   // --- signup ---
@@ -169,7 +170,7 @@ export default function LoginPage({ initialView = 'login' }) {
 
         <div style={{ position: 'relative', width: '100%', maxWidth: 440, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 22 }}>
           {view === 'login' && (
-            <LoginView form={login} loading={loading} formError={formError} onSubmit={submitLogin} onSignup={() => go('signup')} onReset={() => go('reset')} />
+            <LoginView form={login} loading={loginMutation.isPending} formError={formError} onSubmit={submitLogin} onSignup={() => go('signup')} onReset={() => go('reset')} />
           )}
           {view === 'signup' && <SignupView form={signup} loading={loading} onSubmit={submitSignup} onLogin={() => go('login')} />}
           {view === 'signupDone' && <SignupDoneView onLogin={() => go('login')} />}
