@@ -1,0 +1,71 @@
+/* ============================================================
+   JARAM — Color Tokens
+   Point color: red (로고/포인트). Ground: warm paper (따뜻한 종이).
+   A heritage palette — warm ink on aged paper, struck through with
+   the JARAM vermilion and a deeper oxblood for prestige accents.
+   ============================================================ */
+
+:root {
+  /* ---- Brand red (the point color) ---- */
+  --red-50:  #FCEEEB;
+  --red-100: #F8D8D1;
+  --red-200: #F1AFA3;
+  --red-300: #E97D6C;
+  --red-400: #E50113;   /* JARAM red — the canonical mark color */
+  --red-500: #C0392B;   /* hover / pressed (carried from product) */
+  --red-600: #A50912;   /* deep vermilion */
+  --red-700: #7E0610;   /* oxblood — seal red, heritage accents */
+  --red-800: #5E060D;
+
+  /* ---- Warm paper (the ground) ---- */
+  --paper-50:  #FFFDF8;  /* brightest — inset highlights */
+  --paper-100: #FCF8F0;  /* raised card surface */
+  --paper-200: #F7F1E5;  /* page base — the default canvas */
+  --paper-300: #F0E8D7;  /* sunken / muted fields */
+  --paper-400: #E7DCC6;  /* tonal blocks */
+
+  /* ---- Warm ink (text on paper) ---- */
+  --ink-900: #1C1813;    /* strong — display & headings */
+  --ink-800: #2A2419;
+  --ink-700: #3C342A;    /* body text */
+  --ink-500: #6E6354;    /* secondary / captions */
+  --ink-400: #938876;    /* muted / placeholder */
+  --ink-300: #B8AC97;    /* disabled */
+
+  /* ---- Hairlines & borders (warm) ---- */
+  --line-strong: #D9CDB6;
+  --line:        #E4DAC6;
+  --line-soft:   #EDE4D3;
+
+  /* ---- Fixed neutrals ---- */
+  --white: #FFFFFF;
+  --black: #14110C;
+
+  /* ============================================================
+     Semantic aliases — reference these in components
+     ============================================================ */
+  --brand:            var(--red-400);
+  --brand-hover:      var(--red-500);
+  --brand-deep:       var(--red-700);   /* serif numerals, seal, rules */
+  --brand-tint:       var(--red-50);
+
+  --surface-page:     var(--paper-200);
+  --surface-card:     var(--paper-100);
+  --surface-raised:   var(--paper-50);
+  --surface-sunken:   var(--paper-300);
+  --surface-tonal:    var(--paper-400);
+  --surface-ink:      var(--ink-900);   /* inverted (dark) sections */
+
+  --text-strong:      var(--ink-900);
+  --text-body:        var(--ink-700);
+  --text-muted:       var(--ink-500);
+  --text-faint:       var(--ink-400);
+  --text-on-brand:    #FFFFFF;
+  --text-on-ink:      var(--paper-100);
+
+  --border-strong:    var(--line-strong);
+  --border:           var(--line);
+  --border-soft:      var(--line-soft);
+
+  --focus-ring:       var(--red-400);
+}

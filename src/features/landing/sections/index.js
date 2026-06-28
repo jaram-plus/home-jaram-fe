@@ -1,0 +1,10 @@
+export { Header } from './Header';
+export { Hero } from './Hero';
+export { Manifesto } from './Manifesto';
+export { Activities } from './Activities';
+export { Tracks } from './Tracks';
+export { Alumni } from './Alumni';
+export { Voices } from './Voices';
+export { History } from './History';
+export { CTA } from './CTA';
+export { Footer } from './Footer';
