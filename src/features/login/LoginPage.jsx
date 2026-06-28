@@ -2,7 +2,7 @@ import React, { useState, useRef, useCallback } from 'react';
 import './login.css';
 import { jaramMark } from './login.assets';
 import { useForm } from './useForm';
-import { MESSAGES, LOGIN_ERROR, TOAST } from './login.data';
+import { MESSAGES, LOGIN_ERROR, SIGNUP_ERROR, TOAST } from './login.data';
 import { isEmail, isHanyang, isStudentId, isStrongPw } from './login.validation';
 import * as api from './login.api';
 import { useLoginMutation } from './useLoginMutation';
@@ -98,12 +98,17 @@ export default function LoginPage({ initialView = 'login' }) {
       return;
     }
     signup.setErrors({});
+    setFormError('');
     setLoading(true);
     try {
       await api.signup({ name: v.name, studentId: v.sid, email: v.email, password: v.pw });
       setView('signupDone');
     } catch (err) {
-      signup.setErrors({ email: MESSAGES.emailTaken });
+      if (err && err.code === 'EMAIL_TAKEN') {
+        signup.setErrors({ email: MESSAGES.emailTaken });
+      } else {
+        setFormError(SIGNUP_ERROR.SERVER);
+      }
     } finally {
       setLoading(false);
     }
@@ -172,7 +177,7 @@ export default function LoginPage({ initialView = 'login' }) {
           {view === 'login' && (
             <LoginView form={login} loading={loginMutation.isPending} formError={formError} onSubmit={submitLogin} onSignup={() => go('signup')} onReset={() => go('reset')} />
           )}
-          {view === 'signup' && <SignupView form={signup} loading={loading} onSubmit={submitSignup} onLogin={() => go('login')} />}
+          {view === 'signup' && <SignupView form={signup} loading={loading} formError={formError} onSubmit={submitSignup} onLogin={() => go('login')} />}
           {view === 'signupDone' && <SignupDoneView onLogin={() => go('login')} />}
           {view === 'reset' && <ResetRequestView form={reset} onSubmit={submitResetSend} onLogin={() => go('login')} />}
           {view === 'resetSent' && <ResetSentView onOpenLink={() => go('resetNew')} onLogin={() => go('login')} />}

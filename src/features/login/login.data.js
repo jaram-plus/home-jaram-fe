@@ -27,6 +27,11 @@ export const LOGIN_ERROR = {
   SERVER: '일시적인 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.',
 };
 
+// 가입 신청 폼 레벨 실패 → 사용자 카피.
+export const SIGNUP_ERROR = {
+  SERVER: '가입 신청 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.',
+};
+
 // Transient toast messages.
 export const TOAST = {
   login: '로그인되었습니다.',

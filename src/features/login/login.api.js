@@ -43,14 +43,19 @@ export async function login({ email, password }) {
 }
 
 export async function signup({ name, studentId, email, password }) {
-  const { data } = await client.post('/api/auth/signup', {
-    name,
-    studentId,
-    email,
-    password,
-  });
-  // A 409 (email taken) rejects here → the view shows MESSAGES.emailTaken.
-  return data;
+  try {
+    const { data } = await client.post('/api/auth/signup', {
+      name,
+      studentId,
+      email,
+      password,
+    });
+    return data;
+  } catch (error) {
+    // 409 = 이미 신청된 이메일(필드 레벨), 그 외 = 폼 레벨 서버 오류.
+    const code = error.response?.status === 409 ? 'EMAIL_TAKEN' : 'SERVER';
+    throw Object.assign(new Error(error.response?.data?.message || 'signup failed'), { code });
+  }
 }
 
 export async function requestReset({ email }) {

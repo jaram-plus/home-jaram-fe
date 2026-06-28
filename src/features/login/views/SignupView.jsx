@@ -1,10 +1,10 @@
 import React from 'react';
 import { Button, Input } from '@/design-system';
 import { Panel } from './Panel';
-import { Eyebrow, Title, Lead, blockBtn } from './parts';
+import { Eyebrow, Title, Lead, FormError, blockBtn } from './parts';
 
 /** Apply for membership — submitted for officer approval before login. */
-export function SignupView({ form, loading, onSubmit, onLogin }) {
+export function SignupView({ form, loading, formError, onSubmit, onLogin }) {
   const { values, errors, field } = form;
   return (
     <Panel>
@@ -41,6 +41,8 @@ export function SignupView({ form, loading, onSubmit, onLogin }) {
           onChange={field('pw2')}
           error={errors.pw2}
         />
+
+        {formError && <FormError message={formError} />}
 
         <div style={{ marginTop: 4 }}>
           <Button size="lg" disabled={loading} onClick={onSubmit} style={blockBtn}>
