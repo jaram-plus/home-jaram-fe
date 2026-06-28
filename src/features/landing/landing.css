@@ -1,0 +1,98 @@
+/* ============================================================
+   Landing page — CSS that can't live inline (pseudo-elements,
+   keyframes, hover descendants). Everything else is inline-styled
+   on the components, referencing design-system tokens.
+   Imported once by LandingPage.jsx.
+   ============================================================ */
+
+/* --- Alumni logo cells: desaturated until hovered --- */
+.jr-logo-cell img {
+  filter: grayscale(1) opacity(0.5);
+  transition: filter 0.3s ease;
+}
+.jr-logo-cell:hover img {
+  filter: grayscale(0) opacity(1);
+}
+
+/* --- Marquee rails (edge fade + seamless loop, pause on hover) --- */
+.jr-marquee {
+  position: relative;
+  overflow: hidden;
+}
+.jr-marquee::before,
+.jr-marquee::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: clamp(48px, 9vw, 140px);
+  z-index: 2;
+  pointer-events: none;
+}
+.jr-marquee::before {
+  left: 0;
+  background: linear-gradient(90deg, var(--surface-page), rgba(247, 241, 229, 0));
+}
+.jr-marquee::after {
+  right: 0;
+  background: linear-gradient(270deg, var(--surface-page), rgba(247, 241, 229, 0));
+}
+
+.jr-marquee-track {
+  display: flex;
+  width: max-content;
+  animation: jrMarquee 40s linear infinite;
+}
+.jr-marquee:hover .jr-marquee-track {
+  animation-play-state: paused;
+}
+@keyframes jrMarquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+.jr-marquee-track-ltr {
+  display: flex;
+  width: max-content;
+  animation: jrMarqueeLtr 52s linear infinite;
+}
+.jr-marquee:hover .jr-marquee-track-ltr {
+  animation-play-state: paused;
+}
+@keyframes jrMarqueeLtr {
+  from { transform: translateX(-50%); }
+  to { transform: translateX(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .jr-marquee-track,
+  .jr-marquee-track-ltr {
+    animation: none;
+  }
+}
+
+/* --- Footer + CTA link hovers --- */
+.jr-foot-link {
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+.jr-foot-link:hover {
+  color: var(--brand);
+}
+
+.jr-cta-btn {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.jr-cta-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.22);
+}
+
+.jr-cta-more {
+  text-decoration: none;
+  border-bottom: 1px solid rgba(252, 248, 240, 0.4);
+  transition: border-color 0.2s ease;
+}
+.jr-cta-more:hover {
+  border-color: rgba(252, 248, 240, 0.9);
+}

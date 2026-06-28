@@ -1,0 +1,44 @@
+/* ============================================================
+   Login page — CSS that can't live inline (keyframes, hover,
+   ::selection). Everything else is inline-styled on components,
+   referencing design-system tokens. Imported once by LoginPage.jsx.
+   ============================================================ */
+
+@keyframes jrToastIn {
+  from { opacity: 0; transform: translate(-50%, 12px); }
+  to   { opacity: 1; transform: translate(-50%, 0); }
+}
+@keyframes jrViewIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Each auth view fades up once on mount. */
+.jr-view {
+  animation: jrViewIn 0.28s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+/* Inline text links (forgot password, switch to signup, etc.) */
+.jr-link {
+  color: var(--brand);
+  font-weight: var(--w-semibold);
+  cursor: pointer;
+  text-decoration: none;
+}
+.jr-link:hover {
+  color: var(--brand-hover);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+::selection {
+  background: var(--brand);
+  color: #fff;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .jr-view,
+  .jr-toast {
+    animation: none !important;
+  }
+}

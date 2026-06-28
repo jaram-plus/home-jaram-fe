@@ -1,0 +1,28 @@
+/* ============================================================
+   JARAM — Webfonts
+   Display : MapoGeumbitnaru (마포금빛나루) — brand display, brushed heritage feel
+   Serif   : Gowun Batang (고운바탕) — editorial Myeongjo serif, prestige/tradition
+   Sans    : Pretendard — refined neutral Hangul/Latin for body + UI
+   Mono    : Spoqa Han Sans / fallback — code & data
+   ============================================================ */
+
+/* @import rules MUST precede all @font-face/other rules, or the browser drops them. */
+
+/* Body + UI — Pretendard (official dynamic-subset CSS, family name "Pretendard") */
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard-dynamic-subset.min.css');
+
+/* Editorial serif — Gowun Batang (Google Fonts) */
+@import url('https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&display=swap');
+
+/* Mono — IBM Plex Mono carries Latin/numerals cleanly for code + data */
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+/* Brand display — Mapo Golden Pier (free font, Mapo-gu) */
+@font-face {
+  font-family: 'MapoGeumbitnaru';
+  src: url('https://gcore.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.1/MapoGoldenPierA.woff') format('woff');
+  font-weight: 400;
+  font-display: swap;
+}
+
+
