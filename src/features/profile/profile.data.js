@@ -4,9 +4,11 @@
  */
 export const EYEBROW = 'PROFILE';
 
-// 읽기 전용 필드 라벨(표시 순서대로)
+// authority 코드 → 한글 라벨
+export const AUTHORITY_LABELS = { MEMBER: '회원', OFFICER: '임원', ADMIN: '관리자' };
+
+// 읽기 전용 필드 라벨(표시 순서대로) — gen은 헤더 부제목으로만 표시
 export const READONLY_LABELS = [
-  ['gen', '기수'],
   ['email', '이메일'],
   ['studentId', '학번'],
   ['authority', '권한'],

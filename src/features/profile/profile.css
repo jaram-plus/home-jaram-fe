@@ -1,0 +1,16 @@
+/* ============================================================
+   Profile page — CSS that can't live inline (keyframes,
+   reduced-motion). Everything else is inline-styled on components,
+   referencing design-system tokens. Imported once by ProfilePage.jsx.
+   ============================================================ */
+
+@keyframes jrToastIn {
+  from { opacity: 0; transform: translate(-50%, 12px); }
+  to   { opacity: 1; transform: translate(-50%, 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .jr-toast {
+    animation: none !important;
+  }
+}

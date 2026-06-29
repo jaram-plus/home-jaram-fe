@@ -1,5 +1,6 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { Navigate } from 'react-router-dom';
+import './profile.css';
 import { Header } from '@/shared/ui/Header';
 import { useAuthStore } from '@/shared/auth/auth.store';
 import { useForm } from './useForm';

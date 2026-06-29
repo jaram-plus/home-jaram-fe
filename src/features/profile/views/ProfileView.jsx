@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, Button } from '@/design-system';
 import { Eyebrow, FieldRow } from './parts';
-import { EYEBROW, READONLY_LABELS, LABELS, MESSAGES } from '../profile.data';
+import { EYEBROW, READONLY_LABELS, LABELS, MESSAGES, AUTHORITY_LABELS } from '../profile.data';
 
 /**
  * 읽기 모드 카드. 상단 빨강 룰(accent="top") + PROFILE 아이라벨, 이름(디스플레이),
@@ -37,7 +37,9 @@ export function ProfileView({ me, onEdit }) {
       <div style={{ marginTop: 'var(--space-5)' }}>
         {READONLY_LABELS.map(([key, label]) => (
           <FieldRow key={key} label={label}>
-            {me[key] ?? <span style={{ color: 'var(--text-muted)' }}>{MESSAGES.empty}</span>}
+            {key === 'authority'
+              ? (AUTHORITY_LABELS[me[key]] ?? me[key])
+              : (me[key] ?? <span style={{ color: 'var(--text-muted)' }}>{MESSAGES.empty}</span>)}
           </FieldRow>
         ))}
         <FieldRow label={LABELS.bio}>
