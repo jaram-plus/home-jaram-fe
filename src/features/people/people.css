@@ -1,0 +1,47 @@
+/* ============================================================
+   People page — CSS that can't live inline (keyframes, hover,
+   ::selection). Everything else is inline-styled on components,
+   referencing design-system tokens. Imported once by PeoplePage.jsx.
+   ============================================================ */
+
+@keyframes jrFade {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Tab-switch fade (임원 / 기여자 / 졸업자). */
+.jr-anim {
+  animation: jrFade 0.28s ease;
+}
+
+/* Person card lift on hover. */
+.jr-person {
+  transition: transform var(--dur) var(--ease-out), box-shadow var(--dur) var(--ease-out);
+}
+.jr-person:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+}
+
+/* Social icon link (GitHub / blog). */
+.jr-soc {
+  color: var(--text-faint);
+  display: inline-flex;
+  transition: color var(--dur) var(--ease-out);
+}
+.jr-soc:hover {
+  color: var(--brand);
+}
+
+::selection {
+  background: var(--brand);
+  color: #fff;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .jr-anim,
+  .jr-person {
+    animation: none !important;
+    transition: none !important;
+  }
+}

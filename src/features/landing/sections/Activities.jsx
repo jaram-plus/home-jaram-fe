@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { Eyebrow } from './Eyebrow';
 import { ACTIVITIES } from '../landing.data';
 
@@ -71,7 +72,13 @@ export function Activities() {
                     letterSpacing: '-0.01em',
                   }}
                 >
-                  {a.title}
+                  {a.href ? (
+                    <Link to={a.href} className="jr-act-link" style={{ color: 'inherit', textDecoration: 'none' }}>
+                      {a.title}
+                    </Link>
+                  ) : (
+                    a.title
+                  )}
                 </h3>
               </div>
               <p

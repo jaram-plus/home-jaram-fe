@@ -23,7 +23,6 @@ export function Input({ label, hint, error, as = 'input', id, style, ...rest }) 
     transition: 'border-color var(--dur) var(--ease-out), box-shadow var(--dur) var(--ease-out)',
     resize: as === 'textarea' ? 'vertical' : undefined,
     minHeight: as === 'textarea' ? '96px' : undefined,
-    fontFamily: 'var(--font-sans)',
     lineHeight: 1.5,
     ...style,
   };

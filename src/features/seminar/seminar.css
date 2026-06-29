@@ -1,0 +1,50 @@
+/* ============================================================
+   Seminar page — CSS that can't live inline (keyframes, hover,
+   ::selection). Everything else is inline-styled on components,
+   referencing design-system tokens. Imported once by SeminarPage.jsx.
+   ============================================================ */
+
+@keyframes jrToastIn {
+  from { opacity: 0; transform: translate(-50%, 12px); }
+  to   { opacity: 1; transform: translate(-50%, 0); }
+}
+@keyframes jrFade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes jrPop {
+  from { opacity: 0; transform: translateY(10px) scale(0.99); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* View-switch fade (list / roster). */
+.jr-anim {
+  animation: jrFade 0.24s ease;
+}
+
+/* Material link ("발표 자료 보기 →"). */
+.jr-mat {
+  color: var(--brand);
+  font-weight: var(--w-semibold);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.jr-mat:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+::selection {
+  background: var(--brand);
+  color: #fff;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .jr-anim,
+  .jr-pop,
+  .jr-toast {
+    animation: none !important;
+  }
+}

@@ -9,7 +9,12 @@
  * the backend and keep only the static editorial copy here.
  */
 
-export const NAV = ['소개', '활동', '사람들', '졸업생'];
+export const NAV = [
+  { label: '소개', href: '#' },
+  { label: '스터디', href: '/study' },
+  { label: '세미나', href: '/seminar' },
+  { label: '사람들', href: '/people' },
+];
 
 export const STATS = [
   { value: '41', label: '년의 역사' },
@@ -19,8 +24,8 @@ export const STATS = [
 ];
 
 export const ACTIVITIES = [
-  { no: '01', en: 'Study', title: '스터디', body: '관심 주제로 모여 한 학기를 함께 완주합니다. 수준과 관심사에 맞춘 소규모 그룹으로 깊이 있게 파고듭니다.' },
-  { no: '02', en: 'Seminar', title: '세미나', body: '배운 것을 발표로 정리하고 서로의 시야를 넓힙니다. 최신 기술부터 심화 이론까지, 함께 나누며 단단해집니다.' },
+  { no: '01', en: 'Study', title: '스터디', href: '/study', body: '관심 주제로 모여 한 학기를 함께 완주합니다. 수준과 관심사에 맞춘 소규모 그룹으로 깊이 있게 파고듭니다.' },
+  { no: '02', en: 'Seminar', title: '세미나', href: '/seminar', body: '배운 것을 발표로 정리하고 서로의 시야를 넓힙니다. 최신 기술부터 심화 이론까지, 함께 나누며 단단해집니다.' },
   { no: '03', en: 'Hackathon · Workshop', title: '해커톤·워크샵', body: '짧은 호흡으로 직접 만들어 봅니다. 밀도 높은 몰입 속에서 손으로 익히는 시간입니다.' },
   { no: '04', en: 'Project', title: '프로젝트', body: '실제로 동작하는 결과물을 남깁니다. 협업으로 실무 경험을 쌓고 대외 활동으로 이어 갑니다.' },
 ];
@@ -63,7 +68,20 @@ export const HISTORY = [
 ];
 
 export const FOOT_MENU = [
-  { h: 'JARAM', items: ['소개', '활동', '사람들', '졸업생'] },
-  { h: 'Activity', items: ['스터디', '세미나', '해커톤·워크샵', '프로젝트'] },
-  { h: 'Connect', items: ['GitHub', 'Instagram', '블로그'] },
+  { h: 'JARAM', items: [
+    { label: '소개', href: '#' },
+    { label: '사람들', href: '/people' },
+    { label: '졸업생', href: '/people' },
+  ] },
+  { h: 'Activity', items: [
+    { label: '스터디', href: '/study' },
+    { label: '세미나', href: '/seminar' },
+    { label: '해커톤·워크샵', href: '#' },
+    { label: '프로젝트', href: '#' },
+  ] },
+  { h: 'Connect', items: [
+    { label: 'GitHub', href: '#' },
+    { label: 'Instagram', href: '#' },
+    { label: '블로그', href: '#' },
+  ] },
 ];

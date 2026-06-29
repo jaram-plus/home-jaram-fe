@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { jaramMark } from '../landing.assets';
 import { FOOT_MENU } from '../landing.data';
 
@@ -46,13 +47,22 @@ export function Footer() {
                   {col.h}
                 </div>
                 <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 11 }}>
-                  {col.items.map((it) => (
-                    <li key={it}>
-                      <a href="#" className="jr-foot-link" style={{ fontSize: '0.9375rem', color: 'var(--text-body)', whiteSpace: 'nowrap' }}>
-                        {it}
-                      </a>
-                    </li>
-                  ))}
+                  {col.items.map((it) => {
+                    const linkStyle = { fontSize: '0.9375rem', color: 'var(--text-body)', whiteSpace: 'nowrap' };
+                    return (
+                      <li key={it.label}>
+                        {it.href.startsWith('/') ? (
+                          <Link to={it.href} className="jr-foot-link" style={linkStyle}>
+                            {it.label}
+                          </Link>
+                        ) : (
+                          <a href={it.href} className="jr-foot-link" style={linkStyle}>
+                            {it.label}
+                          </a>
+                        )}
+                      </li>
+                    );
+                  })}
                 </ul>
               </div>
             ))}

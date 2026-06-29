@@ -80,6 +80,13 @@
   color: var(--brand);
 }
 
+.jr-act-link {
+  transition: color 0.2s ease;
+}
+.jr-act-link:hover {
+  color: var(--brand);
+}
+
 .jr-cta-btn {
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }

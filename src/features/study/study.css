@@ -1,0 +1,49 @@
+/* ============================================================
+   Study page — CSS that can't live inline (keyframes, hover,
+   ::selection). Everything else is inline-styled on components,
+   referencing design-system tokens. Imported once by StudyPage.jsx.
+   ============================================================ */
+
+@keyframes jrToastIn {
+  from { opacity: 0; transform: translate(-50%, 12px); }
+  to   { opacity: 1; transform: translate(-50%, 0); }
+}
+@keyframes jrFade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes jrPop {
+  from { opacity: 0; transform: translateY(10px) scale(0.99); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* View-switch fade (browse / mine / manage). */
+.jr-anim {
+  animation: jrFade 0.24s ease;
+}
+
+/* Inline text links. */
+.jr-link {
+  color: var(--brand);
+  font-weight: var(--w-semibold);
+  cursor: pointer;
+  text-decoration: none;
+}
+.jr-link:hover {
+  color: var(--brand-hover);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+::selection {
+  background: var(--brand);
+  color: #fff;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .jr-anim,
+  .jr-pop,
+  .jr-toast {
+    animation: none !important;
+  }
+}

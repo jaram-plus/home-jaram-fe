@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { Button } from '@/design-system';
 import { jaramMark } from '../landing.assets';
 import { NAV } from '../landing.data';
@@ -27,10 +28,10 @@ export function Header() {
           justifyContent: 'space-between',
         }}
       >
-        <a href="/" style={{ display: 'flex', alignItems: 'center', gap: 12, textDecoration: 'none' }}>
+        <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: 12, textDecoration: 'none' }}>
           <img src={jaramMark} alt="JARAM" style={{ height: 34 }} />
           <span style={{ fontFamily: 'var(--font-display)', fontSize: 26, color: 'var(--text-strong)' }}>자람</span>
-        </a>
+        </Link>
         <nav
           style={{
             display: 'flex',
@@ -41,11 +42,18 @@ export function Header() {
             color: 'var(--text-body)',
           }}
         >
-          {NAV.map((item) => (
-            <a key={item} href="#" style={{ color: 'inherit', textDecoration: 'none' }}>
-              {item}
-            </a>
-          ))}
+          {NAV.map((item) => {
+            const style = { color: 'inherit', textDecoration: 'none' };
+            return item.href.startsWith('/') ? (
+              <Link key={item.label} to={item.href} style={style}>
+                {item.label}
+              </Link>
+            ) : (
+              <a key={item.label} href={item.href} style={style}>
+                {item.label}
+              </a>
+            );
+          })}
           <Button size="sm" href="/apply">지원하기</Button>
         </nav>
       </div>
