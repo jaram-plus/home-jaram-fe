@@ -23,6 +23,6 @@
 - 경로 alias `@/* → src/*` 사용 권장.
 
 ## 백엔드 연동
-- API 베이스 URL: `<여기에 채우기>`
-- API 스펙 위치: `<백엔드 레포 URL 또는 OpenAPI 문서 경로>`
+- API 베이스 URL: `http://localhost:8080` (로컬 개발 기본값, env `VITE_API_BASE_URL`로 재정의)
+- API 스펙 위치: `docs/api/openapi.yaml` (OpenAPI 3.1 단일 계약). 설계·usecase: `docs/superpowers/specs/2026-06-29-jaram-backend-design.md`
 - 백엔드(Spring Boot)는 별도 레포이며 JSON만 제공한다. DTO 네이밍·인증 방식은 해당 레포 CLAUDE.md를 따른다.
