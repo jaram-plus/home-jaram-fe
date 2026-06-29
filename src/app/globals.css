@@ -1,5 +1,11 @@
 @import "tailwindcss";
 
+/* Always reserve the scrollbar gutter so centered layouts don't shift
+   horizontally between long (scrolling) and short (no-scroll) pages. */
+html {
+  scrollbar-gutter: stable;
+}
+
 /* Page ground = warm paper; ink text. Design-system tokens come from
    @/design-system/styles.css (imported in layout). */
 body {

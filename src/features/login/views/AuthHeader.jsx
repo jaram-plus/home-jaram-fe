@@ -6,6 +6,9 @@ export function AuthHeader() {
   return (
     <header
       style={{
+        position: 'sticky',
+        top: 0,
+        zIndex: 50,
         borderBottom: '1px solid var(--border)',
         background: 'color-mix(in srgb, var(--surface-page) 86%, transparent)',
         backdropFilter: 'blur(10px)',
@@ -15,15 +18,15 @@ export function AuthHeader() {
         style={{
           maxWidth: 'var(--container-max)',
           margin: '0 auto',
-          height: 68,
+          height: 72,
           padding: '0 var(--container-pad)',
           display: 'flex',
           alignItems: 'center',
           gap: 12,
         }}
       >
-        <img src={jaramMark} alt="JARAM" style={{ height: 32 }} />
-        <span style={{ fontFamily: 'var(--font-display)', fontSize: 25, color: 'var(--text-strong)', lineHeight: 1 }}>
+        <img src={jaramMark} alt="JARAM" style={{ height: 34 }} />
+        <span style={{ fontFamily: 'var(--font-display)', fontSize: 26, color: 'var(--text-strong)', lineHeight: 1 }}>
           자람
         </span>
         <span

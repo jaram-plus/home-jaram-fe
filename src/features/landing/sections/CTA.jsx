@@ -1,15 +1,18 @@
 import React from 'react';
 import { jaramMark } from '../landing.assets';
+import { useAuthStore } from '@/shared/auth/auth.store';
 
 /** CTA — the single vermilion-field section (paper text + JR watermark). */
 export function CTA() {
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+
   return (
     <section
       style={{
         position: 'relative',
         overflow: 'hidden',
         background: 'var(--brand)',
-        padding: 'clamp(6rem, 13vw, 11rem) 32px',
+        padding: 'clamp(6rem, 13vw, 11rem) var(--container-pad)',
         textAlign: 'center',
       }}
     >
@@ -70,23 +73,25 @@ export function CTA() {
           받은 만큼 나누고, 나눈 만큼 성장하는 자리. 다음 한 해를 함께 채워갈 당신을 기다립니다.
         </p>
         <div style={{ display: 'flex', gap: 26, marginTop: 44, justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap' }}>
-          <a
-            href="/apply"
-            className="jr-cta-btn"
-            style={{
-              display: 'inline-block',
-              padding: '17px 38px',
-              borderRadius: 4,
-              background: 'var(--surface-card)',
-              color: 'var(--text-strong)',
-              fontSize: '1.0625rem',
-              fontWeight: 700,
-              textDecoration: 'none',
-              boxShadow: '0 8px 22px rgba(0, 0, 0, 0.18)',
-            }}
-          >
-            41기 지원하기
-          </a>
+          {!isAuthenticated && (
+            <a
+              href="/apply"
+              className="jr-cta-btn"
+              style={{
+                display: 'inline-block',
+                padding: '17px 38px',
+                borderRadius: 4,
+                background: 'var(--surface-card)',
+                color: 'var(--text-strong)',
+                fontSize: '1.0625rem',
+                fontWeight: 700,
+                textDecoration: 'none',
+                boxShadow: '0 8px 22px rgba(0, 0, 0, 0.18)',
+              }}
+            >
+              41기 지원하기
+            </a>
+          )}
           <a href="/about" className="jr-cta-more" style={{ color: 'var(--text-on-ink)', fontSize: '1.0625rem', fontWeight: 600 }}>
             자람 더 알아보기 →
           </a>

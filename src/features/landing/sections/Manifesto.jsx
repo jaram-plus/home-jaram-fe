@@ -23,7 +23,7 @@ export function Manifesto() {
       >
         1984
       </div>
-      <div style={{ maxWidth: 1200, margin: '0 auto', padding: 'clamp(80px, 12vw, 150px) 32px', position: 'relative' }}>
+      <div style={{ maxWidth: 'var(--container-max)', margin: '0 auto', padding: 'clamp(80px, 12vw, 150px) var(--container-pad)', position: 'relative' }}>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'clamp(2.5rem, 6vw, 5.5rem)' }}>
           <div style={{ flex: '0 0 200px', maxWidth: 240 }}>
             <span style={{ display: 'block', height: 1, width: 40, background: 'var(--brand)', marginBottom: 18 }} />

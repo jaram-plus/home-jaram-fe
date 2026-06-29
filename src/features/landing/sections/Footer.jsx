@@ -10,10 +10,10 @@ export function Footer() {
       style={{
         borderTop: '1px solid var(--border)',
         background: 'var(--surface-page)',
-        padding: 'clamp(3.5rem, 7vw, 5.5rem) 32px clamp(2.5rem, 4vw, 3.5rem)',
+        padding: 'clamp(3.5rem, 7vw, 5.5rem) var(--container-pad) clamp(2.5rem, 4vw, 3.5rem)',
       }}
     >
-      <div style={{ maxWidth: 1120, margin: '0 auto' }}>
+      <div style={{ maxWidth: 'var(--container-max)', margin: '0 auto' }}>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'clamp(2.5rem, 6vw, 5rem)', justifyContent: 'space-between' }}>
           <div style={{ flex: '1 1 280px', maxWidth: 360 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 18 }}>

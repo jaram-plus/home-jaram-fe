@@ -1,14 +1,14 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './login.css';
 import { jaramMark } from './login.assets';
 import { useForm } from './useForm';
-import { MESSAGES, LOGIN_ERROR, SIGNUP_ERROR, TOAST } from './login.data';
+import { MESSAGES, LOGIN_ERROR, SIGNUP_ERROR } from './login.data';
 import { isEmail, isHanyang, isStudentId, isStrongPw } from './login.validation';
 import * as api from './login.api';
 import { useLoginMutation } from './useLoginMutation';
 import {
   AuthHeader,
-  Toast,
   LoginView,
   SignupView,
   SignupDoneView,
@@ -28,28 +28,19 @@ import {
  * navigation (toast on success, demo reset-link shortcut) with real routing.
  */
 export default function LoginPage({ initialView = 'login' }) {
+  const navigate = useNavigate();
   const [view, setView] = useState(initialView); // login | signup | signupDone | reset | resetSent | resetNew | resetDone
   const [loading, setLoading] = useState(false);
   const [formError, setFormError] = useState('');
-  const [toast, setToast] = useState(null);
-  const toastTimer = useRef(null);
 
   const login = useForm({ email: '', pw: '' });
   const signup = useForm({ name: '', sid: '', email: '', pw: '', pw2: '' });
   const reset = useForm({ email: '' });
   const newPw = useForm({ pw: '', pw2: '' });
 
-  const showToast = useCallback((msg) => {
-    setToast(msg);
-    clearTimeout(toastTimer.current);
-    toastTimer.current = setTimeout(() => setToast(null), 2800);
-  }, []);
-
   const loginMutation = useLoginMutation({
-    onSuccess: () => {
-      showToast(TOAST.login);
-      // TODO: redirect into the authenticated area, e.g. navigate('/');
-    },
+    // 로그인 성공 → 홈으로 이동. replace로 뒤로가기 시 로그인 화면이 다시 뜨지 않게 한다.
+    onSuccess: () => navigate('/', { replace: true }),
     onError: (err) => setFormError(LOGIN_ERROR[err && err.code] || LOGIN_ERROR.SERVER),
   });
 
@@ -185,8 +176,6 @@ export default function LoginPage({ initialView = 'login' }) {
           {view === 'resetDone' && <ResetDoneView onLogin={() => go('login')} />}
         </div>
       </main>
-
-      <Toast message={toast} />
     </div>
   );
 }

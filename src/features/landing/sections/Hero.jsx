@@ -2,11 +2,14 @@ import React from 'react';
 import { Button, Stat } from '@/design-system';
 import { jaramMark } from '../landing.assets';
 import { STATS } from '../landing.data';
+import { useAuthStore } from '@/shared/auth/auth.store';
 
 /** Hero — oversized display headline, intro, primary CTAs, heritage stats. */
 export function Hero() {
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+
   return (
-    <section style={{ position: 'relative', overflow: 'hidden', padding: '112px 32px 80px' }}>
+    <section style={{ position: 'relative', overflow: 'hidden', padding: '112px var(--container-pad) 80px' }}>
       <img
         src={jaramMark}
         alt=""
@@ -20,7 +23,7 @@ export function Hero() {
           pointerEvents: 'none',
         }}
       />
-      <div style={{ maxWidth: 1200, margin: '0 auto', position: 'relative' }}>
+      <div style={{ maxWidth: 'var(--container-max)', margin: '0 auto', position: 'relative' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 28 }}>
           <span style={{ height: 1, width: 40, background: 'var(--brand)' }} />
           <span
@@ -62,7 +65,9 @@ export function Hero() {
           한양대학교 ERICA 컴퓨터학회 JARAM — 나눔이 실력이 되는 41년.
         </p>
         <div style={{ display: 'flex', gap: 14, marginTop: 40, flexWrap: 'wrap' }}>
-          <Button size="lg" href="/apply">41기 지원하기</Button>
+          {!isAuthenticated && (
+            <Button size="lg" href="/apply">41기 지원하기</Button>
+          )}
           <Button size="lg" variant="outline" href="/about">학회 소개</Button>
         </div>
         <div

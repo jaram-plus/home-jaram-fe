@@ -9,8 +9,8 @@ export function Alumni() {
   const reel = [...ALUMNI, ...ALUMNI];
 
   return (
-    <section style={{ borderTop: '1px solid var(--border)', padding: 'clamp(5rem, 11vw, 9.5rem) 32px' }}>
-      <div style={{ maxWidth: 1120, margin: '0 auto' }}>
+    <section style={{ borderTop: '1px solid var(--border)', padding: 'clamp(5rem, 11vw, 9.5rem) var(--container-pad)' }}>
+      <div style={{ maxWidth: 'var(--container-max)', margin: '0 auto' }}>
         <Eyebrow style={{ marginBottom: 18 }}>Alumni</Eyebrow>
         <h2
           style={{
