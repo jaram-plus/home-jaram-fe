@@ -4,6 +4,7 @@ import LoginPage from '@/features/login/LoginPage';
 import PeoplePage from '@/features/people/PeoplePage';
 import SeminarPage from '@/features/seminar/SeminarPage';
 import StudyPage from '@/features/study/StudyPage';
+import AdminPage from '@/features/admin/AdminPage';
 
 export default function App() {
   return (
@@ -14,6 +15,7 @@ export default function App() {
       <Route path="/people" element={<PeoplePage />} />
       <Route path="/seminar" element={<SeminarPage />} />
       <Route path="/study" element={<StudyPage />} />
+      <Route path="/admin" element={<AdminPage />} />
     </Routes>
   );
 }
