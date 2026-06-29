@@ -73,8 +73,8 @@ export function Header({ current }) {
             );
           })}
           {isAuthenticated ? (
-            // TODO: /profile 페이지·라우트 미구현 (App.tsx). 추가되면 span→<Link to="/profile">로 교체.
-            <span
+            <Link
+              to="/profile"
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -87,6 +87,7 @@ export function Header({ current }) {
                 fontFamily: 'var(--font-sans)',
                 fontSize: 'var(--fs-sm)',
                 fontWeight: 'var(--w-semibold)',
+                textDecoration: 'none',
               }}
             >
               <span
@@ -107,7 +108,7 @@ export function Header({ current }) {
                 {(user?.name ?? '회').trim().charAt(0)}
               </span>
               {user?.name ?? '프로필'}
-            </span>
+            </Link>
           ) : (
             <Button size="sm" href="/apply">지원하기</Button>
           )}
