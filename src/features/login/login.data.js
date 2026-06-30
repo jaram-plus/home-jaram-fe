@@ -16,7 +16,31 @@ export const MESSAGES = {
   pwMismatch: '비밀번호가 일치하지 않습니다.',
   nameRequired: '이름을 입력해 주세요.',
   sidRequired: '학번을 정확히 입력해 주세요.',
+  genRequired: '기수를 입력해 주세요. (예: 41)',
+  facultyRequired: '학부를 선택해 주세요.',
+  facultyEtcRequired: '학부를 입력해 주세요.',
+  phoneRequired: '전화번호를 입력해 주세요.',
+  phoneFormat: '올바른 전화번호 형식이 아닙니다. (예: 010-1234-5678)',
 };
+
+// 2단계(추가 정보) 폼의 선택지. value는 와이어로 보내는 값, label은 화면 표시.
+export const STUDENT_TYPES = [
+  { value: 'new', label: '신입생' },
+  { value: 'current', label: '재학생' },
+];
+
+// 신입생 기수 — 가입 신청 연도 기준 자동 산출(현재 년도 - 창립연도). 예: 2026 → 42.
+export { currentGen as newcomerGen } from '@/shared/club/founding';
+
+// 재학여부 토글 — boolean 그대로 전송.
+export const ENROLLMENT = [
+  { value: true, label: '재학' },
+  { value: false, label: '휴학' },
+];
+
+// 학부 선택지. '기타' 선택 시 직접 입력 칸이 열린다.
+export const FACULTY_ETC = '기타';
+export const FACULTIES = ['컴퓨터학부', '인공지능학과', 'ICT융합학부', FACULTY_ETC];
 
 // Server-side login failures → user-facing copy.
 // `api.login` rejects with an Error whose `.code` is one of these keys.

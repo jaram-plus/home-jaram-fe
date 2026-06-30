@@ -42,13 +42,20 @@ export async function login({ email, password }) {
   }
 }
 
-export async function signup({ name, studentId, email, password }) {
+// 추가 정보(studentType/gen/faculty/phone/enrolled)는 제안 계약을 앞선 필드다.
+// 백엔드 SignupRequest 확정 시 docs/api/openapi.yaml 와 키 이름을 맞춘다.
+export async function signup({ name, studentId, email, password, studentType, gen, faculty, phone, enrolled }) {
   try {
     const { data } = await client.post('/api/auth/signup', {
       name,
       studentId,
       email,
       password,
+      studentType,
+      gen,
+      faculty,
+      phone,
+      enrolled,
     });
     return data;
   } catch (error) {

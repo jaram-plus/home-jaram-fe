@@ -46,7 +46,7 @@ export function SignupView({ form, loading, formError, onSubmit, onLogin }) {
 
         <div style={{ marginTop: 4 }}>
           <Button size="lg" disabled={loading} onClick={onSubmit} style={blockBtn}>
-            {loading ? '신청 중…' : '가입 신청하기'}
+            가입 신청하기 (1/2)
           </Button>
         </div>
       </div>

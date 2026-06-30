@@ -3,14 +3,15 @@ import { useNavigate } from 'react-router-dom';
 import './login.css';
 import { jaramMark } from './login.assets';
 import { useForm } from './useForm';
-import { MESSAGES, LOGIN_ERROR, SIGNUP_ERROR } from './login.data';
-import { isEmail, isHanyang, isStudentId, isStrongPw } from './login.validation';
+import { MESSAGES, LOGIN_ERROR, SIGNUP_ERROR, FACULTY_ETC, newcomerGen } from './login.data';
+import { isEmail, isHanyang, isStudentId, isStrongPw, isPhone, isGen } from './login.validation';
 import * as api from './login.api';
 import { useLoginMutation } from './useLoginMutation';
 import {
   AuthHeader,
   LoginView,
   SignupView,
+  SignupStep2View,
   SignupDoneView,
   ResetRequestView,
   ResetSentView,
@@ -29,12 +30,17 @@ import {
  */
 export default function LoginPage({ initialView = 'login' }) {
   const navigate = useNavigate();
-  const [view, setView] = useState(initialView); // login | signup | signupDone | reset | resetSent | resetNew | resetDone
+  const [view, setView] = useState(initialView); // login | signup | signup2 | signupDone | reset | resetSent | resetNew | resetDone
   const [loading, setLoading] = useState(false);
   const [formError, setFormError] = useState('');
 
   const login = useForm({ email: '', pw: '' });
-  const signup = useForm({ name: '', sid: '', email: '', pw: '', pw2: '' });
+  const signup = useForm({
+    // 1단계
+    name: '', sid: '', email: '', pw: '', pw2: '',
+    // 2단계 (추가 정보)
+    studentType: 'current', gen: '', facultyChoice: '', facultyEtc: '', phone: '', enrolled: true,
+  });
   const reset = useForm({ email: '' });
   const newPw = useForm({ pw: '', pw2: '' });
 
@@ -75,8 +81,8 @@ export default function LoginPage({ initialView = 'login' }) {
     loginMutation.mutate({ email: v.email, password: v.pw });
   }
 
-  // --- signup ---
-  async function submitSignup() {
+  // --- signup 1단계: 기본 정보 검증 후 2단계로 ---
+  function submitSignupStep1() {
     const v = signup.values;
     const e = {};
     if (!v.name.trim()) e.name = MESSAGES.nameRequired;
@@ -90,13 +96,44 @@ export default function LoginPage({ initialView = 'login' }) {
     }
     signup.setErrors({});
     setFormError('');
+    setView('signup2');
+  }
+
+  // --- signup 2단계: 추가 정보 검증 후 최종 신청 ---
+  async function submitSignup() {
+    const v = signup.values;
+    const e = {};
+    if (v.studentType === 'current' && !isGen(v.gen)) e.gen = MESSAGES.genRequired;
+    if (!v.facultyChoice) e.facultyChoice = MESSAGES.facultyRequired;
+    else if (v.facultyChoice === FACULTY_ETC && !v.facultyEtc.trim()) e.facultyEtc = MESSAGES.facultyEtcRequired;
+    if (!v.phone.trim()) e.phone = MESSAGES.phoneRequired;
+    else if (!isPhone(v.phone)) e.phone = MESSAGES.phoneFormat;
+    if (Object.keys(e).length) {
+      signup.setErrors(e);
+      return;
+    }
+    signup.setErrors({});
+    setFormError('');
     setLoading(true);
     try {
-      await api.signup({ name: v.name, studentId: v.sid, email: v.email, password: v.pw });
+      await api.signup({
+        name: v.name,
+        studentId: v.sid,
+        email: v.email,
+        password: v.pw,
+        studentType: v.studentType,
+        // 재학생은 입력값, 신입생은 가입 연도 기준 자동 계산.
+        gen: v.studentType === 'current' ? v.gen : String(newcomerGen()),
+        faculty: v.facultyChoice === FACULTY_ETC ? v.facultyEtc.trim() : v.facultyChoice,
+        phone: v.phone,
+        enrolled: v.enrolled,
+      });
       setView('signupDone');
     } catch (err) {
       if (err && err.code === 'EMAIL_TAKEN') {
+        // 이메일 중복은 1단계 필드 → 1단계로 되돌려 보여준다.
         signup.setErrors({ email: MESSAGES.emailTaken });
+        setView('signup');
       } else {
         setFormError(SIGNUP_ERROR.SERVER);
       }
@@ -168,7 +205,16 @@ export default function LoginPage({ initialView = 'login' }) {
           {view === 'login' && (
             <LoginView form={login} loading={loginMutation.isPending} formError={formError} onSubmit={submitLogin} onSignup={() => go('signup')} onReset={() => go('reset')} />
           )}
-          {view === 'signup' && <SignupView form={signup} loading={loading} formError={formError} onSubmit={submitSignup} onLogin={() => go('login')} />}
+          {view === 'signup' && <SignupView form={signup} loading={loading} formError={formError} onSubmit={submitSignupStep1} onLogin={() => go('login')} />}
+          {view === 'signup2' && (
+            <SignupStep2View
+              form={signup}
+              loading={loading}
+              formError={formError}
+              onSubmit={submitSignup}
+              onBack={() => { setFormError(''); setView('signup'); }}
+            />
+          )}
           {view === 'signupDone' && <SignupDoneView onLogin={() => go('login')} />}
           {view === 'reset' && <ResetRequestView form={reset} onSubmit={submitResetSend} onLogin={() => go('login')} />}
           {view === 'resetSent' && <ResetSentView onOpenLink={() => go('resetNew')} onLogin={() => go('login')} />}

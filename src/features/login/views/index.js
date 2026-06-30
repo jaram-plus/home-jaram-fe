@@ -2,6 +2,7 @@ export { AuthHeader } from './AuthHeader';
 export { Toast } from './Toast';
 export { LoginView } from './LoginView';
 export { SignupView } from './SignupView';
+export { SignupStep2View } from './SignupStep2View';
 export { SignupDoneView } from './SignupDoneView';
 export { ResetRequestView } from './ResetRequestView';
 export { ResetSentView } from './ResetSentView';

@@ -76,6 +76,147 @@ export function CenterText({ children }) {
   );
 }
 
+/**
+ * Segmented toggle — labelled row of mutually-exclusive pills, styled to match
+ * the Input field (sunken track, brand-filled selection). `options` is
+ * `[{ value, label }]`; `value` may be any primitive (string or boolean).
+ */
+export function Segmented({ label, value, onChange, options }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+      {label && (
+        <span style={{ fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-sm)', fontWeight: 'var(--w-semibold)', color: 'var(--text-body)' }}>
+          {label}
+        </span>
+      )}
+      <div
+        role="radiogroup"
+        style={{
+          display: 'flex',
+          gap: 4,
+          padding: 4,
+          background: 'var(--surface-sunken)',
+          border: '1.5px solid var(--border-strong)',
+          borderRadius: 'var(--radius-md)',
+        }}
+      >
+        {options.map((opt) => {
+          const active = opt.value === value;
+          return (
+            <button
+              key={String(opt.value)}
+              type="button"
+              role="radio"
+              aria-checked={active}
+              onClick={() => onChange(opt.value)}
+              style={{
+                flex: 1,
+                padding: '9px 12px',
+                fontFamily: 'var(--font-sans)',
+                fontSize: 'var(--fs-sm)',
+                fontWeight: 'var(--w-semibold)',
+                color: active ? '#fff' : 'var(--text-muted)',
+                background: active ? 'var(--brand)' : 'transparent',
+                border: 'none',
+                borderRadius: 'var(--radius-sm)',
+                cursor: 'pointer',
+                transition: 'background var(--dur) var(--ease-out), color var(--dur) var(--ease-out)',
+              }}
+            >
+              {opt.label}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Chips — single-select group of content-width pills that wrap. Used where the
+ * option labels are too long for an equal-width Segmented. `options` is an array
+ * of strings (the value is the label). Selection is brand-filled.
+ */
+export function Chips({ label, value, onChange, options, error }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+      {label && (
+        <span style={{ fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-sm)', fontWeight: 'var(--w-semibold)', color: 'var(--text-body)' }}>
+          {label}
+        </span>
+      )}
+      <div role="radiogroup" style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+        {options.map((opt) => {
+          const active = opt === value;
+          return (
+            <button
+              key={opt}
+              type="button"
+              role="radio"
+              aria-checked={active}
+              onClick={() => onChange(opt)}
+              style={{
+                padding: '9px 16px',
+                fontFamily: 'var(--font-sans)',
+                fontSize: 'var(--fs-sm)',
+                fontWeight: 'var(--w-semibold)',
+                color: active ? '#fff' : 'var(--text-body)',
+                background: active ? 'var(--brand)' : 'var(--surface-raised)',
+                border: `1.5px solid ${active ? 'var(--brand)' : 'var(--border-strong)'}`,
+                borderRadius: 'var(--radius-md)',
+                cursor: 'pointer',
+                transition: 'background var(--dur) var(--ease-out), color var(--dur) var(--ease-out), border-color var(--dur) var(--ease-out)',
+              }}
+            >
+              {opt}
+            </button>
+          );
+        })}
+      </div>
+      {error && (
+        <span style={{ fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-xs)', color: 'var(--brand)' }}>
+          {error}
+        </span>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Read-only field — a labelled value the user can't edit (e.g. an auto-computed
+ * 기수). Mirrors the Input layout but renders a sunken, muted box.
+ */
+export function ReadonlyField({ label, hint, value }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+      {label && (
+        <span style={{ fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-sm)', fontWeight: 'var(--w-semibold)', color: 'var(--text-body)' }}>
+          {label}
+        </span>
+      )}
+      <div
+        style={{
+          fontFamily: 'var(--font-sans)',
+          fontSize: 'var(--fs-body)',
+          color: 'var(--text-strong)',
+          background: 'var(--surface-sunken)',
+          border: '1.5px solid var(--border-strong)',
+          borderRadius: 'var(--radius-md)',
+          padding: '11px 14px',
+          lineHeight: 1.5,
+        }}
+      >
+        {value}
+      </div>
+      {hint && (
+        <span style={{ fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-xs)', color: 'var(--text-faint)' }}>
+          {hint}
+        </span>
+      )}
+    </div>
+  );
+}
+
 /** Inline form-level error banner (e.g. failed login). */
 export function FormError({ message }) {
   return (
