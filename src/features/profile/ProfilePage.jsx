@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import './profile.css';
 import { Header } from '@/shared/ui/Header';
 import { useAuthStore } from '@/shared/auth/auth.store';
@@ -22,6 +22,13 @@ export default function ProfilePage() {
 }
 
 function ProfileInner() {
+  const navigate = useNavigate();
+  const clearAuth = useAuthStore((s) => s.clear);
+  const logout = () => {
+    clearAuth();
+    navigate('/login', { replace: true });
+  };
+
   const { data: me, isLoading, isError } = useMe();
   const [editing, setEditing] = useState(false);
   const [formError, setFormError] = useState('');
@@ -86,7 +93,7 @@ function ProfileInner() {
         {isError && (
           <p style={{ fontFamily: 'var(--font-sans)', color: 'var(--brand)' }}>{MESSAGES.loadError}</p>
         )}
-        {me && !editing && <ProfileView me={me} onEdit={startEdit} />}
+        {me && !editing && <ProfileView me={me} onEdit={startEdit} onLogout={logout} />}
         {me && editing && (
           <EditView
             me={me}

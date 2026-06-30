@@ -421,7 +421,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/MemberId'
       responses:
-        '200': { description: 승인됨 (status=ACTIVE, 로그인 가능) }
+        '200': { description: "승인됨 (status=ACTIVE, 로그인 가능)" }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
@@ -453,6 +453,7 @@ paths:
       security: [{ bearerAuth: [] }]
       responses:
         '200':
+          description: 내 정보
           content:
             application/json:
               schema: { $ref: '#/components/schemas/MeProfile' }
@@ -468,6 +469,7 @@ paths:
             schema: { $ref: '#/components/schemas/MeUpdateRequest' }
       responses:
         '200':
+          description: 수정된 내 정보
           content:
             application/json:
               schema: { $ref: '#/components/schemas/MeProfile' }
@@ -566,6 +568,14 @@ components:
     Authority:
       type: string
       enum: [MEMBER, OFFICER]
+    MemberDepartment:
+      type: [string, 'null']
+      description: 부서. enum name으로 전송 (라벨은 FE 매핑).
+      enum: [LEADERSHIP, ACADEMIC, PR, FINANCE, INFRA, null]
+    MemberTitle:
+      type: [string, 'null']
+      description: 직책. enum name으로 전송 (라벨은 FE 매핑).
+      enum: [PRESIDENT, VICE_PRESIDENT, ACADEMIC_LEAD, ACADEMIC_MEMBER, PR_LEAD, PR_MEMBER, FINANCE_LEAD, FINANCE_MEMBER, SERVER_ADMIN, OB, REGULAR, ASSOCIATE, NEWCOMER, null]
     MeProfile:
       type: object
       required: [id, name, email, authority]
@@ -575,6 +585,8 @@ components:
         studentId: { type: string }
         email: { type: string, format: email }
         authority: { $ref: '#/components/schemas/Authority' }
+        department: { $ref: '#/components/schemas/MemberDepartment' }
+        title: { $ref: '#/components/schemas/MemberTitle' }
         gen: { type: [string, 'null'], example: '41기' }
         bio: { type: [string, 'null'] }
         githubUrl: { type: [string, 'null'], format: uri }

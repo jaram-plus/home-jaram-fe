@@ -53,9 +53,9 @@ export const PEOPLE = {
         ],
       },
       {
-        heading: '운영',
+        heading: '인프라',
         members: [
-          { name: '서관리', role: '서버관리자', gen: '41기', bio: '자람 서비스의 인프라를 운영합니다.', github: true, blog: true },
+          { name: '서관리', role: '서버 관리자', gen: '41기', bio: '자람 서비스의 인프라를 운영합니다.', github: true, blog: true },
         ],
       },
     ],
