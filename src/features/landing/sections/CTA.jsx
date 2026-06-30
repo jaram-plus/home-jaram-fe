@@ -1,5 +1,6 @@
 import React from 'react';
 import { jaramMark } from '../landing.assets';
+import { currentGen } from '@/shared/club/founding';
 import { useAuthStore } from '@/shared/auth/auth.store';
 
 /** CTA — the single vermilion-field section (paper text + JR watermark). */
@@ -42,7 +43,7 @@ export function CTA() {
             marginBottom: 28,
           }}
         >
-          Join JARAM · 41기
+          Join JARAM · {currentGen()}기
         </span>
         <h2
           style={{
@@ -89,7 +90,7 @@ export function CTA() {
                 boxShadow: '0 8px 22px rgba(0, 0, 0, 0.18)',
               }}
             >
-              41기 지원하기
+              {currentGen()}기 지원하기
             </a>
           )}
           <a href="/about" className="jr-cta-more" style={{ color: 'var(--text-on-ink)', fontSize: '1.0625rem', fontWeight: 600 }}>

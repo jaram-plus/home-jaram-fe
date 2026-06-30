@@ -1,6 +1,7 @@
 import React from 'react';
 import { Eyebrow } from './Eyebrow';
 import { HISTORY } from '../landing.data';
+import { clubYearsKorean } from '@/shared/club/founding';
 
 /** History — vertical timeline of milestones. */
 export function History() {
@@ -27,7 +28,7 @@ export function History() {
             wordBreak: 'keep-all',
           }}
         >
-          마흔한 해를 이어온 <span style={{ color: 'var(--brand)' }}>발자취</span>.
+          {clubYearsKorean()} 해를 이어온 <span style={{ color: 'var(--brand)' }}>발자취</span>.
         </h2>
         <div>
           {HISTORY.map((h, i) => (

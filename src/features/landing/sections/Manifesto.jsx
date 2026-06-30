@@ -1,4 +1,5 @@
 import React from 'react';
+import { clubYearsKorean } from '@/shared/club/founding';
 
 /** Manifesto — editorial asymmetric layout (meta column + large statement). */
 export function Manifesto() {
@@ -75,7 +76,7 @@ export function Manifesto() {
               }}
             >
               자람은 1984년 한양대학교 ERICA에서 시작한 컴퓨터학회입니다. 받은 만큼 나누고, 나눈 만큼 성장하는 선순환 속에서
-              마흔한 해 동안 배움의 태도를 다음 세대로 이어왔습니다.
+              {clubYearsKorean()} 해 동안 배움의 태도를 다음 세대로 이어왔습니다.
             </p>
           </div>
         </div>

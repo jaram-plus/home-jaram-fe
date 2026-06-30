@@ -8,6 +8,7 @@
  * In production, fetch the dynamic figures (STATS, ALUMNI, HISTORY) from
  * the backend and keep only the static editorial copy here.
  */
+import { clubYears } from '@/shared/club/founding';
 
 export const NAV = [
   { label: '소개', href: '#' },
@@ -17,7 +18,7 @@ export const NAV = [
 ];
 
 export const STATS = [
-  { value: '41', label: '년의 역사' },
+  { value: String(clubYears()), label: '년의 역사' },
   { value: '70', suffix: '+', label: '활성 멤버' },
   { value: '500', suffix: '+', label: '졸업생' },
   { value: '1984', label: '설립년도' },

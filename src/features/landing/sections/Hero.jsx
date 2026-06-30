@@ -2,6 +2,7 @@ import React from 'react';
 import { Button, Stat } from '@/design-system';
 import { jaramMark } from '../landing.assets';
 import { STATS } from '../landing.data';
+import { clubYears, currentGen } from '@/shared/club/founding';
 import { useAuthStore } from '@/shared/auth/auth.store';
 
 /** Hero — oversized display headline, intro, primary CTAs, heritage stats. */
@@ -62,11 +63,11 @@ export function Hero() {
             color: 'var(--text-muted)',
           }}
         >
-          한양대학교 ERICA 컴퓨터학회 JARAM — 나눔이 실력이 되는 41년.
+          한양대학교 ERICA 컴퓨터학회 JARAM — 나눔이 실력이 되는 {clubYears()}년.
         </p>
         <div style={{ display: 'flex', gap: 14, marginTop: 40, flexWrap: 'wrap' }}>
           {!isAuthenticated && (
-            <Button size="lg" href="/apply">41기 지원하기</Button>
+            <Button size="lg" href="/apply">{currentGen()}기 지원하기</Button>
           )}
           <Button size="lg" variant="outline" href="/about">학회 소개</Button>
         </div>
