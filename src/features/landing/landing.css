@@ -56,9 +56,6 @@
   width: max-content;
   animation: jrMarqueeLtr 52s linear infinite;
 }
-.jr-marquee:hover .jr-marquee-track-ltr {
-  animation-play-state: paused;
-}
 @keyframes jrMarqueeLtr {
   from { transform: translateX(-50%); }
   to { transform: translateX(0); }
