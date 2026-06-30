@@ -15,6 +15,22 @@ export function Eyebrow({ children }) {
   );
 }
 
+/** 본문 그룹 머리말. 작은 빨강 아이라벨로 '계정/소개' 구획을 연다. */
+export function GroupLabel({ children }) {
+  return (
+    <div
+      style={{
+        marginBottom: 'var(--space-2)',
+        fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-xs)',
+        fontWeight: 'var(--w-bold)', letterSpacing: 'var(--ls-label)',
+        textTransform: 'uppercase', color: 'var(--text-faint)',
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
 /** 헤어라인으로 구분된 라벨(좌)+값(우) 행. */
 export function FieldRow({ label, children }) {
   return (

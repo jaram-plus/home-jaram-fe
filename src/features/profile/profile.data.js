@@ -10,6 +10,10 @@ export const ACTIONS = { edit: '수정', logout: '로그아웃' };
 // authority 코드 → 한글 라벨
 export const AUTHORITY_LABELS = { MEMBER: '회원', OFFICER: '임원', ADMIN: '관리자' };
 
+// 카드 본문 그룹 아이라벨(ALL-CAPS) — 시스템/운영진이 부여하는 '계정' 정보와
+// 본인이 직접 쓰는 '소개'를 구분한다.
+export const GROUPS = { account: 'ACCOUNT', profile: 'ABOUT' };
+
 // 읽기 전용 필드 라벨(표시 순서대로) — gen은 헤더 부제목으로만 표시.
 // department·title은 운영진이 부여하는 값으로 본인 수정 불가, 읽기로만 노출.
 export const READONLY_LABELS = [
