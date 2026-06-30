@@ -41,7 +41,7 @@ function Notice({ children }) {
  * the demo navigation/toasts with real routing + server responses.
  */
 export default function SeminarPage() {
-  const isAdmin = useAuthStore((s) => s.user?.authority === 'ADMIN');
+  const isAdmin = useAuthStore((s) => ['OFFICER', 'ADMIN'].includes(s.user?.authority));
   const subNav = SUB_NAV.filter((t) => t.key !== 'roster' || isAdmin);
 
   const [view, setView] = useState('list'); // list | roster
