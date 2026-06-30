@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { jaramMark } from '../login.assets';
 
 /** Slim top bar for the auth screens — JR mark + wordmark + heritage label. */
@@ -25,10 +26,12 @@ export function AuthHeader() {
           gap: 12,
         }}
       >
-        <img src={jaramMark} alt="JARAM" style={{ height: 34 }} />
-        <span style={{ fontFamily: 'var(--font-display)', fontSize: 26, color: 'var(--text-strong)', lineHeight: 1 }}>
-          자람
-        </span>
+        <Link to="/" aria-label="홈으로" style={{ display: 'flex', alignItems: 'center', gap: 12, textDecoration: 'none' }}>
+          <img src={jaramMark} alt="JARAM" style={{ height: 34 }} />
+          <span style={{ fontFamily: 'var(--font-display)', fontSize: 26, color: 'var(--text-strong)', lineHeight: 1 }}>
+            자람
+          </span>
+        </Link>
         <span
           style={{
             marginLeft: 14,

@@ -7,7 +7,7 @@ import jaramMark from '@/design-system/assets/logos/jaram-mark.png';
 /**
  * Sticky translucent app header — the single header used across every page.
  *
- * JR mark + wordmark, primary nav, and an auth-aware action (지원하기 CTA when
+ * JR mark + wordmark, primary nav, and an auth-aware action (로그인 CTA when
  * signed out, profile chip when signed in). Pass `current` to highlight the
  * active nav item by key; an unknown/omitted key highlights nothing.
  */
@@ -110,7 +110,7 @@ export function Header({ current }) {
               {user?.name ?? '프로필'}
             </Link>
           ) : (
-            <Button size="sm" href="/apply">지원하기</Button>
+            <Button size="sm" href="/login">로그인</Button>
           )}
         </nav>
       </div>
