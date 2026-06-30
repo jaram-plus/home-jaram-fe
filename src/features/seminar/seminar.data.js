@@ -66,6 +66,8 @@ export const MESSAGES = {
   codeWrong: '출석 코드가 올바르지 않습니다.',
   codeServer: '출석 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.',
   titleRequired: '제목을 입력해 주세요.',
+  startsAtRequired: '일시를 선택해 주세요.',
+  createServer: '세미나 등록 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.',
 };
 
 // Transient toast strings.

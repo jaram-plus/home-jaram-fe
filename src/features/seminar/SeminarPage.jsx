@@ -1,6 +1,7 @@
 import React, { useState, useRef, useCallback } from 'react';
 import './seminar.css';
 import { Button } from '@/design-system';
+import { useAuthStore } from '@/shared/auth/auth.store';
 import { useForm } from './useForm';
 import { ROSTER_TABS, MESSAGES, TOAST } from './seminar.data';
 import { useSeminars, useRoster, useAttend, useCreateSeminar } from './seminar.queries';
@@ -40,6 +41,9 @@ function Notice({ children }) {
  * the demo navigation/toasts with real routing + server responses.
  */
 export default function SeminarPage() {
+  const isAdmin = useAuthStore((s) => s.user?.authority === 'ADMIN');
+  const subNav = SUB_NAV.filter((t) => t.key !== 'roster' || isAdmin);
+
   const [view, setView] = useState('list'); // list | roster
   const [filter, setFilter] = useState('all'); // all | upcoming | ended
   const [attended, setAttended] = useState({}); // seminarId -> true
@@ -50,7 +54,7 @@ export default function SeminarPage() {
   const [attendErr, setAttendErr] = useState('');
 
   const [createOpen, setCreateOpen] = useState(false);
-  const createForm = useForm({ title: '', speaker: '', topic: '', when: '', place: '', mode: '', code: '', material: '' });
+  const createForm = useForm({ title: '', speaker: '', topic: '', startsAt: '', place: '', mode: '', attendanceCode: '', materialUrl: '' });
 
   const [toast, setToast] = useState(null);
   const toastTimer = useRef(null);
@@ -79,6 +83,10 @@ export default function SeminarPage() {
       setCreateOpen(false);
       showToast(TOAST.created);
     },
+    onError: () => {
+      // 모달은 열어 둔 채(입력 보존) 토스트로 실패를 알린다.
+      showToast(MESSAGES.createServer);
+    },
   });
 
   // --- attend ---
@@ -104,8 +112,11 @@ export default function SeminarPage() {
     setCreateOpen(true);
   }
   function submitCreate() {
-    if (!createForm.values.title.trim()) {
-      createForm.setErrors({ title: MESSAGES.titleRequired });
+    const errs = {};
+    if (!createForm.values.title.trim()) errs.title = MESSAGES.titleRequired;
+    if (!createForm.values.startsAt) errs.startsAt = MESSAGES.startsAtRequired;
+    if (Object.keys(errs).length) {
+      createForm.setErrors(errs);
       return;
     }
     createM.mutate(createForm.values);
@@ -130,11 +141,11 @@ export default function SeminarPage() {
               자람에서 열리는 세미나를 확인하고 출석을 체크하세요.
             </p>
           </div>
-          <Button onClick={openCreate}>＋ 세미나 개설하기</Button>
+          {isAdmin && <Button onClick={openCreate}>＋ 세미나 개설하기</Button>}
         </div>
 
         <div style={{ display: 'flex', gap: 4, marginTop: 34, borderBottom: '1px solid var(--border)' }}>
-          {SUB_NAV.map((t) => (
+          {subNav.map((t) => (
             <TabButton key={t.key} active={view === t.key} onClick={() => setView(t.key)}>{t.label}</TabButton>
           ))}
         </div>
@@ -156,7 +167,7 @@ export default function SeminarPage() {
             />
           )
         )}
-        {view === 'roster' && (
+        {view === 'roster' && isAdmin && (
           <RosterView
             roster={roster}
             selected={rosterSel}
@@ -177,7 +188,7 @@ export default function SeminarPage() {
         />
       )}
 
-      {createOpen && <CreateModal form={createForm} onClose={() => setCreateOpen(false)} onSubmit={submitCreate} />}
+      {createOpen && <CreateModal form={createForm} onClose={() => setCreateOpen(false)} onSubmit={submitCreate} pending={createM.isPending} />}
 
       <Toast message={toast} />
     </div>
