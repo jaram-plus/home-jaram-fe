@@ -4,7 +4,7 @@ import './login.css';
 import { jaramMark } from './login.assets';
 import { useForm } from './useForm';
 import { MESSAGES, LOGIN_ERROR, SIGNUP_ERROR, FACULTY_ETC, newcomerGen } from './login.data';
-import { isEmail, isHanyang, isStudentId, isStrongPw, isPhone, isGen } from './login.validation';
+import { isEmail, isHanyang, isStudentId, isStrongPw, isPhone, isGen, genDigits, formatPhone } from './login.validation';
 import * as api from './login.api';
 import { useLoginMutation } from './useLoginMutation';
 import {
@@ -121,11 +121,11 @@ export default function LoginPage({ initialView = 'login' }) {
         studentId: v.sid,
         email: v.email,
         password: v.pw,
-        studentType: v.studentType,
-        // 재학생은 입력값, 신입생은 가입 연도 기준 자동 계산.
-        gen: v.studentType === 'current' ? v.gen : String(newcomerGen()),
+        // studentType은 와이어로 보내지 않는다 — 아래 gen 산출에만 쓰는 클라 전용 값.
+        // 재학생은 입력값, 신입생은 가입 연도 기준 자동 계산. 와이어는 숫자만.
+        gen: genDigits(v.studentType === 'current' ? v.gen : String(newcomerGen())),
         faculty: v.facultyChoice === FACULTY_ETC ? v.facultyEtc.trim() : v.facultyChoice,
-        phone: v.phone,
+        phone: formatPhone(v.phone),
         enrolled: v.enrolled,
       });
       setView('signupDone');
