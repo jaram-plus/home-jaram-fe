@@ -1,31 +1,29 @@
-/* ============================================================
-   Admin page — CSS that can't live inline (keyframes, ::selection).
-   Everything else is inline-styled on components, referencing
-   design-system tokens. Imported once by AdminPage.jsx.
-   ============================================================ */
+/**
+ * admin 페이지 전용 스타일 — 인라인으로 표현 불가능한 것만. (keyframes · scrollbar · ::selection)
+ * 색·여백·타이포는 전부 디자인 시스템 CSS 변수. 하드코딩 hex 없음.
+ */
 
-@keyframes jrToastIn {
-  from { opacity: 0; transform: translate(-50%, 12px); }
-  to   { opacity: 1; transform: translate(-50%, 0); }
+/* 콘텐츠 스크롤 영역 — 종이 톤 스크롤바 */
+.adm-scroll::-webkit-scrollbar { width: 10px; height: 10px; }
+.adm-scroll::-webkit-scrollbar-thumb {
+  background: var(--line-strong, var(--border-strong));
+  border-radius: 999px;
+  border: 3px solid var(--surface-page);
 }
-@keyframes jrFade {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
+.adm-scroll::-webkit-scrollbar-track { background: transparent; }
 
-/* View fade-in. */
-.jr-anim {
-  animation: jrFade 0.24s ease;
-}
+/* select 는 폼 폰트를 상속받지 않으므로 명시 */
+.admin-root select { font-family: var(--font-sans); }
 
-::selection {
-  background: var(--brand);
-  color: #fff;
-}
+/* 모달·토스트 진입 애니메이션 (prefers-reduced-motion 존중) */
+@keyframes admFade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes admPop { from { opacity: 0; transform: translateY(8px) scale(0.98); } to { opacity: 1; transform: none; } }
+@keyframes admToastIn { from { opacity: 0; transform: translate(-50%, 12px); } to { opacity: 1; transform: translate(-50%, 0); } }
+
+.adm-anim-fade { animation: admFade 0.2s ease; }
+.adm-anim-pop { animation: admPop 0.24s cubic-bezier(0.2, 0.7, 0.2, 1); }
+.adm-anim-toast { animation: admToastIn 0.24s cubic-bezier(0.2, 0.7, 0.2, 1); }
 
 @media (prefers-reduced-motion: reduce) {
-  .jr-anim,
-  .jr-toast {
-    animation: none !important;
-  }
+  .adm-anim-fade, .adm-anim-pop, .adm-anim-toast { animation: none; }
 }

@@ -1,4 +1,23 @@
-export { Header as AppHeader } from '@/shared/ui/Header';
+export { AdminShell } from './shell/AdminShell';
+export { Sidebar } from './shell/Sidebar';
+export { NavItem } from './shell/NavItem';
+
+export { DashboardView } from './dashboard/DashboardView';
+export { KpiCard } from './dashboard/KpiCard';
+export { DonutChart } from './dashboard/DonutChart';
+export { BarChart } from './dashboard/BarChart';
+export { LineChart } from './dashboard/LineChart';
+export { PendingBanner } from './dashboard/PendingBanner';
+
+export { TableView } from './table/TableView';
+export { DataTable } from './table/DataTable';
+export { EditableCell } from './table/EditableCell';
+export { TableToolbar } from './table/TableToolbar';
+export { SaveBar } from './table/SaveBar';
+export { Pagination } from './table/Pagination';
+export { EmptyState } from './table/EmptyState';
+
+export { SettingsView } from './settings/SettingsView';
+export { AddRowModal } from './forms/AddRowModal';
+export { ConfirmDialog } from './forms/ConfirmDialog';
 export { Toast } from './Toast';
-export { Eyebrow } from './parts';
-export { PendingMemberList } from './PendingMemberList';

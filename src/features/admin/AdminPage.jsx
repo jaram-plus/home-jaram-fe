@@ -1,84 +1,37 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import './admin.css';
-import { MESSAGES, TOAST } from './admin.data';
-import { usePendingMembers, useApproveMember, useRejectMember } from './admin.queries';
-import { AppHeader, Toast, Eyebrow, PendingMemberList } from './views';
+import { AdminShell } from './views';
+import { DashboardView } from './views';
+import { TableView } from './views';
+import { SettingsView } from './views';
 
 /**
- * JARAM admin page — officer-only membership approval (UC-A5). Lists members
- * awaiting approval and lets an officer approve (status=ACTIVE, 로그인 가능) or
- * reject with a reason (status=REJECTED). Approve/reject call the backend via
- * admin.queries; the pending list is invalidated by the mutation hooks.
+ * /admin 기능 엔트리. App.tsx 에는 스플랫 라우트 한 줄만 추가합니다 (DEVELOPMENT.md §3).
  *
- * Officer-authority enforcement is server-side (403 on the endpoints). Route
- * guarding by authority can wrap this page once roles are wired client-side.
+ *   <Route path="/admin/*" element={<RequireAdmin><AdminPage /></RequireAdmin>} />
+ *
+ * 하위 화면은 여기 중첩 라우트로 나눠 URL 로 상태화합니다 (새로고침·공유·뒤로가기 보존).
+ *   /admin/dashboard  /admin/members(?tab=member|exec|contrib|graduate)
+ *   /admin/seminars   /admin/studies   /admin/applications   /admin/settings
+ * 표의 검색·필터·정렬·페이지도 searchParams(?q=&sort=&page=…)로 직렬화됩니다 (TableView).
+ *
+ * AdminShell 은 <Outlet/> 을 감싸는 레이아웃 라우트라, 화면 전환 시 사이드바·헤더는
+ * 리렌더되지 않고 main 만 교체됩니다.
  */
 export default function AdminPage() {
-  const [rejectId, setRejectId] = useState(null); // member id whose reject form is open
-  const [reason, setReason] = useState('');
-
-  const [toast, setToast] = useState(null);
-  const toastTimer = useRef(null);
-
-  const showToast = useCallback((msg) => {
-    setToast(msg);
-    clearTimeout(toastTimer.current);
-    toastTimer.current = setTimeout(() => setToast(null), 2800);
-  }, []);
-
-  const cancelReject = useCallback(() => {
-    setRejectId(null);
-    setReason('');
-  }, []);
-
-  const pendingQ = usePendingMembers();
-
-  const approveM = useApproveMember({
-    onSuccess: (_d, vars) => { setRejectId(null); showToast(TOAST.approved(vars.name)); },
-  });
-  const rejectM = useRejectMember({
-    onSuccess: () => { cancelReject(); showToast(TOAST.rejected); },
-  });
-
-  const approve = (m) => approveM.mutate({ memberId: m.id, name: m.name });
-  const reject = (m) => {
-    if (!reason.trim()) {
-      showToast(MESSAGES.reasonRequired);
-      return;
-    }
-    rejectM.mutate({ memberId: m.id, reason });
-  };
-
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--surface-page)' }}>
-      <AppHeader current="admin" />
-
-      <section style={{ maxWidth: 'var(--container-max)', margin: '0 auto', padding: 'clamp(2.5rem, 5vw, 4rem) var(--container-pad) 0' }}>
-        <Eyebrow>Admin</Eyebrow>
-        <h1 style={{ margin: 0, fontFamily: 'var(--font-serif)', fontWeight: 400, fontSize: 'var(--fs-title-1)', color: 'var(--text-strong)', lineHeight: 1.1 }}>
-          가입 승인 대기
-        </h1>
-        <p style={{ margin: '14px 0 0', fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-lead)', color: 'var(--text-muted)', lineHeight: 'var(--lh-normal)' }}>
-          가입을 신청한 회원을 검토하고 승인하거나 거절합니다.
-        </p>
-      </section>
-
-      <section style={{ maxWidth: 'var(--container-max)', margin: '0 auto', padding: '28px var(--container-pad) clamp(4rem, 8vw, 7rem)' }}>
-        <PendingMemberList
-          members={pendingQ.data ?? []}
-          loading={pendingQ.isLoading}
-          error={pendingQ.isError}
-          rejectId={rejectId}
-          reason={reason}
-          onReason={(e) => setReason(e.target.value)}
-          onCancelReject={cancelReject}
-          onStartReject={(id) => { setRejectId(id); setReason(''); }}
-          onApprove={approve}
-          onReject={reject}
-        />
-      </section>
-
-      <Toast message={toast} />
-    </div>
+    <Routes>
+      <Route element={<AdminShell />}>
+        <Route index element={<Navigate to="/admin/dashboard" replace />} />
+        <Route path="dashboard" element={<DashboardView />} />
+        <Route path="members" element={<TableView />} />
+        <Route path="seminars" element={<TableView resource="seminars" />} />
+        <Route path="studies" element={<TableView resource="studies" />} />
+        <Route path="applications" element={<TableView resource="applications" />} />
+        <Route path="settings" element={<SettingsView />} />
+        <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />
+      </Route>
+    </Routes>
   );
 }
