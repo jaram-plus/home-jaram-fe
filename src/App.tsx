@@ -5,6 +5,7 @@ import PeoplePage from '@/features/people/PeoplePage';
 import SeminarPage from '@/features/seminar/SeminarPage';
 import StudyPage from '@/features/study/StudyPage';
 import AdminPage from '@/features/admin/AdminPage';
+import { RequireAdmin } from '@/features/admin/RequireAdmin';
 import ProfilePage from '@/features/profile/ProfilePage';
 
 export default function App() {
@@ -16,7 +17,7 @@ export default function App() {
       <Route path="/people" element={<PeoplePage />} />
       <Route path="/seminar" element={<SeminarPage />} />
       <Route path="/study" element={<StudyPage />} />
-      <Route path="/admin" element={<AdminPage />} />
+      <Route path="/admin/*" element={<RequireAdmin><AdminPage /></RequireAdmin>} />
       <Route path="/profile" element={<ProfilePage />} />
     </Routes>
   );
