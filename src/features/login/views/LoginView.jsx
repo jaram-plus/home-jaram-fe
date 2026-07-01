@@ -12,7 +12,10 @@ export function LoginView({ form, loading, formError, onSubmit, onSignup, onRese
       <Title size={36}>로그인</Title>
       <Lead>자람 회원을 위한 공간입니다. 한양대 이메일로 로그인하세요.</Lead>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 18, marginTop: 28 }}>
+      <form
+        onSubmit={(e) => { e.preventDefault(); if (!loading) onSubmit(); }}
+        style={{ display: 'flex', flexDirection: 'column', gap: 18, marginTop: 28 }}
+      >
         <Input
           label="이메일"
           type="email"
@@ -46,11 +49,11 @@ export function LoginView({ form, loading, formError, onSubmit, onSignup, onRese
         {formError && <FormError message={formError} />}
 
         <div style={{ marginTop: 4 }}>
-          <Button size="lg" disabled={loading} onClick={onSubmit} style={blockBtn}>
+          <Button size="lg" type="submit" disabled={loading} style={blockBtn}>
             {loading ? '확인 중…' : '로그인'}
           </Button>
         </div>
-      </div>
+      </form>
 
       <div style={{ marginTop: 26, paddingTop: 22, borderTop: '1px solid var(--border-soft)', textAlign: 'center' }}>
         <p style={{ margin: 0, fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-sm)', color: 'var(--text-muted)' }}>
