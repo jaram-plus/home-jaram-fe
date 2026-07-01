@@ -5,8 +5,8 @@ import { EMPTY } from '../study.data';
 
 const FILTERS = [
   { key: 'all', label: '전체' },
-  { key: 'recruiting', label: '모집 중' },
-  { key: 'ongoing', label: '진행 중' },
+  { key: 'RECRUITING', label: '모집 중' },
+  { key: 'ONGOING', label: '진행 중' },
 ];
 
 /** Browse view — filter chips + responsive study grid. */

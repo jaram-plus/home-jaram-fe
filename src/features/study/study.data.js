@@ -8,30 +8,29 @@
  */
 
 // Browsable studies. `status` drives the badge; `apply` drives the CTA state.
-//   status: recruiting | closed | ongoing | ended
-//   apply:  open | applied | closed | joined
+//   status (StudyStatus): RECRUITING | ONGOING | CLOSED  (CLOSED = 모집 마감·종료)
+//   apply  (ApplyState):  OPEN | APPLIED | CLOSED | JOINED
 export const STUDIES = [
-  { id: 's1', title: 'React 심화 스터디', fields: ['Frontend', 'React'], leader: '이성장', schedule: '매주 화 19:00', period: '8주 과정', mode: '온·오프라인 병행', cur: 3, cap: 6, status: 'recruiting', apply: 'open' },
-  { id: 's2', title: '알고리즘 문제풀이', fields: ['Algorithm', 'C++'], leader: '김자람', schedule: '매주 목 20:00', period: '12주 과정', mode: '오프라인', cur: 5, cap: 6, status: 'recruiting', apply: 'applied' },
-  { id: 's3', title: '운영체제 뿌수기', fields: ['CS', 'OS'], leader: '박나눔', schedule: '매주 월 19:30', period: '10주 과정', mode: '온라인', cur: 6, cap: 6, status: 'closed', apply: 'closed' },
-  { id: 's4', title: 'Spring 백엔드 실전', fields: ['Backend', 'Spring'], leader: '최순환', schedule: '매주 수 19:00', period: '진행 중', mode: '오프라인', cur: 5, cap: 5, status: 'ongoing', apply: 'joined' },
-  { id: 's5', title: '자료구조 입문', fields: ['CS'], leader: '한그루', schedule: '매주 금 18:00', period: '8주 과정', mode: '온라인', cur: 2, cap: 8, status: 'recruiting', apply: 'open' },
-  { id: 's6', title: 'Docker · Kubernetes', fields: ['DevOps'], leader: '정포부', schedule: '격주 토 14:00', period: '6주 과정', mode: '온·오프라인 병행', cur: 4, cap: 5, status: 'recruiting', apply: 'open' },
+  { id: 's1', title: 'React 심화 스터디', fields: ['Frontend', 'React'], leader: '이성장', schedule: '매주 화 19:00', period: '8주 과정', mode: '온·오프라인 병행', cur: 3, cap: 6, status: 'RECRUITING', apply: 'OPEN' },
+  { id: 's2', title: '알고리즘 문제풀이', fields: ['Algorithm', 'C++'], leader: '김자람', schedule: '매주 목 20:00', period: '12주 과정', mode: '오프라인', cur: 5, cap: 6, status: 'RECRUITING', apply: 'APPLIED' },
+  { id: 's3', title: '운영체제 뿌수기', fields: ['CS', 'OS'], leader: '박나눔', schedule: '매주 월 19:30', period: '10주 과정', mode: '온라인', cur: 6, cap: 6, status: 'CLOSED', apply: 'CLOSED' },
+  { id: 's4', title: 'Spring 백엔드 실전', fields: ['Backend', 'Spring'], leader: '최순환', schedule: '매주 수 19:00', period: '진행 중', mode: '오프라인', cur: 5, cap: 5, status: 'ONGOING', apply: 'JOINED' },
+  { id: 's5', title: '자료구조 입문', fields: ['CS'], leader: '한그루', schedule: '매주 금 18:00', period: '8주 과정', mode: '온라인', cur: 2, cap: 8, status: 'RECRUITING', apply: 'OPEN' },
+  { id: 's6', title: 'Docker · Kubernetes', fields: ['DevOps'], leader: '정포부', schedule: '격주 토 14:00', period: '6주 과정', mode: '온·오프라인 병행', cur: 4, cap: 5, status: 'RECRUITING', apply: 'OPEN' },
 ];
 
 // status → Tag content. tone maps to the design-system Tag `tone` prop.
 export const STATUS_BADGE = {
-  recruiting: { label: '모집 중', tone: 'brand' },
-  closed: { label: '모집 마감', tone: 'neutral' },
-  ongoing: { label: '진행 중', tone: 'seal' },
-  ended: { label: '종료', tone: 'neutral' },
+  RECRUITING: { label: '모집 중', tone: 'brand' },
+  ONGOING: { label: '진행 중', tone: 'seal' },
+  CLOSED: { label: '모집 마감', tone: 'neutral' },
 };
 
 // apply state → disabled CTA label (when the user can't apply).
 export const APPLY_LABEL = {
-  applied: '승인 대기 중',
-  closed: '모집이 마감되었습니다',
-  joined: '참여 중인 스터디입니다',
+  APPLIED: '승인 대기 중',
+  CLOSED: '모집이 마감되었습니다',
+  JOINED: '참여 중인 스터디입니다',
 };
 
 // --- "내 활동" (read-only demo) ---

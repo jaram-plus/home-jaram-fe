@@ -10,10 +10,11 @@ const FILTERS = [
 ];
 
 // 'upcoming' filter shows both upcoming and in-progress seminars.
+// (filter keys are UI selectors; status values are wire enum SeminarStatus, UPPER.)
 function pass(filter, status) {
   if (filter === 'all') return true;
-  if (filter === 'upcoming') return status === 'upcoming' || status === 'ongoing';
-  return status === 'ended';
+  if (filter === 'upcoming') return status === 'UPCOMING' || status === 'ONGOING';
+  return status === 'ENDED';
 }
 
 /** List view — filter chips + the seminar schedule. */

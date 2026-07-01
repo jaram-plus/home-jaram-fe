@@ -10,7 +10,7 @@ import { STATUS_BADGE, ATTEND_LABEL } from '../seminar.data';
  */
 export function SeminarCard({ seminar, attended, onAttend }) {
   const badge = STATUS_BADGE[seminar.status];
-  const canAttend = !attended && seminar.status === 'ongoing';
+  const canAttend = !attended && seminar.status === 'ONGOING';
   const label = attended ? ATTEND_LABEL.done : ATTEND_LABEL[seminar.status];
 
   return (

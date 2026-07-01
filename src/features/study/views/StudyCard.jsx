@@ -6,7 +6,7 @@ import { STATUS_BADGE, APPLY_LABEL } from '../study.data';
 /** One study in the browse grid. `onApply` opens the application modal. */
 export function StudyCard({ study, onApply }) {
   const badge = STATUS_BADGE[study.status];
-  const canApply = study.apply === 'open';
+  const canApply = study.apply === 'OPEN';
   return (
     <div
       style={{
