@@ -15,14 +15,14 @@ const labelEnum = (map) => z.enum(Object.values(map));
 
 /** 학번: 8~10자리 숫자 (학교 포맷). 회원 내 중복 금지는 서버/제출 시 별도 검사. */
 export const studentId = z.string().regex(/^\d{8,10}$/, '학번은 8~10자리 숫자여야 합니다.');
-/** 기수: '41기' 형태 또는 정수 문자열. */
-export const cohort = z.string().regex(/^\d{1,2}기$|^\d{1,2}$/, "기수는 '41기' 형태로 입력하세요.");
+/** 기수(gen): '41기' 형태 또는 정수 문자열. */
+export const gen = z.string().regex(/^\d{1,2}기$|^\d{1,2}$/, "기수는 '41기' 형태로 입력하세요.");
 const phone = z.string().regex(/^01\d-?\d{3,4}-?\d{4}$/, '연락처 형식이 올바르지 않습니다.').or(z.literal('')).optional();
 
 export const memberSchema = z.object({
   name: z.string().min(1, '이름을 입력하세요.'),
   studentId,
-  cohort,
+  gen,
   grade: labelEnum(GRADE_LABEL),
   status: labelEnum(STATUS_LABEL),
   phone,
@@ -31,7 +31,7 @@ export const memberSchema = z.object({
 export const execSchema = z.object({
   name: z.string().min(1, '이름을 입력하세요.'),
   studentId,
-  cohort,
+  gen,
   department: labelEnum(DEPARTMENT_LABEL),
   position: z.string().min(1, '직책을 입력하세요.'),
   term: z.string().min(1, '임기를 입력하세요.'),
@@ -39,7 +39,7 @@ export const execSchema = z.object({
 
 export const contribSchema = z.object({
   name: z.string().min(1, '이름을 입력하세요.'),
-  cohort: z.string().min(1),
+  gen: z.string().min(1),
   type: z.string().min(1),
   contribution: z.string().min(1, '기여 내용을 입력하세요.'),
   link: z.string().optional(),
@@ -47,7 +47,7 @@ export const contribSchema = z.object({
 
 export const graduateSchema = z.object({
   name: z.string().min(1, '이름을 입력하세요.'),
-  cohort,
+  gen,
   gradYear: z.string().regex(/^\d{4}$/, '졸업연도 4자리를 입력하세요.'),
   org: z.string().optional(),
   job: z.string().optional(),
@@ -91,7 +91,7 @@ export const SCHEMA_BY_RESOURCE = {
 /** 설정 폼 스키마. */
 export const settingsSchema = z.object({
   semester: z.string().min(1, '학기를 입력하세요.'),
-  currentCohort: z.coerce.number().int().positive('기수는 양의 정수여야 합니다.'),
+  currentGen: z.coerce.number().int().positive('기수는 양의 정수여야 합니다.'),
   autoPromote: z.boolean(),
 });
 

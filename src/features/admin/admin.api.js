@@ -37,24 +37,40 @@ const ENUM_FIELDS = {
 };
 const flip = (map) => Object.fromEntries(Object.entries(map).map(([k, v]) => [v, k]));
 
-/** 서버 → 화면: enum 키를 한글 라벨로. */
+/* ── gen(기수) 라벨 ↔ 와이어 정수 ───────────────────────────────────
+ * 백엔드 행 필드명은 gen (계약상 정수, 예 41). 화면은 '41기' 라벨을 다룹니다.
+ * '41기'|'41' → 41. 비숫자('외부' 등)는 그대로 통과(계약 미정의 자유값).
+ */
+const GEN_RESOURCES = new Set(['member', 'exec', 'contrib', 'graduate']);
+const genToWire = (v) => {
+  if (typeof v !== 'string') return v;
+  const m = v.match(/^(\d{1,2})기?$/);
+  return m ? Number(m[1]) : v;
+};
+const genFromWire = (v) => (typeof v === 'number' ? `${v}기` : v);
+
+/** 서버 → 화면: enum 키를 한글 라벨로 + gen 정수→'N기'. */
 export function fromWire(resource, row) {
   const fields = ENUM_FIELDS[resource];
-  if (!fields || !row) return row;
+  const hasGen = GEN_RESOURCES.has(resource);
+  if ((!fields && !hasGen) || !row) return row;
   const out = { ...row };
-  for (const [field, map] of Object.entries(fields)) {
+  for (const [field, map] of Object.entries(fields || {})) {
     if (out[field] != null && map[out[field]]) out[field] = map[out[field]];
   }
+  if (hasGen && out.gen != null) out.gen = genFromWire(out.gen);
   return out;
 }
 
-/** 화면 → 서버: 한글 라벨을 enum 키로 + 빈 문자열→null. */
+/** 화면 → 서버: 한글 라벨을 enum 키로 + gen 'N기'→정수 + 빈 문자열→null. */
 export function toWire(resource, fields) {
   const maps = ENUM_FIELDS[resource] || {};
+  const hasGen = GEN_RESOURCES.has(resource);
   const out = {};
   for (const [k, v] of Object.entries(fields)) {
     let val = v;
     if (maps[k]) val = flip(maps[k])[v] ?? v;
+    else if (hasGen && k === 'gen') val = genToWire(v);
     if (val === '') val = null;
     out[k] = val;
   }
@@ -69,7 +85,7 @@ export async function fetchList(resource, params = {}) {
   }
   const { path } = RESOURCES[resource];
   const query = toListQuery(resource, params);
-  // GET /api/admin/members?tab=&q=&grade=&cohort=&status=&sort=&page=&size=
+  // GET /api/admin/members?tab=&q=&grade=&gen=&status=&sort=&page=&size=
   // 주의: applications 는 큐 모델 — 실제 목록은 GET /api/admin/members/pending (PendingMember[]).
   const { data } = await client.get(`/api/admin/${path}`, { params: query });
   return { ...data, items: (data.items || []).map((r) => fromWire(resource, r)) };

@@ -27,8 +27,8 @@ export function DashboardView() {
     { label: '정회원', value: g.regular || 0, color: 'var(--brand-deep)' },
   ];
   const donutTotal = donut.reduce((a, b) => a + b.value, 0);
-  const maxCohort = Math.max(...(s.cohortBreakdown || []).map((c) => c.cohort));
-  const bars = (s.cohortBreakdown || []).map((c) => ({ label: `${c.cohort}기`, value: c.count, highlight: c.cohort === maxCohort }));
+  const maxGen = Math.max(...(s.genBreakdown || []).map((c) => c.gen));
+  const bars = (s.genBreakdown || []).map((c) => ({ label: `${c.gen}기`, value: c.count, highlight: c.gen === maxGen }));
 
   return (
     <div style={{ position: 'relative' }}>

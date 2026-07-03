@@ -14,7 +14,7 @@ export function SettingsView() {
   const showToast = useAdminStore((s) => s.showToast);
   const save = useSaveSettings({ onSuccess: () => showToast(TOAST.settingsSaved) });
 
-  const [form, setForm] = useState({ semester: '', currentCohort: '', autoPromote: true });
+  const [form, setForm] = useState({ semester: '', currentGen: '', autoPromote: true });
   const [drive, setDrive] = useState(true);
   const [err, setErr] = useState('');
   const [seeded, setSeeded] = useState(false);
@@ -22,13 +22,13 @@ export function SettingsView() {
   // 서버 설정을 편집 폼에 1회만 심는다 (effect 없이 렌더 중 조정 — React 권장 패턴).
   if (data && !seeded) {
     setSeeded(true);
-    setForm({ semester: data.semester, currentCohort: String(data.currentCohort), autoPromote: data.autoPromote });
+    setForm({ semester: data.semester, currentGen: String(data.currentGen), autoPromote: data.autoPromote });
     setDrive(data.driveConnected);
   }
 
   const set = (k, v) => setForm((s) => ({ ...s, [k]: v }));
   const onSave = () => {
-    const parsed = settingsSchema.safeParse({ semester: form.semester, currentCohort: form.currentCohort, autoPromote: form.autoPromote });
+    const parsed = settingsSchema.safeParse({ semester: form.semester, currentGen: form.currentGen, autoPromote: form.autoPromote });
     if (!parsed.success) { setErr(parsed.error.issues[0].message); return; }
     setErr('');
     save.mutate({ ...parsed.data, driveConnected: drive });
@@ -49,7 +49,7 @@ export function SettingsView() {
           <p style={cardTitle}>학회 기본 설정</p>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18 }}>
             <Input label="현재 학기" value={form.semester} onChange={(e) => set('semester', e.target.value)} />
-            <Input label="현재 기수" value={form.currentCohort} onChange={(e) => set('currentCohort', e.target.value)} />
+            <Input label="현재 기수" value={form.currentGen} onChange={(e) => set('currentGen', e.target.value)} />
           </div>
         </div>
 
