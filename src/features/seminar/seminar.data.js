@@ -13,6 +13,7 @@
  * `code` was checked client-side in the original mock; the real check happens
  * server-side (see seminar.api.js checkAttendance).
  */
+import { SEMINAR_STATUS_LABELS } from '@/shared/seminar/enums';
 
 export const SEMINARS = [
   { id: 'm1', title: 'React 18 동시성 렌더링 깊게 보기', speaker: '이성장', topic: 'Frontend', day: '27', month: '6월', weekday: '금', time: '19:00', place: '제3공학관 401호', status: 'ONGOING', material: true, code: 'JARAM41' },
@@ -48,12 +49,12 @@ export const ROSTER_TABS = [
   { key: 'r2', label: '알고리즘 인터뷰 완전 정복' },
 ];
 
-// status → Tag content. tone maps to the design-system Tag `tone` prop.
-export const STATUS_BADGE = {
-  UPCOMING: { label: '예정', tone: 'brand' },
-  ONGOING: { label: '진행 중', tone: 'seal' },
-  ENDED: { label: '종료', tone: 'neutral' },
-};
+// status → tone (design-system Tag `tone` prop). label comes from the shared
+// enum module so admin/seminar never drift apart again.
+const STATUS_TONE = { UPCOMING: 'brand', ONGOING: 'seal', ENDED: 'neutral' };
+export const STATUS_BADGE = Object.fromEntries(
+  Object.keys(SEMINAR_STATUS_LABELS).map((k) => [k, { label: SEMINAR_STATUS_LABELS[k], tone: STATUS_TONE[k] }]),
+);
 
 // status → disabled CTA label (when the user can't check in). `done` = 출석 완료.
 export const ATTEND_LABEL = {
