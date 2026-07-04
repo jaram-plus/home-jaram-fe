@@ -24,9 +24,11 @@ import {
  * password reset, as a single-route view machine.
  *
  * `view` selects the screen; each form's state lives in its own `useForm`.
- * Submit handlers validate locally, then call the placeholder API in
- * login.api.js — wire those to the Spring backend and replace the demo
- * navigation (toast on success, demo reset-link shortcut) with real routing.
+ * Submit handlers validate locally, then call the real Spring endpoints via
+ * login.api.js (paths are a proposed REST contract until the backend
+ * confirms them — see that file's header). The reset step still opens the
+ * next screen through a local shortcut instead of a real emailed link
+ * (see ResetSentView's `onOpenLink`).
  */
 export default function LoginPage({ initialView = 'login' }) {
   const navigate = useNavigate();

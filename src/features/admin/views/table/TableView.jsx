@@ -50,7 +50,7 @@ export function TableView({ resource: fixedResource }) {
 
   /* ── 서버 상태 ─────────────────────────────────────────────── */
   const { data, isLoading, isFetching } = useResourceList(resource, params);
-  const items = data?.items || [];
+  const items = React.useMemo(() => data?.items || [], [data]);
   const total = data?.total ?? 0;
   const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const origById = React.useMemo(() => Object.fromEntries(items.map((r) => [r.id, r])), [items]);

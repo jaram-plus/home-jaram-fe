@@ -1,16 +1,17 @@
 /**
  * Seminar page copy + seed data — pure data, no JSX.
  *
- * `SEMINARS` is the browsable schedule; `ROSTERS` seeds the attendance-roster
- * demo. In production both come from the backend — keep only the static copy
- * (badge maps, attend labels, messages, empty/toast strings) here.
+ * `SEMINARS`/`ROSTERS` mirror the original mock schedule/roster shape; the
+ * page now fetches both from the backend via seminar.api.js, so these two
+ * exports are currently unused. Keep only the static copy (badge maps, attend
+ * labels, messages, empty/toast strings) here.
  *
  * `status` drives the badge AND the attend CTA (wire enum SeminarStatus, UPPER_SNAKE):
  *   UPCOMING  출석 시간 전 (CTA disabled)
  *   ONGOING   출석 가능 (CTA enabled)
  *   ENDED     출석 마감 (CTA disabled)
- * `code` is the attendance code checked client-side in the demo; the real
- * check belongs on the server.
+ * `code` was checked client-side in the original mock; the real check happens
+ * server-side (see seminar.api.js checkAttendance).
  */
 
 export const SEMINARS = [
@@ -21,7 +22,8 @@ export const SEMINARS = [
 ];
 
 // Attendance rosters keyed by seminar group. `cap` is capacity, `list` is the
-// seeded attendees (mutated locally in the demo when attendance is checked).
+// seeded attendees for the original mock roster (unused now that rosters come
+// from the server via seminar.api.js getRoster).
 export const ROSTERS = {
   r1: {
     title: 'React 18 동시성 렌더링 깊게 보기',

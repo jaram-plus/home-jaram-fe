@@ -3,9 +3,9 @@ import { Button, Input } from '@/design-system';
 import { ModalShell } from './ModalShell';
 
 /**
- * Seminar-creation modal. Only the title is validated in this demo; the other
- * fields are bound to `form` so the create payload is ready when connecting
- * the backend.
+ * Seminar-creation modal. SeminarPage requires title and start time; the
+ * other fields are optional but all are bound to `form` so the create
+ * payload (seminar.api.js createSeminar) carries whatever the officer fills in.
  */
 export function CreateModal({ form, onClose, onSubmit, pending = false }) {
   const { values, errors, field } = form;

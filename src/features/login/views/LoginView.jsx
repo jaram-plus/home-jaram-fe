@@ -1,7 +1,8 @@
 import React from 'react';
 import { Button, Input } from '@/design-system';
 import { Panel } from './Panel';
-import { Eyebrow, Title, Lead, FormError, blockBtn } from './parts';
+import { Eyebrow, Title, Lead, FormError } from './parts';
+import { blockBtn } from './styles';
 
 /** Sign in — email + password, with links to signup and password reset. */
 export function LoginView({ form, loading, formError, onSubmit, onSignup, onReset }) {

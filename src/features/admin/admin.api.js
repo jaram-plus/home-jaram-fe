@@ -1,10 +1,10 @@
 /**
  * admin API — 순수 HTTP 계층. (DEVELOPMENT.md §5 · 기획.md §6)
  *
- * 지금은 USE_MOCK=true 라 SEED 를 돌려주어 백엔드 없이도 화면이 동작합니다.
- * 백엔드(Swagger) 확정 후:
- *   1) USE_MOCK=false 로 바꾸거나 VITE_ADMIN_MOCK 환경변수로 제어하고,
- *   2) 아래 client.* 호출의 경로·필드를 실제 스펙과 대조해 맞춥니다.
+ * 별도 Spring 백엔드의 admin 엔드포인트 준비 여부가 아직 확정되지 않아, 기본값은
+ * mock(SEED) 유지입니다. `.env`에 `VITE_ADMIN_MOCK=false` 를 설정하면 실 서버로
+ * 전환됩니다(opt-in). 실 연동 시 아래 client.* 호출은 docs/api/openapi.yaml 과
+ * 대조해 두었으니, 스펙이 바뀌면 함께 맞춰주세요.
  *
  * 책임
  *   - 요청 payload 정제: 빈 문자열→null, datetime-local→ISO-8601, 라벨→enum 키(toWire)
@@ -19,10 +19,24 @@ import {
   SEMINAR_STATUS_LABEL, STUDY_STATUS_LABEL,
 } from './admin.data';
 
-// 백엔드가 준비되면 false 로. (Vite 환경변수로 제어하려면 아래 한 줄로 교체)
-// const USE_MOCK = import.meta.env.VITE_ADMIN_MOCK !== 'false';
-const USE_MOCK = true;
+// 기본값은 mock 유지(백엔드 확정 전). 실 서버로 붙이려면 .env 에 VITE_ADMIN_MOCK=false.
+const USE_MOCK = import.meta.env.VITE_ADMIN_MOCK !== 'false';
 const delay = (ms) => new Promise((r) => setTimeout(r, ms));
+
+/**
+ * 서버 에러 → code 를 붙인 Error (seminar.api.js checkAttendance 와 동일 규약).
+ * 4xx 는 서버가 보낸 ErrorResponse.code(예: VALIDATION·NOT_FOUND)를 우선하고,
+ * 없으면 호출부가 넘긴 fallback 코드를 쓴다. 5xx/네트워크 오류는 'SERVER'.
+ */
+function throwWireError(error, fallbackCode) {
+  const status = error.response?.status;
+  const data = error.response?.data;
+  const code = status >= 400 && status < 500 ? data?.code || fallbackCode : 'SERVER';
+  throw Object.assign(new Error(data?.message || '요청을 처리하지 못했습니다.'), {
+    code,
+    fieldErrors: data?.fieldErrors,
+  });
+}
 
 /* ── enum 라벨 ↔ 와이어 키 매핑 ───────────────────────────────────────
  * 화면/스토어는 한글 라벨을 다루고, 서버는 enum 키를 주고받습니다.
@@ -83,12 +97,41 @@ export async function fetchList(resource, params = {}) {
     await delay(200);
     return mockList(resource, params);
   }
+  if (resource === 'applications') return fetchPendingApplications(params);
+  // GET /api/admin/{resource}?tab=&q=&grade=&gen=&status=&sort=&page=&size= (AdminListResponse)
   const { path } = RESOURCES[resource];
   const query = toListQuery(resource, params);
-  // GET /api/admin/members?tab=&q=&grade=&gen=&status=&sort=&page=&size=
-  // 주의: applications 는 큐 모델 — 실제 목록은 GET /api/admin/members/pending (PendingMember[]).
   const { data } = await client.get(`/api/admin/${path}`, { params: query });
   return { ...data, items: (data.items || []).map((r) => fromWire(resource, r)) };
+}
+
+/**
+ * applications 는 AdminResource(members/seminars/studies)에 없는 큐 모델이라
+ * 전용 엔드포인트를 쓴다: GET /api/admin/members/pending → PendingMember[]
+ * (페이지네이션 없음). 화면 스키마(admin.data SCHEMAS.applications)에 맞춰 정제하고,
+ * 검색·페이지는 이 계층에서 처리한다.
+ */
+async function fetchPendingApplications({ q = '', page = 1, size = 8 } = {}) {
+  const { data } = await client.get('/api/admin/members/pending');
+  const rows = (data || []).map((m) => ({
+    id: m.id,
+    name: m.name,
+    studentId: m.studentId,
+    appliedAt: (m.createdAt || '').slice(0, 10),
+    status: APPLICATION_STATUS_LABEL.PENDING,
+  }));
+  return paginate(rows, { q, page, size });
+}
+
+/** 서버가 페이지네이션을 지원하지 않는 목록에 검색·페이지를 얹는다. */
+function paginate(rows, { q = '', page = 1, size = 8 }) {
+  const needle = String(q).trim().toLowerCase();
+  const filtered = needle
+    ? rows.filter((r) => Object.values(r).some((v) => String(v).toLowerCase().includes(needle)))
+    : rows;
+  const total = filtered.length;
+  const start = (page - 1) * size;
+  return { items: filtered.slice(start, start + size), page, size, total };
 }
 
 /** searchParams → 서버 쿼리. tab 은 members 계열에서 리소스 구분에 사용. */
@@ -116,23 +159,61 @@ export async function saveBatch(resource, { updates = [], creates = [], deletes 
     await delay(600);
     return mockBatch(resource, body);
   }
+  if (resource === 'applications') return saveApplicationsQueue(updates, deletes);
+  // PATCH /api/admin/{resource}:batch (AdminBatchRequest → AdminBatchResponse, 부분 성공)
   const { path } = RESOURCES[resource];
-  const { data } = await client.patch(`/api/admin/${path}:batch`, body);
-  return data;
+  try {
+    const { data } = await client.patch(`/api/admin/${path}:batch`, body);
+    return data;
+  } catch (error) {
+    throwWireError(error, 'VALIDATION');
+  }
+}
+
+/**
+ * applications 는 AdminResource(members/seminars/studies)에 없어 batch 대상이
+ * 아니다. 화면에서 스테이지된 승인/반려(status 필드 변경)를 단건 승인/반려
+ * 엔드포인트 호출로 변환해 순차 처리한다. 수기 등록(creates)·삭제(deletes)는
+ * 대응하는 엔드포인트가 없어 아직 지원하지 않는다(스펙 확정 시 반영).
+ */
+async function saveApplicationsQueue(updates, deletes) {
+  const updated = [];
+  const errors = [];
+  for (const u of updates) {
+    const status = u.fields?.status;
+    try {
+      if (status === APPLICATION_STATUS_LABEL.APPROVED) await approveApplication(u.id);
+      else if (status === APPLICATION_STATUS_LABEL.REJECTED) await rejectApplication(u.id, u.fields?.reason || '관리자 반려');
+      else continue;
+      updated.push({ id: u.id });
+    } catch (error) {
+      errors.push({ id: u.id, fieldErrors: { status: error.message } });
+    }
+  }
+  deletes.forEach((id) => errors.push({ id, fieldErrors: { _: '가입 신청은 삭제를 지원하지 않습니다.' } }));
+  return { updated, created: [], deleted: [], conflicts: [], errors };
 }
 
 /* ── 단건 · 액션 ─────────────────────────────────────────────────────── */
 export async function approveApplication(id) {
   if (USE_MOCK) { await delay(400); return { ok: true, id }; }
-  // 승인 시 서버가 gen 파생(gen==현재년도-1984→NEWCOMER, 그 외 ASSOCIATE)으로 등급 부여 후 status=ACTIVE.
-  const { data } = await client.post(`/api/admin/members/${id}/approve`);
-  return data;
+  try {
+    // 승인 시 서버가 gen 파생(gen==현재년도-1984→NEWCOMER, 그 외 ASSOCIATE)으로 등급 부여 후 status=ACTIVE.
+    const { data } = await client.post(`/api/admin/members/${id}/approve`);
+    return data;
+  } catch (error) {
+    throwWireError(error, 'NOT_FOUND');
+  }
 }
 export async function rejectApplication(id, reason) {
   if (USE_MOCK) { await delay(300); return { ok: true, id }; }
-  // RejectRequest.reason 필수 (openapi).
-  const { data } = await client.post(`/api/admin/members/${id}/reject`, { reason });
-  return data;
+  try {
+    // RejectRequest.reason 필수 (openapi).
+    const { data } = await client.post(`/api/admin/members/${id}/reject`, { reason });
+    return data;
+  } catch (error) {
+    throwWireError(error, 'VALIDATION');
+  }
 }
 
 /* ── 대시보드 · 설정 · 내보내기 ─────────────────────────────────────── */
@@ -149,15 +230,26 @@ export async function fetchSettings() {
 }
 export async function saveSettings(payload) {
   if (USE_MOCK) { await delay(400); return { ...SETTINGS_SEED, ...payload }; }
-  const { data } = await client.patch('/api/admin/settings', payload);
-  return data;
+  // AdminSettingsUpdate 계약은 semester·currentGen·autoPromote 만 받는다
+  // (driveConnected 는 서버가 Drive 연동 여부로 관리 — 이 엔드포인트로 보내지 않는다).
+  const { semester, currentGen, autoPromote } = payload;
+  try {
+    const { data } = await client.patch('/api/admin/settings', { semester, currentGen, autoPromote });
+    return data;
+  } catch (error) {
+    throwWireError(error, 'VALIDATION');
+  }
 }
 
 /** 현재 필터/정렬을 반영한 스프레드시트 생성 → { fileUrl, fileId }. */
 export async function exportToDrive(resource, { filters, columns } = {}) {
   if (USE_MOCK) { await delay(500); return { fileUrl: '#', fileId: 'mock-file' }; }
-  const { data } = await client.post('/api/admin/export/google-drive', { resource: RESOURCES[resource].path, filters, columns });
-  return data;
+  try {
+    const { data } = await client.post('/api/admin/export/google-drive', { resource: RESOURCES[resource].path, filters, columns });
+    return data;
+  } catch (error) {
+    throwWireError(error, 'FORBIDDEN');
+  }
 }
 
 /* ── 개발용 mock 구현 (USE_MOCK 전용 — 백엔드 연동 시 통째로 삭제) ───── */

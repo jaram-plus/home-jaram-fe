@@ -1,10 +1,11 @@
 /**
  * Study page copy + seed data — pure data, no JSX.
  *
- * `STUDIES` is the browsable catalogue; `SEED_PENDING` / `SEED_APPLICANTS`
- * seed the officer-management demo lists (the page filters them locally on
- * approve/reject). In production these come from the backend — keep only the
- * static copy (messages, badge maps, empty states) here.
+ * `STUDIES`, `MY_APPS`, `MY_STUDIES`, `SEED_PENDING` / `SEED_APPLICANTS` mirror
+ * the original mock catalogue/officer-management lists; the page now fetches
+ * all of these from the backend via study.api.js, so these exports are
+ * currently unused. Keep only the static copy (messages, badge maps, empty
+ * states) here.
  */
 
 // Browsable studies. `status` drives the badge; `apply` drives the CTA state.
@@ -33,7 +34,7 @@ export const APPLY_LABEL = {
   JOINED: '참여 중인 스터디입니다',
 };
 
-// --- "내 활동" (read-only demo) ---
+// --- "내 활동" (original mock, now unused — see study.api.js listMyActivity) ---
 export const MY_APPS = [
   { id: 'app1', title: 'React 심화 스터디', message: '승인 대기 중입니다.', badge: '대기', tone: 'neutral' },
   { id: 'app2', title: '알고리즘 문제풀이', message: '참여가 확정되었습니다.', badge: '승인', tone: 'brand' },
@@ -46,7 +47,7 @@ export const MY_STUDIES = [
   { id: 'my3', title: '블록체인 기초', message: '개설이 반려되었습니다. 사유: 유사한 스터디가 이미 운영 중입니다.', badge: '반려됨', tone: 'neutral' },
 ];
 
-// --- officer management seed (mutated locally on approve/reject) ---
+// --- officer management (original mock, now unused — see study.api.js listPending/listApplicants) ---
 export const SEED_PENDING = [
   { id: 'p1', title: 'Rust 입문 스터디', field: 'Backend', creator: '김자람', recruit: '4명', schedule: '매주 화 19:00 · 8주 과정', intro: '시스템 프로그래밍 언어 Rust의 소유권 모델부터 비동기까지 함께 학습합니다.', date: '2026.06.20' },
   { id: 'p2', title: 'Figma UI 스터디', field: 'Design', creator: '박나눔', recruit: '6명', schedule: '매주 목 18:00 · 6주 과정', intro: '컴포넌트 설계와 오토레이아웃 중심으로 실무형 UI를 만들어 봅니다.', date: '2026.06.22' },

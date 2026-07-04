@@ -14,7 +14,7 @@ import { useAuthStore } from '@/shared/auth/auth.store';
  */
 const ADMIN_ROLES = ['OFFICER', 'ADMIN'];
 
-export function isAdmin(user) {
+function isAdmin(user) {
   if (!user) return false;
   return ADMIN_ROLES.includes(user.authority);
 }

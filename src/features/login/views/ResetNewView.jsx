@@ -1,7 +1,8 @@
 import React from 'react';
 import { Button, Input } from '@/design-system';
 import { Panel } from './Panel';
-import { Eyebrow, Title, CenterText, IconBadge, AlertIcon, blockBtn } from './parts';
+import { Eyebrow, Title, CenterText, IconBadge, AlertIcon } from './parts';
+import { blockBtn } from './styles';
 
 /**
  * Reset · step 2 — set a new password.

@@ -3,8 +3,9 @@ import { Button, Input } from '@/design-system';
 import { ModalShell } from './ModalShell';
 
 /**
- * Attendance-code modal. The code is validated in SeminarPage (demo) /
- * server-side (production); `error` surfaces the failure under the field.
+ * Attendance-code modal. SeminarPage only checks the field isn't empty; the
+ * code itself is validated server-side. `error` surfaces the failure under
+ * the field.
  */
 export function AttendModal({ code, error, onCode, onClose, onSubmit }) {
   return (

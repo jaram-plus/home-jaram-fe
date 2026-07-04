@@ -1,7 +1,8 @@
 import React from 'react';
 import { Button } from '@/design-system';
 import { Panel } from './Panel';
-import { Title, CenterText, IconBadge, MailIcon, blockBtn } from './parts';
+import { Title, CenterText, IconBadge, MailIcon } from './parts';
+import { blockBtn } from './styles';
 
 /**
  * Reset link sent — check your inbox.

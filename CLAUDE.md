@@ -18,11 +18,7 @@
 - 아이콘: Heroicons(outline, 24px, stroke-2) 또는 Lucide. 단색 `currentColor`. 장식용 SVG·이모지 금지.
 
 ## 코드 규칙
-- 컴포넌트는 `.jsx` + `.d.ts` 페어. 타입은 자동 인식된다.
-- 스타일시트는 앱 진입점에서 **한 번만** `import './design-system/styles.css'`.
-- 경로 alias `@/* → src/*` 사용 권장.
+자세한 내용은 **`docs/dev/code-rules.md`** 참조.
 
 ## 백엔드 연동
-- API 베이스 URL: `http://localhost:8080` (로컬 개발 기본값, env `VITE_API_BASE_URL`로 재정의)
-- API 스펙 위치: `docs/api/openapi.yaml` (OpenAPI 3.1 단일 계약). 설계·usecase: `docs/superpowers/specs/2026-06-29-jaram-backend-design.md`
-- 백엔드(Spring Boot)는 별도 레포이며 JSON만 제공한다. DTO 네이밍·인증 방식은 해당 레포 CLAUDE.md를 따른다.
+자세한 내용은 **`docs/dev/data-flow.md`** 참조.

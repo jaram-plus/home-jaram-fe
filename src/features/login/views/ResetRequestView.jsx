@@ -1,7 +1,8 @@
 import React from 'react';
 import { Button, Input } from '@/design-system';
 import { Panel } from './Panel';
-import { Eyebrow, Title, Lead, blockBtn } from './parts';
+import { Eyebrow, Title, Lead } from './parts';
+import { blockBtn } from './styles';
 
 /** Reset · step 1 — request a reset link by email. */
 export function ResetRequestView({ form, onSubmit, onLogin }) {

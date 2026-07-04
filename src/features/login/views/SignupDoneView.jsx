@@ -1,7 +1,8 @@
 import React from 'react';
 import { Button } from '@/design-system';
 import { Panel } from './Panel';
-import { Title, CenterText, IconBadge, CheckIcon, blockBtn } from './parts';
+import { Title, CenterText, IconBadge, CheckIcon } from './parts';
+import { blockBtn } from './styles';
 
 /** Signup received — awaiting officer approval. */
 export function SignupDoneView({ onLogin }) {

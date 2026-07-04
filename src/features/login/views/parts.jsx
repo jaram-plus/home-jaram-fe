@@ -5,8 +5,6 @@ import React from 'react';
  * All styling references design-system tokens; no hardcoded hex.
  */
 
-export const blockBtn = { width: '100%', justifyContent: 'center' };
-
 export function Eyebrow({ children }) {
   return (
     <p

@@ -49,10 +49,10 @@ function Notice({ children }) {
  * a study (officer approval), and the officer-side management of study
  * approvals and applicants, as a single-route view machine.
  *
- * Submit/approve/reject handlers call the placeholder API in study.api.js;
- * the management lists are kept in local state and filtered on approve/reject
- * so the flow is walkable. Wire the API to the Spring backend and replace the
- * demo navigation/toasts with real routing + server responses.
+ * Submit/approve/reject handlers call the real Spring endpoints via
+ * study.api.js (paths are a proposed REST contract until the backend confirms
+ * them — see that file's header); success invalidates the affected queries
+ * (study.queries.js) so the lists refresh from the server.
  */
 export default function StudyPage() {
   const [view, setView] = useState('browse'); // browse | mine | manage

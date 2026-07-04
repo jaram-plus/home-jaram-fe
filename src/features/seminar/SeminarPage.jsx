@@ -35,10 +35,11 @@ function Notice({ children }) {
  * create a seminar (officer), and review who attended, as a single-route view
  * machine (list | roster).
  *
- * Attendance and creation call the placeholder API in seminar.api.js; attended
- * seminars are tracked in local state so the demo flow is walkable. Wire the
- * API to the Spring backend (the code check belongs server-side) and replace
- * the demo navigation/toasts with real routing + server responses.
+ * Attendance and creation call the real Spring endpoints via seminar.api.js
+ * (paths are a proposed REST contract until the backend confirms them — see
+ * that file's header; the code check is validated server-side). `attended`
+ * mirrors a successful check-in in local state since the mutation doesn't
+ * invalidate the roster query.
  */
 export default function SeminarPage() {
   const isAdmin = useAuthStore((s) => ['OFFICER', 'ADMIN'].includes(s.user?.authority));

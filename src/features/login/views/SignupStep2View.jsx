@@ -1,7 +1,8 @@
 import React from 'react';
 import { Button, Input } from '@/design-system';
 import { Panel } from './Panel';
-import { Eyebrow, Title, Lead, FormError, Segmented, Chips, ReadonlyField, blockBtn } from './parts';
+import { Eyebrow, Title, Lead, FormError, Segmented, Chips, ReadonlyField } from './parts';
+import { blockBtn } from './styles';
 import { STUDENT_TYPES, ENROLLMENT, FACULTIES, FACULTY_ETC, newcomerGen } from '../login.data';
 
 /**

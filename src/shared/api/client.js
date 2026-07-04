@@ -10,8 +10,8 @@ import { useAuthStore } from '@/shared/auth/auth.store';
  *   (expired/invalid token) — a 401 during login carries no token, so the
  *   sign-in flow is unaffected.
  *
- * Backend not built yet — base URL is the Spring default port. Move this to an
- * env var (e.g. VITE_API_BASE_URL) once the deploy targets are known.
+ * Base URL is read from `VITE_API_BASE_URL`, falling back to the Spring
+ * default port for local development (see `.env.example`).
  */
 export const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080';

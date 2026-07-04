@@ -9,7 +9,7 @@ import { useAdminStore, dirtyCount } from '../../admin.store';
 import { MESSAGES } from '../../admin.data';
 
 /** /admin/<seg> (+ ?tab=) → 현재 리소스 키. 이탈 가드·라벨에 사용. */
-export function currentResource(pathname, tab) {
+function currentResource(pathname, tab) {
   const seg = pathname.split('/').filter(Boolean)[1] || 'dashboard'; // ['admin', <seg>]
   if (seg === 'members') return tab || 'member';
   return seg; // dashboard | seminars | studies | applications | settings

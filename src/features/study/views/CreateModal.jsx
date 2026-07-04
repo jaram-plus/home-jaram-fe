@@ -3,9 +3,9 @@ import { Button, Input } from '@/design-system';
 import { ModalShell } from './ModalShell';
 
 /**
- * Study-creation modal. Only the title is validated in this demo; the other
- * fields are uncontrolled placeholders — wire them to `form` and the create
- * payload when connecting the backend.
+ * Study-creation modal. Only the title is validated; the other fields are
+ * bound to `form` so the create payload (study.api.js createStudy) carries
+ * whatever the officer fills in.
  */
 export function CreateModal({ form, onClose, onSubmit }) {
   const { values, errors, field } = form;
