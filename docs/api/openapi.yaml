@@ -739,6 +739,10 @@ components:
       type: string
       enum: [UPCOMING, ONGOING, ENDED]
       description: startsAt + 출석창으로 서버 파생
+    TargetGrade:
+      type: string
+      enum: [NEWCOMER, ASSOCIATE, REGULAR, OB]
+      description: 세미나 공개 대상 등급
     StudyStatus:
       type: string
       enum: [RECRUITING, ONGOING, CLOSED]
@@ -875,7 +879,10 @@ components:
         mode: { type: [string, 'null'] }
         status: { $ref: '#/components/schemas/SeminarStatus' }
         materialUrl: { type: [string, 'null'], format: uri }
-        capacity: { type: [integer, 'null'] }
+        target:
+          type: array
+          items: { $ref: '#/components/schemas/TargetGrade' }
+          description: 공개 대상 등급. 빈 배열은 전체 공개.
     SeminarCreateRequest:
       type: object
       required: [title, startsAt]
@@ -888,7 +895,10 @@ components:
         mode: { type: [string, 'null'] }
         attendanceCode: { type: [string, 'null'], description: 출석 코드 (응답엔 미노출) }
         materialUrl: { type: [string, 'null'], format: uri }
-        capacity: { type: [integer, 'null'] }
+        target:
+          type: array
+          items: { $ref: '#/components/schemas/TargetGrade' }
+          description: 공개 대상 등급. 빈 배열은 전체 공개.
     AttendRequest:
       type: object
       required: [code]
@@ -1031,7 +1041,7 @@ components:
           items:
             type: object
             additionalProperties: true
-            description: 리소스별 행. 필드는 FE 화면 스키마(admin.data SCHEMAS)를 따르며 enum 필드는 와이어 키(UPPER_SNAKE).
+            description: 리소스별 행. 필드는 FE 화면 스키마(admin.data SCHEMAS)를 따르며 enum 필드는 와이어 키(UPPER_SNAKE). seminars 리소스 행에는 attendanceCode 포함(공개 Seminar 응답과 달리 임원 전용 조회이므로 노출).
         page: { type: integer }
         size: { type: integer }
         total: { type: integer }
