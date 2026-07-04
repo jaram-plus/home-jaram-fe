@@ -29,6 +29,24 @@ export function EditableCell({ col, row, dirty, onChange, onAction, memberIndex 
     );
   }
 
+  if (col.type === 'multiselect') {
+    const arr = Array.isArray(value) ? value : [];
+    const toggle = (opt) => {
+      const next = arr.includes(opt) ? arr.filter((o) => o !== opt) : [...arr, opt];
+      onChange(next);
+    };
+    return (
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 10px', padding: '4px 2px' }}>
+        {col.options.map((o) => (
+          <label key={o} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-sm)', color: dirty ? 'var(--red-600)' : 'var(--text-strong)', fontWeight: dirty ? 600 : 400, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+            <input type="checkbox" checked={arr.includes(o)} onChange={() => toggle(o)} />
+            {o}
+          </label>
+        ))}
+      </div>
+    );
+  }
+
   if (col.type === 'tag') {
     const tone = value === '대기' ? 'brand' : value === '반려' ? 'seal' : 'neutral';
     return <span style={{ display: 'flex', justifyContent: align === 'center' ? 'center' : 'flex-start' }}><Tag tone={tone}>{value}</Tag></span>;

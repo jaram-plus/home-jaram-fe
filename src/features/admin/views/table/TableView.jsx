@@ -107,6 +107,7 @@ export function TableView({ resource: fixedResource }) {
       if (c.type === 'actions' || c.type === 'match') return;
       if (c.type === 'select') fields[c.key] = c.options[0];
       else if (c.type === 'tag') fields[c.key] = '대기';
+      else if (c.type === 'multiselect') fields[c.key] = [];
       else fields[c.key] = '';
     });
     addRow(resource, fields);
