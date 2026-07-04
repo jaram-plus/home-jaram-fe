@@ -10,14 +10,16 @@
  * 화면은 한글 라벨로 다루고, 와이어(백엔드)는 enum 키로 주고받습니다. 라벨↔키 매핑은
  * admin.api.js 의 toWire / fromWire 경계 한 곳에서만 수행합니다 (DEVELOPMENT.md §5 도메인 enum).
  */
+import { SEMINAR_STATUS_LABELS, TARGET_GRADE_LABELS } from '@/shared/seminar/enums';
 
 /* ── enum 키 ↔ 한글 라벨 ─────────────────────────────────────────────── */
 export const GRADE_LABEL = { NEWCOMER: '수습회원', ASSOCIATE: '준회원', REGULAR: '정회원', OB: '졸업생' };
 export const STATUS_LABEL = { ACTIVE: '활동', ON_LEAVE: '휴학', WITHDRAWN: '탈퇴' };
 export const DEPARTMENT_LABEL = { LEADERSHIP: '회장단', ACADEMIC: '학술부', PR: '홍보부', FINANCE: '회계부', INFRA: '인프라' };
 export const APPLICATION_STATUS_LABEL = { PENDING: '대기', APPROVED: '승인', REJECTED: '반려' };
-export const SEMINAR_STATUS_LABEL = { UPCOMING: '예정', ONGOING: '진행', ENDED: '완료' };
 export const STUDY_STATUS_LABEL = { RECRUITING: '모집', ONGOING: '진행', CLOSED: '종료' };
+// admin.api.js / admin.validation.js 는 여기서 재수출된 걸 import한다(수입 경로 최소 변경).
+export { SEMINAR_STATUS_LABELS, TARGET_GRADE_LABELS };
 
 /** 라벨 맵을 옵션 배열로. (필요하면 일부만 골라 쓰세요) */
 export const labelsOf = (map) => Object.values(map);
@@ -108,15 +110,18 @@ export const SCHEMAS = {
   },
   seminars: {
     eyebrow: 'SEMINAR', title: '세미나 관리', addLabel: '세미나 개설',
-    desc: '세미나 일정·출석코드·자료·상태를 관리합니다.',
-    filters: [{ key: 'status', label: '상태', options: ['전체', '예정', '진행', '완료'] }],
+    desc: '세미나 일정·발표자·공개 대상·출석코드·상태를 관리합니다.',
+    filters: [{ key: 'status', label: '상태', options: ['전체', ...labelsOf(SEMINAR_STATUS_LABELS)] }],
     cols: [
-      { key: 'title', label: '세미나명', type: 'text', width: '1.5fr' },
-      { key: 'target', label: '대상', type: 'text', width: '0.7fr', align: 'center' },
-      { key: 'speaker', label: '발표자', type: 'text', width: '0.8fr' },
-      { key: 'date', label: '일시', type: 'text', width: '1.1fr' },
-      { key: 'code', label: '출석코드', type: 'text', width: '0.7fr', align: 'center' },
-      { key: 'status', label: '상태', type: 'select', width: '0.8fr', options: ['예정', '진행', '완료'] },
+      { key: 'title', label: '세미나명', type: 'text', width: '1.3fr' },
+      { key: 'speaker', label: '발표자', type: 'text', width: '0.7fr' },
+      { key: 'topic', label: '주제', type: 'text', width: '0.7fr' },
+      { key: 'startsAt', label: '일시', type: 'text', width: '1fr' },
+      { key: 'place', label: '장소', type: 'text', width: '0.9fr' },
+      { key: 'mode', label: '진행 방식', type: 'text', width: '0.7fr' },
+      { key: 'target', label: '대상', type: 'multiselect', width: '1.6fr', options: labelsOf(TARGET_GRADE_LABELS) },
+      { key: 'attendanceCode', label: '출석코드', type: 'text', width: '0.7fr', align: 'center' },
+      { key: 'status', label: '상태', type: 'select', width: '0.8fr', options: labelsOf(SEMINAR_STATUS_LABELS) },
       { key: '__act', label: '', type: 'actions', width: '0.6fr', align: 'center', actions: ['delete'] },
     ],
   },
@@ -207,12 +212,12 @@ export const SEED = {
     { id: 'g6', name: '남기훈', gen: '31기', gradYear: '2017', org: '삼성전자', job: 'SW 엔지니어' },
   ],
   seminars: [
-    { id: 's1', title: 'Git 협업 워크플로우', target: '전체', speaker: '강준혁', date: '2026-03-07 19:00', code: 'GIT7', status: '완료' },
-    { id: 's2', title: 'React 상태관리 심화', target: '41기', speaker: '최유나', date: '2026-03-14 19:00', code: 'RCT2', status: '완료' },
-    { id: 's3', title: '네트워크 기초', target: '수습', speaker: '박도윤', date: '2026-03-21 19:00', code: 'NET9', status: '진행' },
-    { id: 's4', title: '자료구조 스터디 OT', target: '전체', speaker: '윤서아', date: '2026-03-28 19:00', code: 'DS55', status: '예정' },
-    { id: 's5', title: '알고리즘 문제풀이', target: '재학생', speaker: '정시우', date: '2026-04-04 19:00', code: 'ALG1', status: '예정' },
-    { id: 's6', title: 'DB 인덱스 원리', target: '41기', speaker: '이하은', date: '2026-04-11 19:00', code: 'DBIX', status: '예정' },
+    { id: 's1', title: 'Git 협업 워크플로우', speaker: '강준혁', topic: 'Git', startsAt: '2026-03-07T19:00', place: '제3공학관 401호', mode: '오프라인', target: [], attendanceCode: 'GIT7', status: '종료' },
+    { id: 's2', title: 'React 상태관리 심화', speaker: '최유나', topic: 'Frontend', startsAt: '2026-03-14T19:00', place: '제3공학관 401호', mode: '오프라인', target: ['수습회원'], attendanceCode: 'RCT2', status: '종료' },
+    { id: 's3', title: '네트워크 기초', speaker: '박도윤', topic: 'Network', startsAt: '2026-03-21T19:00', place: '온라인', mode: '온라인', target: ['수습회원'], attendanceCode: 'NET9', status: '진행 중' },
+    { id: 's4', title: '자료구조 스터디 OT', speaker: '윤서아', topic: 'CS', startsAt: '2026-03-28T19:00', place: '제3공학관 401호', mode: '오프라인', target: [], attendanceCode: 'DS55', status: '예정' },
+    { id: 's5', title: '알고리즘 문제풀이', speaker: '정시우', topic: 'Algorithm', startsAt: '2026-04-04T19:00', place: '제3공학관 502호', mode: '오프라인', target: ['준회원', '정회원'], attendanceCode: 'ALG1', status: '예정' },
+    { id: 's6', title: 'DB 인덱스 원리', speaker: '이하은', topic: 'Backend', startsAt: '2026-04-11T19:00', place: '온라인', mode: '온라인', target: ['수습회원'], attendanceCode: 'DBIX', status: '예정' },
   ],
   studies: [
     { id: 'st1', title: '알고리즘 코테반', leader: '강준혁', count: '12명', schedule: '월 20:00', period: '2026-03 ~ 06', rate: '92%', status: '진행' },
