@@ -8,7 +8,7 @@
 import { z } from 'zod';
 import {
   GRADE_LABEL, STATUS_LABEL, DEPARTMENT_LABEL,
-  SEMINAR_STATUS_LABEL, STUDY_STATUS_LABEL,
+  SEMINAR_STATUS_LABELS, STUDY_STATUS_LABEL,
 } from './admin.data';
 
 const labelEnum = (map) => z.enum(Object.values(map));
@@ -55,11 +55,14 @@ export const graduateSchema = z.object({
 
 export const seminarSchema = z.object({
   title: z.string().min(1, '세미나명을 입력하세요.'),
-  target: z.string().optional(),
-  speaker: z.string().min(1, '발표자를 입력하세요.'),
-  date: z.string().min(1, '일시를 입력하세요.'),
-  code: z.string().min(2, '출석코드를 입력하세요.'), // 유일성은 서버가 판정
-  status: labelEnum(SEMINAR_STATUS_LABEL),
+  speaker: z.string().optional(),
+  topic: z.string().optional(),
+  startsAt: z.string().min(1, '일시를 입력하세요.'),
+  place: z.string().optional(),
+  mode: z.string().optional(),
+  target: z.array(z.string()).optional(),
+  attendanceCode: z.string().optional(),
+  status: labelEnum(SEMINAR_STATUS_LABELS),
 });
 
 export const studySchema = z.object({
