@@ -16,7 +16,7 @@ import {
   SEED, DASHBOARD_SEED, SETTINGS_SEED, RESOURCES,
   GRADE_LABEL, STATUS_LABEL, DEPARTMENT_LABEL,
   APPLICATION_STATUS_LABEL,
-  SEMINAR_STATUS_LABEL, STUDY_STATUS_LABEL,
+  SEMINAR_STATUS_LABELS, TARGET_GRADE_LABELS, STUDY_STATUS_LABEL,
 } from './admin.data';
 
 // 기본값은 mock 유지(백엔드 확정 전). 실 서버로 붙이려면 .env 에 VITE_ADMIN_MOCK=false.
@@ -45,7 +45,7 @@ function throwWireError(error, fallbackCode) {
 const ENUM_FIELDS = {
   member: { grade: GRADE_LABEL, status: STATUS_LABEL },
   exec: { department: DEPARTMENT_LABEL },
-  seminars: { status: SEMINAR_STATUS_LABEL },
+  seminars: { status: SEMINAR_STATUS_LABELS, target: TARGET_GRADE_LABELS },
   studies: { status: STUDY_STATUS_LABEL },
   applications: { status: APPLICATION_STATUS_LABEL },
 };
@@ -63,28 +63,33 @@ const genToWire = (v) => {
 };
 const genFromWire = (v) => (typeof v === 'number' ? `${v}기` : v);
 
-/** 서버 → 화면: enum 키를 한글 라벨로 + gen 정수→'N기'. */
+/** 서버 → 화면: enum 키를 한글 라벨로(배열 필드는 항목별로) + gen 정수→'N기'. */
 export function fromWire(resource, row) {
   const fields = ENUM_FIELDS[resource];
   const hasGen = GEN_RESOURCES.has(resource);
   if ((!fields && !hasGen) || !row) return row;
   const out = { ...row };
   for (const [field, map] of Object.entries(fields || {})) {
-    if (out[field] != null && map[out[field]]) out[field] = map[out[field]];
+    if (out[field] == null) continue;
+    out[field] = Array.isArray(out[field])
+      ? out[field].map((v) => map[v] ?? v)
+      : (map[out[field]] ?? out[field]);
   }
   if (hasGen && out.gen != null) out.gen = genFromWire(out.gen);
   return out;
 }
 
-/** 화면 → 서버: 한글 라벨을 enum 키로 + gen 'N기'→정수 + 빈 문자열→null. */
+/** 화면 → 서버: 한글 라벨을 enum 키로(배열 필드는 항목별로) + gen 'N기'→정수 + 빈 문자열→null. */
 export function toWire(resource, fields) {
   const maps = ENUM_FIELDS[resource] || {};
   const hasGen = GEN_RESOURCES.has(resource);
   const out = {};
   for (const [k, v] of Object.entries(fields)) {
     let val = v;
-    if (maps[k]) val = flip(maps[k])[v] ?? v;
-    else if (hasGen && k === 'gen') val = genToWire(v);
+    if (maps[k]) {
+      const flipped = flip(maps[k]);
+      val = Array.isArray(v) ? v.map((x) => flipped[x] ?? x) : (flipped[v] ?? v);
+    } else if (hasGen && k === 'gen') val = genToWire(v);
     if (val === '') val = null;
     out[k] = val;
   }
