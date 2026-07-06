@@ -1,5 +1,8 @@
 import axios from 'axios';
 import { useAuthStore } from '@/shared/auth/auth.store';
+import { API_BASE_URL } from '@/shared/config/runtime';
+
+export { API_BASE_URL };
 
 /**
  * Shared axios instance for the Spring backend.
@@ -10,11 +13,9 @@ import { useAuthStore } from '@/shared/auth/auth.store';
  *   (expired/invalid token) — a 401 during login carries no token, so the
  *   sign-in flow is unaffected.
  *
- * Base URL is read from `VITE_API_BASE_URL`, falling back to the Spring
- * default port for local development (see `.env.example`).
+ * Base URL is resolved by `@/shared/config/runtime` — runtime config.js first
+ * (Docker), then `VITE_API_BASE_URL` (local dev), then localhost:8080.
  */
-export const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080';
 
 export const client = axios.create({
   baseURL: API_BASE_URL,

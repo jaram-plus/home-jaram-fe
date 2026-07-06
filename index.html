@@ -7,6 +7,10 @@
   </head>
   <body>
     <div id="root"></div>
+    <!-- Runtime config: loaded before the bundle so window.__APP_CONFIG__ is ready.
+         In Docker, nginx entrypoint (docker/30-configjs.sh) generates this from $API_BASE_URL.
+         In local dev, public/config.js serves as an empty placeholder. -->
+    <script src="/config.js"></script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
