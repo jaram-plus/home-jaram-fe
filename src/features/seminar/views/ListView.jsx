@@ -3,10 +3,11 @@ import { Pill, EmptyState } from './parts';
 import { SeminarCard } from './SeminarCard';
 import { EMPTY } from '../seminar.data';
 
+// 표시 순서: 예정 → 종료 → 전체. 최초 선택 탭은 SeminarPage의 useState('all') 그대로다.
 const FILTERS = [
-  { key: 'all', label: '전체' },
   { key: 'upcoming', label: '예정' },
   { key: 'ended', label: '종료' },
+  { key: 'all', label: '전체' },
 ];
 
 // 'upcoming' filter shows both upcoming and in-progress seminars.
