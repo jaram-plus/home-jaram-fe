@@ -36,6 +36,13 @@ export function CreateModal({ form, onClose, onSubmit, pending = false }) {
           <Input label="장소" placeholder="제3공학관 401호 / 온라인" value={values.place} onChange={field('place')} />
         </div>
         <Input label="진행 방식" placeholder="오프라인 / 온라인" value={values.mode} onChange={field('mode')} />
+        <Input
+          as="textarea"
+          label="상세 설명"
+          placeholder="세미나에서 다룰 내용을 자유롭게 적어 주세요."
+          value={values.description}
+          onChange={field('description')}
+        />
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
           <Input label="출석 코드" placeholder="참석자에게 공지할 코드를 설정하세요" value={values.attendanceCode} onChange={field('attendanceCode')} />
           <Input label="발표 자료 링크" placeholder="슬라이드·문서 URL" value={values.materialUrl} onChange={field('materialUrl')} />

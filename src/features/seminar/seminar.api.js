@@ -59,6 +59,7 @@ export async function createSeminar(form) {
     mode: opt(form.mode),
     attendanceCode: opt(form.attendanceCode),
     materialUrl: opt(form.materialUrl),
+    description: opt(form.description),
     target: form.target || [],
   };
   const { data } = await client.post('/api/seminars', payload);

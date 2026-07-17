@@ -58,7 +58,7 @@ export default function SeminarPage() {
   const [detailSeminar, setDetailSeminar] = useState(null);
 
   const [createOpen, setCreateOpen] = useState(false);
-  const createForm = useForm({ title: '', speaker: '', topic: '', startsAt: '', place: '', mode: '', attendanceCode: '', materialUrl: '', target: [] });
+  const createForm = useForm({ title: '', speaker: '', topic: '', startsAt: '', place: '', mode: '', attendanceCode: '', materialUrl: '', description: '', target: [] });
 
   const [toast, setToast] = useState(null);
   const toastTimer = useRef(null);
