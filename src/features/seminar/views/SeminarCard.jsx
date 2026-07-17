@@ -11,7 +11,7 @@ import { useAttendanceCountdown } from '../useAttendanceCountdown';
  * `attended` prop은 출석 직후 목록 refetch가 도착하기 전까지만 쓰이는 낙관적 오버레이다.
  * ENDED 칩만 로그인 상태로 개인화된다 — 비로그인은 개인화할 근거가 없어 '종료'로 폴백한다.
  */
-export function SeminarCard({ seminar, attended, isLoggedIn, onAttend }) {
+export function SeminarCard({ seminar, attended, isLoggedIn, onAttend, onOpenDetail }) {
   const minsLeft = useAttendanceCountdown(seminar.attendanceClosesAt);
   const isAttended = attended || Boolean(seminar.attendedAt);
   const canAttend = !isAttended && seminar.status === 'ONGOING';
@@ -26,6 +26,7 @@ export function SeminarCard({ seminar, attended, isLoggedIn, onAttend }) {
 
   return (
     <div
+      onClick={() => onOpenDetail(seminar)}
       style={{
         display: 'flex',
         gap: 24,
@@ -37,6 +38,7 @@ export function SeminarCard({ seminar, attended, isLoggedIn, onAttend }) {
         boxShadow: 'var(--shadow-sm)',
         padding: '24px 26px',
         flexWrap: 'wrap',
+        cursor: 'pointer',
       }}
     >
       {/* date block */}
@@ -85,7 +87,7 @@ export function SeminarCard({ seminar, attended, isLoggedIn, onAttend }) {
       {/* action */}
       <div style={{ flex: 'none', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 8 }}>
         {canAttend ? (
-          <Button onClick={() => onAttend(seminar)}>출석하기</Button>
+          <Button onClick={(e) => { e.stopPropagation(); onAttend(seminar); }}>출석하기</Button>
         ) : (
           <Button variant="secondary" disabled>{label}</Button>
         )}

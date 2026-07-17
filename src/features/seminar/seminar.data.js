@@ -73,6 +73,21 @@ export const ENDED_CHIP = {
 // ONGOING 카드에서 출석 버튼 아래 한 줄. mins는 useAttendanceCountdown이 계산한 남은 분.
 export const COUNTDOWN_LABEL = (mins) => `출석 인정까지 ${mins}분 남음`;
 
+// 상세 모달 카피. 참석자 미리보기는 로그인 회원만 조회할 수 있다(서버가 401).
+export const DETAIL = {
+  descriptionTitle: '세미나 소개',
+  myAttendanceTitle: '내 출석 기록',
+  myAttendance: (at) => `${at}에 출석하셨습니다.`,
+  attendeesTitle: '참석자',
+  attendeesCount: (n) => `${n}명이 출석했습니다.`,
+  attendeesLoginRequired: '로그인하시면 참석자를 확인하실 수 있습니다.',
+  attendeesLoading: '불러오는 중…',
+  attendeesError: '참석자를 불러오지 못했습니다.',
+  unknownMember: '탈퇴한 회원',
+  material: '발표 자료 보기',
+  close: '닫기',
+};
+
 // Client-side validation messages.
 export const MESSAGES = {
   codeRequired: '출석 코드를 입력해 주세요.',

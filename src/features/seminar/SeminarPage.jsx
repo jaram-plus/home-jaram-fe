@@ -14,6 +14,7 @@ import {
   RosterView,
   AttendModal,
   CreateModal,
+  DetailModal,
 } from './views';
 
 const SUB_NAV = [
@@ -43,6 +44,7 @@ function Notice({ children }) {
  */
 export default function SeminarPage() {
   const isAdmin = useAuthStore((s) => ['OFFICER', 'ADMIN'].includes(s.user?.authority));
+  const isLoggedIn = useAuthStore((s) => s.isAuthenticated);
   const subNav = SUB_NAV.filter((t) => t.key !== 'roster' || isAdmin);
 
   const [view, setView] = useState('list'); // list | roster
@@ -53,6 +55,7 @@ export default function SeminarPage() {
   const [attendSeminar, setAttendSeminar] = useState(null);
   const [attendCode, setAttendCode] = useState('');
   const [attendErr, setAttendErr] = useState('');
+  const [detailSeminar, setDetailSeminar] = useState(null);
 
   const [createOpen, setCreateOpen] = useState(false);
   const createForm = useForm({ title: '', speaker: '', topic: '', startsAt: '', place: '', mode: '', attendanceCode: '', materialUrl: '', target: [] });
@@ -164,7 +167,9 @@ export default function SeminarPage() {
               filter={filter}
               onFilter={setFilter}
               attended={attended}
+              isLoggedIn={isLoggedIn}
               onAttend={openAttend}
+              onOpenDetail={setDetailSeminar}
             />
           )
         )}
@@ -190,6 +195,14 @@ export default function SeminarPage() {
       )}
 
       {createOpen && <CreateModal form={createForm} onClose={() => setCreateOpen(false)} onSubmit={submitCreate} pending={createM.isPending} />}
+
+      {detailSeminar && (
+        <DetailModal
+          seminar={detailSeminar}
+          isLoggedIn={isLoggedIn}
+          onClose={() => setDetailSeminar(null)}
+        />
+      )}
 
       <Toast message={toast} />
     </div>

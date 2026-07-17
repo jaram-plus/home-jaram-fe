@@ -19,7 +19,7 @@ function pass(filter, status) {
 }
 
 /** List view — filter chips + the seminar schedule. */
-export function ListView({ seminars, filter, onFilter, attended, onAttend }) {
+export function ListView({ seminars, filter, onFilter, attended, isLoggedIn, onAttend, onOpenDetail }) {
   const shown = seminars.filter((s) => pass(filter, s.status));
   return (
     <div className="jr-anim">
@@ -34,7 +34,14 @@ export function ListView({ seminars, filter, onFilter, attended, onAttend }) {
       {shown.length > 0 ? (
         <div style={{ display: 'grid', gap: 18 }}>
           {shown.map((s) => (
-            <SeminarCard key={s.id} seminar={s} attended={!!attended[s.id]} onAttend={onAttend} />
+            <SeminarCard
+              key={s.id}
+              seminar={s}
+              attended={!!attended[s.id]}
+              isLoggedIn={isLoggedIn}
+              onAttend={onAttend}
+              onOpenDetail={onOpenDetail}
+            />
           ))}
         </div>
       ) : (

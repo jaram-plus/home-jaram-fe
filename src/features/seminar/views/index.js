@@ -6,3 +6,4 @@ export { SeminarCard } from './SeminarCard';
 export { RosterView } from './RosterView';
 export { AttendModal } from './AttendModal';
 export { CreateModal } from './CreateModal';
+export { DetailModal } from './DetailModal';
