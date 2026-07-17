@@ -1,7 +1,8 @@
 import React from 'react';
 import { Button, Tag } from '@/design-system';
 import { TopicChip } from './parts';
-import { STATUS_BADGE, ATTEND_LABEL, ENDED_CHIP } from '../seminar.data';
+import { STATUS_BADGE, ATTEND_LABEL, ENDED_CHIP, COUNTDOWN_LABEL } from '../seminar.data';
+import { useAttendanceCountdown } from '../useAttendanceCountdown';
 
 /**
  * One seminar in the list — date block · body · attend action.
@@ -11,6 +12,7 @@ import { STATUS_BADGE, ATTEND_LABEL, ENDED_CHIP } from '../seminar.data';
  * ENDED 칩만 로그인 상태로 개인화된다 — 비로그인은 개인화할 근거가 없어 '종료'로 폴백한다.
  */
 export function SeminarCard({ seminar, attended, isLoggedIn, onAttend }) {
+  const minsLeft = useAttendanceCountdown(seminar.attendanceClosesAt);
   const isAttended = attended || Boolean(seminar.attendedAt);
   const canAttend = !isAttended && seminar.status === 'ONGOING';
   const label = isAttended ? ATTEND_LABEL.done : ATTEND_LABEL[seminar.status];
@@ -81,11 +83,17 @@ export function SeminarCard({ seminar, attended, isLoggedIn, onAttend }) {
       </div>
 
       {/* action */}
-      <div style={{ flex: 'none', display: 'flex', alignItems: 'center' }}>
+      <div style={{ flex: 'none', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 8 }}>
         {canAttend ? (
           <Button onClick={() => onAttend(seminar)}>출석하기</Button>
         ) : (
           <Button variant="secondary" disabled>{label}</Button>
+        )}
+        {/* 이미 출석했으면 남은 시간은 의미가 없다. 0분이면 다음 refetch에서 ENDED로 넘어간다. */}
+        {canAttend && minsLeft > 0 && (
+          <p style={{ margin: 0, fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-xs)', color: 'var(--text-muted)', textAlign: 'center' }}>
+            {COUNTDOWN_LABEL(minsLeft)}
+          </p>
         )}
       </div>
     </div>

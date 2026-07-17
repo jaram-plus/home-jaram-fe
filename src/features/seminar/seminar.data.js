@@ -70,6 +70,9 @@ export const ENDED_CHIP = {
   absent: { label: '결석', tone: 'neutral' },
 };
 
+// ONGOING 카드에서 출석 버튼 아래 한 줄. mins는 useAttendanceCountdown이 계산한 남은 분.
+export const COUNTDOWN_LABEL = (mins) => `출석 인정까지 ${mins}분 남음`;
+
 // Client-side validation messages.
 export const MESSAGES = {
   codeRequired: '출석 코드를 입력해 주세요.',
