@@ -63,6 +63,13 @@ export const ATTEND_LABEL = {
   ENDED: '출석이 마감되었습니다',
 };
 
+// ENDED 카드의 칩은 로그인한 회원에게만 개인화된다.
+// 비로그인은 서버가 attendedAt을 채워줄 수 없으므로 STATUS_BADGE.ENDED('종료')로 폴백한다.
+export const ENDED_CHIP = {
+  attended: { label: '출석', tone: 'seal' },
+  absent: { label: '결석', tone: 'neutral' },
+};
+
 // Client-side validation messages.
 export const MESSAGES = {
   codeRequired: '출석 코드를 입력해 주세요.',

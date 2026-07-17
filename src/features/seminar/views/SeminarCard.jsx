@@ -1,17 +1,26 @@
 import React from 'react';
 import { Button, Tag } from '@/design-system';
 import { TopicChip } from './parts';
-import { STATUS_BADGE, ATTEND_LABEL } from '../seminar.data';
+import { STATUS_BADGE, ATTEND_LABEL, ENDED_CHIP } from '../seminar.data';
 
 /**
  * One seminar in the list — date block · body · attend action.
- * `attended` marks a seminar the user has already checked into; the CTA is
- * enabled only while a seminar is `ongoing` and not yet attended.
+ *
+ * 출석 여부의 진실원은 서버가 준 `seminar.attendedAt`(호출자 기준, 비로그인이면 null)이다.
+ * `attended` prop은 출석 직후 목록 refetch가 도착하기 전까지만 쓰이는 낙관적 오버레이다.
+ * ENDED 칩만 로그인 상태로 개인화된다 — 비로그인은 개인화할 근거가 없어 '종료'로 폴백한다.
  */
-export function SeminarCard({ seminar, attended, onAttend }) {
-  const badge = STATUS_BADGE[seminar.status];
-  const canAttend = !attended && seminar.status === 'ONGOING';
-  const label = attended ? ATTEND_LABEL.done : ATTEND_LABEL[seminar.status];
+export function SeminarCard({ seminar, attended, isLoggedIn, onAttend }) {
+  const isAttended = attended || Boolean(seminar.attendedAt);
+  const canAttend = !isAttended && seminar.status === 'ONGOING';
+  const label = isAttended ? ATTEND_LABEL.done : ATTEND_LABEL[seminar.status];
+
+  const endedChip = !isLoggedIn
+    ? STATUS_BADGE.ENDED
+    : seminar.attendedAt
+      ? ENDED_CHIP.attended
+      : ENDED_CHIP.absent;
+  const badge = seminar.status === 'ENDED' ? endedChip : STATUS_BADGE[seminar.status];
 
   return (
     <div

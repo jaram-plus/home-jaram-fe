@@ -25,7 +25,16 @@ export function useRoster(rosterKey) {
 }
 
 export function useAttend(options) {
-  return useMutation({ mutationFn: api.checkAttendance, ...options });
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: api.checkAttendance,
+    ...options,
+    onSuccess: (...args) => {
+      // 출석하면 서버의 attendedAt이 바뀌므로 목록을 다시 받아 온다.
+      qc.invalidateQueries({ queryKey: seminarKeys.all });
+      options?.onSuccess?.(...args);
+    },
+  });
 }
 
 export function useCreateSeminar(options) {
