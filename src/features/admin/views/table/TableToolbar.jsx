@@ -36,10 +36,12 @@ export function TableToolbar({ schema, q, filters, onSearch, onFilter, onExport,
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
           Drive로 내보내기
         </button>
-        <button type="button" onClick={onAddRow} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '9px 16px', fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 600, color: '#fff', background: 'var(--brand)', border: '1.5px solid transparent', borderRadius: 8, cursor: 'pointer', boxShadow: 'var(--shadow-brand)' }}>
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
-          {schema.addLabel}
-        </button>
+        {schema.addLabel && (
+          <button type="button" onClick={onAddRow} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '9px 16px', fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 600, color: '#fff', background: 'var(--brand)', border: '1.5px solid transparent', borderRadius: 8, cursor: 'pointer', boxShadow: 'var(--shadow-brand)' }}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
+            {schema.addLabel}
+          </button>
+        )}
       </div>
     </div>
   );

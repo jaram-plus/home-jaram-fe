@@ -33,6 +33,7 @@ export const RESOURCES = {
   seminars: { path: 'seminars', unit: '건' },
   studies: { path: 'studies', unit: '건' },
   applications: { path: 'applications', unit: '건' },
+  seminarApprovals: { path: 'seminars', unit: '건' },
 };
 
 /** 인원 관리 상단 탭 (URL ?tab= 로 상태화). */
@@ -125,6 +126,19 @@ export const SCHEMAS = {
       { key: 'attendanceCode', label: '출석코드', type: 'text', width: '0.7fr', align: 'center' },
       { key: 'status', label: '상태', type: 'select', width: '0.8fr', options: labelsOf(SEMINAR_STATUS_LABELS) },
       { key: '__act', label: '', type: 'actions', width: '0.6fr', align: 'center', actions: ['delete'] },
+    ],
+  },
+  seminarApprovals: {
+    eyebrow: 'SEMINAR', title: '세미나 승인', addLabel: '',
+    desc: '학회원이 자기 슬롯에서 제출한 세미나를 검토하고 승인/반려하세요. 승인하면 정식 세미나 목록에 노출됩니다.',
+    filters: [],
+    cols: [
+      { key: 'title', label: '세미나명', type: 'text', width: '1.3fr' },
+      { key: 'speaker', label: '발표자', type: 'text', width: '0.8fr' },
+      { key: 'topic', label: '주제', type: 'text', width: '0.7fr' },
+      { key: 'startsAt', label: '일시', type: 'static', width: '1fr' },
+      { key: 'status', label: '상태', type: 'tag', width: '0.7fr', align: 'center' },
+      { key: '__act', label: '', type: 'actions', width: '1fr', align: 'center', actions: ['approve', 'reject'] },
     ],
   },
   studies: {
@@ -220,6 +234,30 @@ export const SEED = {
     { id: 's4', title: '자료구조 스터디 OT', speaker: '윤서아', topic: 'CS', startsAt: '2026-03-28T19:00', place: '제3공학관 401호', mode: '오프라인', target: [], attendanceCode: 'DS55', status: '예정' },
     { id: 's5', title: '알고리즘 문제풀이', speaker: '정시우', topic: 'Algorithm', startsAt: '2026-04-04T19:00', place: '제3공학관 502호', mode: '오프라인', target: ['준회원', '정회원'], attendanceCode: 'ALG1', status: '예정' },
     { id: 's6', title: 'DB 인덱스 원리', speaker: '이하은', topic: 'Backend', startsAt: '2026-04-11T19:00', place: '온라인', mode: '온라인', target: ['수습회원'], attendanceCode: 'DBIX', status: '예정' },
+  ],
+  seminarApprovals: [
+    { id: 'sa1', title: 'Redis 캐시 전략 실습', speaker: '이하은', topic: 'Backend', startsAt: '2026-07-25 19:00', status: '대기' },
+    { id: 'sa2', title: 'TypeScript 제네릭 딥다이브', speaker: '박도윤', topic: 'Frontend', startsAt: '2026-08-01 19:00', status: '대기' },
+  ],
+  schedules: [
+    {
+      id: 'sc1', startsAt: '2026-07-25T19:00', day: '25', month: '7월', weekday: '토', time: '19:00',
+      place: '제3공학관 401호', mode: '오프라인', capacity: 3, status: 'OPEN',
+      slots: [
+        { index: 0, member: { id: 'm2', name: '이하은' }, seminarId: null, seminarApprovalStatus: null, seminarRejectReason: null },
+        { index: 1, member: null, seminarId: null, seminarApprovalStatus: null, seminarRejectReason: null },
+        { index: 2, member: null, seminarId: null, seminarApprovalStatus: null, seminarRejectReason: null },
+      ],
+    },
+    {
+      id: 'sc2', startsAt: '2026-08-01T19:00', day: '01', month: '8월', weekday: '토', time: '19:00',
+      place: '제3공학관 401호', mode: '오프라인', capacity: 3, status: 'LOCKED',
+      slots: [
+        { index: 0, member: { id: 'm3', name: '박도윤' }, seminarId: 'sa2', seminarApprovalStatus: 'PENDING', seminarRejectReason: null },
+        { index: 1, member: null, seminarId: null, seminarApprovalStatus: null, seminarRejectReason: null },
+        { index: 2, member: null, seminarId: null, seminarApprovalStatus: null, seminarRejectReason: null },
+      ],
+    },
   ],
   studies: [
     { id: 'st1', title: '알고리즘 코테반', leader: '강준혁', count: '12명', schedule: '월 20:00', period: '2026-03 ~ 06', rate: '92%', status: '진행' },
