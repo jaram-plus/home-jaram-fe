@@ -2,15 +2,27 @@ import React, { useState, useRef, useCallback } from 'react';
 import './seminar.css';
 import { useAuthStore } from '@/shared/auth/auth.store';
 import { MESSAGES, TOAST } from './seminar.data';
-import { useSeminars, useAttend } from './seminar.queries';
+import { SCHEDULE_MESSAGES, SCHEDULE_TOAST } from './schedule.data';
+import { useSeminars, useAttend, useResubmitSeminar } from './seminar.queries';
+import { useSchedules, useClaimSlot, useCancelSlot, useSubmitSlotSeminar } from './schedule.queries';
+import { useForm } from './useForm';
 import {
   AppHeader,
   Toast,
   Eyebrow,
+  TabButton,
   ListView,
+  ScheduleView,
   AttendModal,
   DetailModal,
+  ClaimModal,
+  SlotSeminarModal,
 } from './views';
+
+const TABS = [
+  { key: 'list', label: '목록' },
+  { key: 'schedule', label: '일정' },
+];
 
 /** 목록 영역의 로딩/에러 안내 한 줄. */
 function Notice({ children }) {
@@ -35,7 +47,9 @@ function Notice({ children }) {
  */
 export default function SeminarPage() {
   const isLoggedIn = useAuthStore((s) => s.isAuthenticated);
+  const currentUserId = useAuthStore((s) => s.user?.id);
 
+  const [view, setView] = useState('list'); // list | schedule
   const [filter, setFilter] = useState('upcoming'); // upcoming | ended | absent | all
   const [attended, setAttended] = useState({}); // seminarId -> true
 
@@ -43,6 +57,11 @@ export default function SeminarPage() {
   const [attendCode, setAttendCode] = useState('');
   const [attendErr, setAttendErr] = useState('');
   const [detailSeminar, setDetailSeminar] = useState(null);
+
+  const [claimTarget, setClaimTarget] = useState(null); // { schedule, index }
+  const [claimErr, setClaimErr] = useState('');
+  const [seminarSlot, setSeminarSlot] = useState(null); // { schedule, slot, editing }
+  const seminarSlotForm = useForm({ title: '', speaker: '', topic: '', description: '', attendanceCode: '', materialUrl: '', target: [] });
 
   const [toast, setToast] = useState(null);
   const toastTimer = useRef(null);
@@ -55,6 +74,7 @@ export default function SeminarPage() {
 
   // --- server state ---
   const seminarsQ = useSeminars();
+  const schedulesQ = useSchedules();
   const attendM = useAttend({
     onSuccess: () => {
       setAttended((map) => ({ ...map, [attendSeminar.id]: true }));
@@ -64,6 +84,33 @@ export default function SeminarPage() {
     onError: (err) => {
       setAttendErr(err.code === 'INVALID_CODE' ? MESSAGES.codeWrong : MESSAGES.codeServer);
     },
+  });
+  const claimM = useClaimSlot({
+    onSuccess: () => {
+      setClaimTarget(null);
+      showToast(SCHEDULE_TOAST.claimed);
+    },
+    onError: (err) => {
+      setClaimErr(err.code === 'SLOT_TAKEN' ? SCHEDULE_MESSAGES.claimTaken : SCHEDULE_MESSAGES.claimServer);
+    },
+  });
+  const cancelM = useCancelSlot({
+    onSuccess: () => showToast(SCHEDULE_TOAST.canceled),
+    onError: () => showToast(SCHEDULE_MESSAGES.cancelServer),
+  });
+  const submitSeminarM = useSubmitSlotSeminar({
+    onSuccess: () => {
+      setSeminarSlot(null);
+      showToast(SCHEDULE_TOAST.seminarSubmitted);
+    },
+    onError: () => showToast(SCHEDULE_MESSAGES.seminarServer),
+  });
+  const resubmitSeminarM = useResubmitSeminar({
+    onSuccess: () => {
+      setSeminarSlot(null);
+      showToast(SCHEDULE_TOAST.seminarResubmitted);
+    },
+    onError: () => showToast(SCHEDULE_MESSAGES.seminarServer),
   });
 
   // --- attend ---
@@ -83,7 +130,40 @@ export default function SeminarPage() {
     attendM.mutate({ seminarId: attendSeminar.id, code });
   }
 
+  // --- schedule slots ---
+  function openClaim(scheduleId, index) {
+    const schedule = (schedulesQ.data ?? []).find((s) => s.id === scheduleId);
+    setClaimTarget({ schedule, index });
+    setClaimErr('');
+  }
+  function confirmClaim() {
+    claimM.mutate({ scheduleId: claimTarget.schedule.id, index: claimTarget.index });
+  }
+  function cancelSlot(scheduleId, index) {
+    cancelM.mutate({ scheduleId, index });
+  }
+  function openCreateSeminar(schedule, slot) {
+    seminarSlotForm.reset();
+    setSeminarSlot({ schedule, slot, editing: false });
+  }
+  function openEditSeminar(schedule, slot) {
+    seminarSlotForm.reset();
+    setSeminarSlot({ schedule, slot, editing: true });
+  }
+  function submitSeminarSlot() {
+    if (!seminarSlotForm.values.title.trim()) {
+      seminarSlotForm.setErrors({ title: SCHEDULE_MESSAGES.seminarTitleRequired });
+      return;
+    }
+    if (seminarSlot.editing) {
+      resubmitSeminarM.mutate({ id: seminarSlot.slot.seminarId, form: seminarSlotForm.values });
+    } else {
+      submitSeminarM.mutate({ scheduleId: seminarSlot.schedule.id, index: seminarSlot.slot.index, form: seminarSlotForm.values });
+    }
+  }
+
   const seminars = seminarsQ.data ?? [];
+  const schedules = schedulesQ.data ?? [];
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--surface-page)' }}>
@@ -104,20 +184,46 @@ export default function SeminarPage() {
         </div>
       </section>
 
+      <section style={{ maxWidth: 'var(--container-max)', margin: '0 auto', padding: '18px var(--container-pad) 0' }}>
+        <div style={{ display: 'flex', gap: 4, borderBottom: '1px solid var(--border)' }}>
+          {TABS.map((t) => (
+            <TabButton key={t.key} active={view === t.key} onClick={() => setView(t.key)}>
+              {t.label}
+            </TabButton>
+          ))}
+        </div>
+      </section>
+
       <section style={{ maxWidth: 'var(--container-max)', margin: '0 auto', padding: '28px var(--container-pad) clamp(4rem, 8vw, 7rem)' }}>
-        {seminarsQ.isLoading ? (
+        {view === 'list' ? (
+          seminarsQ.isLoading ? (
+            <Notice>불러오는 중…</Notice>
+          ) : seminarsQ.isError ? (
+            <Notice>세미나 목록을 불러오지 못했습니다.</Notice>
+          ) : (
+            <ListView
+              seminars={seminars}
+              filter={filter}
+              onFilter={setFilter}
+              attended={attended}
+              isLoggedIn={isLoggedIn}
+              onAttend={openAttend}
+              onOpenDetail={setDetailSeminar}
+            />
+          )
+        ) : schedulesQ.isLoading ? (
           <Notice>불러오는 중…</Notice>
-        ) : seminarsQ.isError ? (
-          <Notice>세미나 목록을 불러오지 못했습니다.</Notice>
+        ) : schedulesQ.isError ? (
+          <Notice>일정을 불러오지 못했습니다.</Notice>
         ) : (
-          <ListView
-            seminars={seminars}
-            filter={filter}
-            onFilter={setFilter}
-            attended={attended}
+          <ScheduleView
+            schedules={schedules}
+            currentUserId={currentUserId}
             isLoggedIn={isLoggedIn}
-            onAttend={openAttend}
-            onOpenDetail={setDetailSeminar}
+            onClaim={openClaim}
+            onCancel={cancelSlot}
+            onCreateSeminar={openCreateSeminar}
+            onEditSeminar={openEditSeminar}
           />
         )}
       </section>
@@ -137,6 +243,29 @@ export default function SeminarPage() {
           seminar={detailSeminar}
           isLoggedIn={isLoggedIn}
           onClose={() => setDetailSeminar(null)}
+        />
+      )}
+
+      {claimTarget && (
+        <ClaimModal
+          schedule={claimTarget.schedule}
+          error={claimErr}
+          onClose={() => setClaimTarget(null)}
+          onConfirm={confirmClaim}
+          pending={claimM.isPending}
+        />
+      )}
+
+      {seminarSlot && (
+        <SlotSeminarModal
+          schedule={seminarSlot.schedule}
+          slot={seminarSlot.slot}
+          form={seminarSlotForm}
+          editing={seminarSlot.editing}
+          seminarId={seminarSlot.slot.seminarId}
+          onClose={() => setSeminarSlot(null)}
+          onSubmit={submitSeminarSlot}
+          pending={submitSeminarM.isPending || resubmitSeminarM.isPending}
         />
       )}
 
