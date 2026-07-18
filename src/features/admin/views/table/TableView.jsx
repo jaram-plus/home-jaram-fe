@@ -94,10 +94,10 @@ export function TableView({ resource: fixedResource }) {
     } else if (kind === 'approve') {
       // 저장 시 회원으로 편입 (staged). 즉시 편입을 원하면 useApproveApplication 로 교체.
       setEdit(resource, row.id, 'status', '승인', origById[row.id]?.status);
-      showToast(TOAST.approved);
+      showToast(resource === 'seminarApprovals' ? TOAST.seminarApproved : TOAST.approved);
     } else if (kind === 'reject') {
       setEdit(resource, row.id, 'status', '반려', origById[row.id]?.status);
-      showToast(TOAST.rejected);
+      showToast(resource === 'seminarApprovals' ? TOAST.seminarRejected : TOAST.rejected);
     }
   };
 

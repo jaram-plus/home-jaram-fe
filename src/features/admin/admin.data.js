@@ -183,6 +183,8 @@ export const TOAST = {
   saved: (n) => `변경분 ${n}건이 저장되었습니다.`,
   approved: '신청을 승인했습니다. 저장 시 회원으로 편입됩니다.',
   rejected: '신청을 반려했습니다.',
+  seminarApproved: '세미나를 승인했습니다. 저장 시 정식 목록에 노출됩니다.',
+  seminarRejected: '세미나를 반려했습니다.',
   exported: '현재 목록을 Google Drive 스프레드시트로 내보냈습니다.',
   settingsSaved: '설정이 저장되었습니다.',
 };
