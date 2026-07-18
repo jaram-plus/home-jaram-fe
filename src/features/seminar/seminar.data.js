@@ -43,6 +43,12 @@ export const ENDED_CHIP = {
   absent: { label: '결석', tone: 'neutral' },
 };
 
+// 슬롯 카드에서 본인 세미나 상태 칩. APPROVED는 이미 정식 목록에 뜨니 칩이 필요 없다.
+export const SEMINAR_APPROVAL_CHIP = {
+  PENDING: { label: '대기중', tone: 'outline' },
+  REJECTED: { label: '반려됨', tone: 'neutral' },
+};
+
 // ONGOING 카드에서 출석 버튼 아래 한 줄. mins는 useAttendanceCountdown이 계산한 남은 분.
 export const COUNTDOWN_LABEL = (mins) => `출석 인정까지 ${mins}분 남음`;
 
@@ -76,4 +82,5 @@ export const TOAST = {
 export const EMPTY = {
   seminars: '예정된 세미나가 없습니다.',
   attendees: '아직 출석한 회원이 없습니다.',
+  schedules: '등록된 일정이 없습니다.',
 };

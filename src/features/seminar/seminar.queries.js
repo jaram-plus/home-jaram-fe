@@ -40,3 +40,26 @@ export function useAttend(options) {
     },
   });
 }
+
+/** 단건 조회 — 재제출 폼이 열릴 때만 조회한다(`options.enabled`). */
+export function useSeminar(id, options) {
+  return useQuery({
+    queryKey: ['seminar', id],
+    queryFn: () => api.getSeminar(id),
+    enabled: !!id,
+    ...options,
+  });
+}
+
+export function useResubmitSeminar(options) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, form }) => api.resubmitSeminar(id, form),
+    ...options,
+    onSuccess: (...args) => {
+      qc.invalidateQueries({ queryKey: seminarKeys.all });
+      qc.invalidateQueries({ queryKey: ['schedules'] });
+      options?.onSuccess?.(...args);
+    },
+  });
+}

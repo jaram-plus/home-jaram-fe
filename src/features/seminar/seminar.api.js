@@ -17,6 +17,31 @@ export async function listSeminars() {
   return data;
 }
 
+/** 단건 조회 — PENDING/REJECTED 재제출 폼 프리필용. 본인/임원 아니면 서버가 404. */
+export async function getSeminar(id) {
+  const { data } = await client.get(`/api/seminars/${id}`);
+  return data;
+}
+
+/**
+ * REJECTED 세미나를 본인이 수정해 재제출한다 — 같은 id, approvalStatus는 PENDING으로,
+ * rejectReason은 null로 돌아간다.
+ */
+export async function resubmitSeminar(id, form) {
+  const opt = (v) => (v && v.trim() ? v.trim() : null);
+  const payload = {
+    title: form.title.trim(),
+    speaker: opt(form.speaker),
+    topic: opt(form.topic),
+    description: opt(form.description),
+    attendanceCode: opt(form.attendanceCode),
+    materialUrl: opt(form.materialUrl),
+    target: form.target || [],
+  };
+  const { data } = await client.patch(`/api/seminars/${id}`, payload);
+  return data;
+}
+
 /**
  * 참석자 미리보기 — 로그인한 회원 누구나 조회한다. officer 전용 roster와 달리
  * 학번(sid)이 없다. 응답: { count, list: [{ name, at }] }.
