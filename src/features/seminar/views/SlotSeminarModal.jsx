@@ -10,7 +10,7 @@ import { useSeminar } from '../seminar.queries';
  *
  * `editing`이면 `seminarId`로 기존 세미나를 조회해 값을 채운다 — 반려 사유도 함께 보여준다.
  */
-export function SlotSeminarModal({ schedule, _slot, form, editing, seminarId, onClose, onSubmit, pending = false }) {
+export function SlotSeminarModal({ schedule, slot: _slot, form, editing, seminarId, onClose, onSubmit, pending = false }) {
   const { values, errors, field, setValues } = form;
   const existing = useSeminar(seminarId, { enabled: !!editing && !!seminarId });
 
