@@ -211,6 +211,24 @@ paths:
         '404': { $ref: '#/components/responses/NotFound' }
         '5XX': { $ref: '#/components/responses/ServerError' }
 
+  /api/seminars/{id}/attendees:
+    get:
+      tags: [seminar]
+      summary: 참석자 미리보기 (신규)
+      description: 로그인한 회원 누구나 조회. sid(학번) 미노출 — officer 전용 roster와 구분.
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: '#/components/parameters/SeminarId'
+      responses:
+        '200':
+          description: 참석자 미리보기
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AttendeePreviewResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '5XX': { $ref: '#/components/responses/ServerError' }
+
   # ─────────────────────────── study ───────────────────────────
   /api/studies:
     get:
@@ -864,7 +882,7 @@ components:
     # ── seminar ──
     Seminar:
       type: object
-      required: [id, title, startsAt, status]
+      required: [id, title, startsAt, status, attendanceClosesAt]
       properties:
         id: { type: string }
         title: { type: string }
@@ -883,6 +901,9 @@ components:
           type: array
           items: { $ref: '#/components/schemas/TargetGrade' }
           description: 공개 대상 등급. 빈 배열은 전체 공개.
+        description: { type: [string, 'null'], description: 세미나 상세 설명 }
+        attendanceClosesAt: { type: string, format: date-time, description: '출석 인정 마감 시각 (startsAt + 출석창, 서버 파생)' }
+        attendedAt: { type: [string, 'null'], description: '내 출석 시각 표시(예 19:02). 미출석/비로그인이면 null' }
     SeminarCreateRequest:
       type: object
       required: [title, startsAt]
@@ -899,6 +920,7 @@ components:
           type: array
           items: { $ref: '#/components/schemas/TargetGrade' }
           description: 공개 대상 등급. 빈 배열은 전체 공개.
+        description: { type: [string, 'null'] }
     AttendRequest:
       type: object
       required: [code]
@@ -926,6 +948,20 @@ components:
         list:
           type: array
           items: { $ref: '#/components/schemas/RosterEntry' }
+    AttendeePreviewEntry:
+      type: object
+      required: [at]
+      properties:
+        name: { type: [string, 'null'] }
+        at: { type: string, description: 출석 시각 표시 (예 '19:02') }
+    AttendeePreviewResponse:
+      type: object
+      required: [count, list]
+      properties:
+        count: { type: integer }
+        list:
+          type: array
+          items: { $ref: '#/components/schemas/AttendeePreviewEntry' }
 
     # ── study ──
     Study:
