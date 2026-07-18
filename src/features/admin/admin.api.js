@@ -103,6 +103,7 @@ export async function fetchList(resource, params = {}) {
     return mockList(resource, params);
   }
   if (resource === 'applications') return fetchPendingApplications(params);
+  if (resource === 'seminarApprovals') return fetchPendingSeminarApprovals(params);
   // GET /api/admin/{resource}?tab=&q=&grade=&gen=&status=&sort=&page=&size= (AdminListResponse)
   const { path } = RESOURCES[resource];
   const query = toListQuery(resource, params);
@@ -123,6 +124,25 @@ async function fetchPendingApplications({ q = '', page = 1, size = 8 } = {}) {
     name: m.name,
     studentId: m.studentId,
     appliedAt: (m.createdAt || '').slice(0, 10),
+    status: APPLICATION_STATUS_LABEL.PENDING,
+  }));
+  return paginate(rows, { q, page, size });
+}
+
+/**
+ * seminarApprovals도 applications와 같은 이유로 전용 엔드포인트를 쓴다:
+ * GET /api/admin/seminars?approvalStatus=PENDING → Seminar[] (officer 전용 조회).
+ * 화면 스키마(admin.data SCHEMAS.seminarApprovals)에 맞춰 정제하고, 검색·페이지는
+ * 이 계층에서 처리한다.
+ */
+async function fetchPendingSeminarApprovals({ q = '', page = 1, size = 8 } = {}) {
+  const { data } = await client.get('/api/admin/seminars', { params: { approvalStatus: 'PENDING' } });
+  const rows = (data || []).map((s) => ({
+    id: s.id,
+    title: s.title,
+    speaker: s.speaker,
+    topic: s.topic,
+    startsAt: `${s.month} ${s.day}일 ${s.time}`,
     status: APPLICATION_STATUS_LABEL.PENDING,
   }));
   return paginate(rows, { q, page, size });
@@ -165,6 +185,7 @@ export async function saveBatch(resource, { updates = [], creates = [], deletes 
     return mockBatch(resource, body);
   }
   if (resource === 'applications') return saveApplicationsQueue(updates, deletes);
+  if (resource === 'seminarApprovals') return saveSeminarApprovalsQueue(updates, deletes);
   // PATCH /api/admin/{resource}:batch (AdminBatchRequest → AdminBatchResponse, 부분 성공)
   const { path } = RESOURCES[resource];
   try {
@@ -199,6 +220,29 @@ async function saveApplicationsQueue(updates, deletes) {
   return { updated, created: [], deleted: [], conflicts: [], errors };
 }
 
+/**
+ * seminarApprovals도 applications와 같은 이유로 batch 대상이 아니다(큐 모델이라
+ * AdminResource 배치 엔드포인트가 없음). 화면에서 스테이지된 승인/반려(status 필드
+ * 변경)를 단건 승인/반려 엔드포인트 호출로 변환해 순차 처리한다.
+ */
+async function saveSeminarApprovalsQueue(updates, deletes) {
+  const updated = [];
+  const errors = [];
+  for (const u of updates) {
+    const status = u.fields?.status;
+    try {
+      if (status === APPLICATION_STATUS_LABEL.APPROVED) await approveSeminar(u.id);
+      else if (status === APPLICATION_STATUS_LABEL.REJECTED) await rejectSeminar(u.id, u.fields?.reason || '관리자 반려');
+      else continue;
+      updated.push({ id: u.id });
+    } catch (error) {
+      errors.push({ id: u.id, fieldErrors: { status: error.message } });
+    }
+  }
+  deletes.forEach((id) => errors.push({ id, fieldErrors: { _: '세미나 승인 대기열은 삭제를 지원하지 않습니다.' } }));
+  return { updated, created: [], deleted: [], conflicts: [], errors };
+}
+
 /* ── 단건 · 액션 ─────────────────────────────────────────────────────── */
 export async function approveApplication(id) {
   if (USE_MOCK) { await delay(400); return { ok: true, id }; }
@@ -218,6 +262,77 @@ export async function rejectApplication(id, reason) {
     return data;
   } catch (error) {
     throwWireError(error, 'VALIDATION');
+  }
+}
+
+export async function approveSeminar(id) {
+  if (USE_MOCK) { await delay(400); return { ok: true, id }; }
+  try {
+    const { data } = await client.post(`/api/admin/seminars/${id}/approve`);
+    return data;
+  } catch (error) {
+    throwWireError(error, 'NOT_FOUND');
+  }
+}
+export async function rejectSeminar(id, reason) {
+  if (USE_MOCK) { await delay(300); return { ok: true, id }; }
+  try {
+    const { data } = await client.post(`/api/admin/seminars/${id}/reject`, { reason });
+    return data;
+  } catch (error) {
+    throwWireError(error, 'VALIDATION');
+  }
+}
+
+/* ── 일정(Schedule) 관리 ────────────────────────────────────────────────────────────────────
+ * 슬롯별 개별 액션(해제)이 필요해 TableView 배치저장 모델에 안 맞는다 — 즉시 반영되는
+ * 단건 액션으로 구현한다. 목록 조회는 공개 GET과 같은 데이터를 admin 전용 화면에서
+ * 다시 쓰는 것뿐이라 별도 admin 전용 조회 엔드포인트를 만들지 않는다.
+ */
+export async function fetchSchedules() {
+  if (USE_MOCK) { await delay(200); return SEED.schedules; }
+  const { data } = await client.get('/api/schedules');
+  return data;
+}
+
+export async function createSchedule(payload) {
+  if (USE_MOCK) {
+    await delay(400);
+    return {
+      id: 'srv-' + Date.now(),
+      ...payload,
+      day: '—', month: '—', weekday: '—', time: '—',
+      status: 'OPEN',
+      slots: Array.from({ length: payload.capacity || 3 }, (_, index) => ({
+        index, member: null, seminarId: null, seminarApprovalStatus: null, seminarRejectReason: null,
+      })),
+    };
+  }
+  try {
+    const { data } = await client.post('/api/admin/schedules', payload);
+    return data;
+  } catch (error) {
+    throwWireError(error, 'VALIDATION');
+  }
+}
+
+export async function lockSchedule(id) {
+  if (USE_MOCK) { await delay(300); return { ok: true, id }; }
+  try {
+    const { data } = await client.patch(`/api/admin/schedules/${id}/lock`);
+    return data;
+  } catch (error) {
+    throwWireError(error, 'NOT_FOUND');
+  }
+}
+
+export async function forceUnassignSlot(scheduleId, index) {
+  if (USE_MOCK) { await delay(300); return { ok: true }; }
+  try {
+    const { data } = await client.delete(`/api/admin/schedules/${scheduleId}/slots/${index}`);
+    return data;
+  } catch (error) {
+    throwWireError(error, 'CONFLICT');
   }
 }
 
