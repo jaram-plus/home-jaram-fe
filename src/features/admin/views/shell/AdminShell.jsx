@@ -12,7 +12,8 @@ import { MESSAGES } from '../../admin.data';
 function currentResource(pathname, tab) {
   const seg = pathname.split('/').filter(Boolean)[1] || 'dashboard'; // ['admin', <seg>]
   if (seg === 'members') return tab || 'member';
-  return seg; // dashboard | seminars | studies | applications | settings
+  if (seg === 'seminar-approvals') return 'seminarApprovals';
+  return seg; // dashboard | seminars | studies | applications | schedules | seminarApprovals | settings
 }
 
 /**
