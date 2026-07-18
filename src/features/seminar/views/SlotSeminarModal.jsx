@@ -9,6 +9,9 @@ import { useSeminar } from '../seminar.queries';
  * 고정되어 입력칸이 없다(CreateModal과 달리 발표 내용만 채운다).
  *
  * `editing`이면 `seminarId`로 기존 세미나를 조회해 값을 채운다 — 반려 사유도 함께 보여준다.
+ *
+ * 출석 코드는 여기서 받지 않는다 — 임원이 "세미나 관리" 표의 출석코드 셀에서 승인 후
+ * 직접 설정한다(학회원이 스스로 코드를 정하지 않도록).
  */
 export function SlotSeminarModal({ schedule, slot: _slot, form, editing, seminarId, onClose, onSubmit, pending = false }) {
   const { values, errors, field, setValues } = form;
@@ -22,7 +25,6 @@ export function SlotSeminarModal({ schedule, slot: _slot, form, editing, seminar
       speaker: s.speaker || '',
       topic: s.topic || '',
       description: s.description || '',
-      attendanceCode: '',
       materialUrl: s.materialUrl || '',
       target: s.target || [],
     });
@@ -69,10 +71,7 @@ export function SlotSeminarModal({ schedule, slot: _slot, form, editing, seminar
           value={values.description}
           onChange={field('description')}
         />
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-          <Input label="출석 코드" placeholder="참석자에게 공지할 코드를 설정하세요" value={values.attendanceCode} onChange={field('attendanceCode')} />
-          <Input label="발표 자료 링크" placeholder="슬라이드·문서 URL" value={values.materialUrl} onChange={field('materialUrl')} />
-        </div>
+        <Input label="발표 자료 링크" placeholder="슬라이드·문서 URL" value={values.materialUrl} onChange={field('materialUrl')} />
         <div>
           <p style={{ margin: '0 0 8px', fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-sm)', fontWeight: 600, color: 'var(--text-strong)' }}>공개 대상</p>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px 16px' }}>

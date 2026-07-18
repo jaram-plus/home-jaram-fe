@@ -25,7 +25,8 @@ export async function getSeminar(id) {
 
 /**
  * REJECTED 세미나를 본인이 수정해 재제출한다 — 같은 id, approvalStatus는 PENDING으로,
- * rejectReason은 null로 돌아간다.
+ * rejectReason은 null로 돌아간다. attendanceCode는 보내지 않는다 — 임원이 "세미나 관리"
+ * 표에서 직접 설정하는 값이라 재제출로 건드리지 않는다.
  */
 export async function resubmitSeminar(id, form) {
   const opt = (v) => (v && v.trim() ? v.trim() : null);
@@ -34,7 +35,6 @@ export async function resubmitSeminar(id, form) {
     speaker: opt(form.speaker),
     topic: opt(form.topic),
     description: opt(form.description),
-    attendanceCode: opt(form.attendanceCode),
     materialUrl: opt(form.materialUrl),
     target: form.target || [],
   };

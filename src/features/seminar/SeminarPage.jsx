@@ -61,7 +61,7 @@ export default function SeminarPage() {
   const [claimTarget, setClaimTarget] = useState(null); // { schedule, index }
   const [claimErr, setClaimErr] = useState('');
   const [seminarSlot, setSeminarSlot] = useState(null); // { schedule, slot, editing }
-  const seminarSlotForm = useForm({ title: '', speaker: '', topic: '', description: '', attendanceCode: '', materialUrl: '', target: [] });
+  const seminarSlotForm = useForm({ title: '', speaker: '', topic: '', description: '', materialUrl: '', target: [] });
 
   const [toast, setToast] = useState(null);
   const toastTimer = useRef(null);
