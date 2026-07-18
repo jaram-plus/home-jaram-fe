@@ -12,6 +12,7 @@ export const adminKeys = {
   list: (resource, params) => ['admin', 'list', resource, params],
   dashboard: () => ['admin', 'dashboard'],
   settings: () => ['admin', 'settings'],
+  schedules: () => ['admin', 'schedules'],
 };
 
 /** 리소스 목록. params = { q, filters, sort, page, size } (searchParams 에서 조립). */
@@ -59,6 +60,46 @@ export function useRejectApplication(options = {}) {
     ...options,
     onSuccess: (...a) => {
       qc.invalidateQueries({ queryKey: ['admin', 'list', 'applications'] });
+      options.onSuccess?.(...a);
+    },
+  });
+}
+
+export function useSchedulesAdmin(options = {}) {
+  return useQuery({ queryKey: adminKeys.schedules(), queryFn: api.fetchSchedules, ...options });
+}
+
+export function useCreateSchedule(options = {}) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: api.createSchedule,
+    ...options,
+    onSuccess: (...a) => {
+      qc.invalidateQueries({ queryKey: adminKeys.schedules() });
+      options.onSuccess?.(...a);
+    },
+  });
+}
+
+export function useLockSchedule(options = {}) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id) => api.lockSchedule(id),
+    ...options,
+    onSuccess: (...a) => {
+      qc.invalidateQueries({ queryKey: adminKeys.schedules() });
+      options.onSuccess?.(...a);
+    },
+  });
+}
+
+export function useForceUnassignSlot(options = {}) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ scheduleId, index }) => api.forceUnassignSlot(scheduleId, index),
+    ...options,
+    onSuccess: (...a) => {
+      qc.invalidateQueries({ queryKey: adminKeys.schedules() });
       options.onSuccess?.(...a);
     },
   });
