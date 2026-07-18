@@ -17,11 +17,6 @@ export async function listSeminars() {
   return data;
 }
 
-export async function getRoster(rosterKey) {
-  const { data } = await client.get(`/api/seminars/${rosterKey}/roster`);
-  return data;
-}
-
 /**
  * 참석자 미리보기 — 로그인한 회원 누구나 조회한다. officer 전용 roster와 달리
  * 학번(sid)이 없다. 응답: { count, list: [{ name, at }] }.
@@ -41,27 +36,4 @@ export async function checkAttendance({ seminarId, code }) {
     const code = status >= 400 && status < 500 ? 'INVALID_CODE' : 'SERVER';
     throw Object.assign(new Error(error.response?.data?.message || 'attendance failed'), { code });
   }
-}
-
-/**
- * 폼 값을 SeminarCreateRequest(openapi)에 맞춰 정제해 보낸다.
- * - 빈 문자열 옵션 필드는 null 로 (스펙은 nullable).
- * - startsAt: datetime-local("2026-06-30T19:00") → ISO-8601(UTC).
- */
-export async function createSeminar(form) {
-  const opt = (v) => (v && v.trim() ? v.trim() : null);
-  const payload = {
-    title: form.title.trim(),
-    startsAt: new Date(form.startsAt).toISOString(),
-    speaker: opt(form.speaker),
-    topic: opt(form.topic),
-    place: opt(form.place),
-    mode: opt(form.mode),
-    attendanceCode: opt(form.attendanceCode),
-    materialUrl: opt(form.materialUrl),
-    description: opt(form.description),
-    target: form.target || [],
-  };
-  const { data } = await client.post('/api/seminars', payload);
-  return data;
 }

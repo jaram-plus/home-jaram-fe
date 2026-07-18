@@ -1,26 +1,16 @@
 import React, { useState, useRef, useCallback } from 'react';
 import './seminar.css';
-import { Button } from '@/design-system';
 import { useAuthStore } from '@/shared/auth/auth.store';
-import { useForm } from './useForm';
-import { ROSTER_TABS, MESSAGES, TOAST } from './seminar.data';
-import { useSeminars, useRoster, useAttend, useCreateSeminar } from './seminar.queries';
+import { MESSAGES, TOAST } from './seminar.data';
+import { useSeminars, useAttend } from './seminar.queries';
 import {
   AppHeader,
   Toast,
   Eyebrow,
-  TabButton,
   ListView,
-  RosterView,
   AttendModal,
-  CreateModal,
   DetailModal,
 } from './views';
-
-const SUB_NAV = [
-  { key: 'list', label: '세미나 목록' },
-  { key: 'roster', label: '출석 현황' },
-];
 
 /** 목록 영역의 로딩/에러 안내 한 줄. */
 function Notice({ children }) {
@@ -32,33 +22,27 @@ function Notice({ children }) {
 }
 
 /**
- * JARAM seminar page — browse the schedule, check in with an attendance code,
- * create a seminar (officer), and review who attended, as a single-route view
- * machine (list | roster).
+ * JARAM seminar page — browse the schedule and check in with an attendance code.
  *
- * Attendance and creation call the real Spring endpoints via seminar.api.js
- * (paths are a proposed REST contract until the backend confirms them — see
- * that file's header; the code check is validated server-side). `attended`
- * mirrors a successful check-in in local state since the mutation doesn't
- * invalidate the roster query.
+ * Attendance calls the real Spring endpoint via seminar.api.js (path is a
+ * proposed REST contract until the backend confirms it — see that file's
+ * header; the code check is validated server-side). `attended` mirrors a
+ * successful check-in in local state since the mutation doesn't invalidate
+ * the seminar list query.
+ *
+ * Seminar creation lives in the admin page (`/admin/seminars`), not here —
+ * officers add rows to the seminars table there instead of a page-level modal.
  */
 export default function SeminarPage() {
-  const isAdmin = useAuthStore((s) => ['OFFICER', 'ADMIN'].includes(s.user?.authority));
   const isLoggedIn = useAuthStore((s) => s.isAuthenticated);
-  const subNav = SUB_NAV.filter((t) => t.key !== 'roster' || isAdmin);
 
-  const [view, setView] = useState('list'); // list | roster
-  const [filter, setFilter] = useState('all'); // all | upcoming | ended
+  const [filter, setFilter] = useState('upcoming'); // upcoming | ended | absent | all
   const [attended, setAttended] = useState({}); // seminarId -> true
-  const [rosterSel, setRosterSel] = useState(ROSTER_TABS[0].key);
 
   const [attendSeminar, setAttendSeminar] = useState(null);
   const [attendCode, setAttendCode] = useState('');
   const [attendErr, setAttendErr] = useState('');
   const [detailSeminar, setDetailSeminar] = useState(null);
-
-  const [createOpen, setCreateOpen] = useState(false);
-  const createForm = useForm({ title: '', speaker: '', topic: '', startsAt: '', place: '', mode: '', attendanceCode: '', materialUrl: '', description: '', target: [] });
 
   const [toast, setToast] = useState(null);
   const toastTimer = useRef(null);
@@ -71,7 +55,6 @@ export default function SeminarPage() {
 
   // --- server state ---
   const seminarsQ = useSeminars();
-  const rosterQ = useRoster(rosterSel);
   const attendM = useAttend({
     onSuccess: () => {
       setAttended((map) => ({ ...map, [attendSeminar.id]: true }));
@@ -80,16 +63,6 @@ export default function SeminarPage() {
     },
     onError: (err) => {
       setAttendErr(err.code === 'INVALID_CODE' ? MESSAGES.codeWrong : MESSAGES.codeServer);
-    },
-  });
-  const createM = useCreateSeminar({
-    onSuccess: () => {
-      setCreateOpen(false);
-      showToast(TOAST.created);
-    },
-    onError: () => {
-      // 모달은 열어 둔 채(입력 보존) 토스트로 실패를 알린다.
-      showToast(MESSAGES.createServer);
     },
   });
 
@@ -110,30 +83,13 @@ export default function SeminarPage() {
     attendM.mutate({ seminarId: attendSeminar.id, code });
   }
 
-  // --- create ---
-  function openCreate() {
-    createForm.reset();
-    setCreateOpen(true);
-  }
-  function submitCreate() {
-    const errs = {};
-    if (!createForm.values.title.trim()) errs.title = MESSAGES.titleRequired;
-    if (!createForm.values.startsAt) errs.startsAt = MESSAGES.startsAtRequired;
-    if (Object.keys(errs).length) {
-      createForm.setErrors(errs);
-      return;
-    }
-    createM.mutate(createForm.values);
-  }
-
-  const roster = rosterQ.data;
   const seminars = seminarsQ.data ?? [];
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--surface-page)' }}>
       <AppHeader current="seminar" />
 
-      {/* page title + sub-nav */}
+      {/* page title */}
       <section style={{ maxWidth: 'var(--container-max)', margin: '0 auto', padding: 'clamp(2.5rem, 5vw, 4rem) var(--container-pad) 0' }}>
         <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 24, flexWrap: 'wrap' }}>
           <div>
@@ -145,41 +101,23 @@ export default function SeminarPage() {
               자람에서 열리는 세미나를 확인하고 출석을 체크하세요.
             </p>
           </div>
-          {isAdmin && <Button onClick={openCreate}>＋ 세미나 개설하기</Button>}
-        </div>
-
-        <div style={{ display: 'flex', gap: 4, marginTop: 34, borderBottom: '1px solid var(--border)' }}>
-          {subNav.map((t) => (
-            <TabButton key={t.key} active={view === t.key} onClick={() => setView(t.key)}>{t.label}</TabButton>
-          ))}
         </div>
       </section>
 
       <section style={{ maxWidth: 'var(--container-max)', margin: '0 auto', padding: '28px var(--container-pad) clamp(4rem, 8vw, 7rem)' }}>
-        {view === 'list' && (
-          seminarsQ.isLoading ? (
-            <Notice>불러오는 중…</Notice>
-          ) : seminarsQ.isError ? (
-            <Notice>세미나 목록을 불러오지 못했습니다.</Notice>
-          ) : (
-            <ListView
-              seminars={seminars}
-              filter={filter}
-              onFilter={setFilter}
-              attended={attended}
-              isLoggedIn={isLoggedIn}
-              onAttend={openAttend}
-              onOpenDetail={setDetailSeminar}
-            />
-          )
-        )}
-        {view === 'roster' && isAdmin && (
-          <RosterView
-            roster={roster}
-            selected={rosterSel}
-            onSelect={setRosterSel}
-            loading={rosterQ.isLoading}
-            error={rosterQ.isError}
+        {seminarsQ.isLoading ? (
+          <Notice>불러오는 중…</Notice>
+        ) : seminarsQ.isError ? (
+          <Notice>세미나 목록을 불러오지 못했습니다.</Notice>
+        ) : (
+          <ListView
+            seminars={seminars}
+            filter={filter}
+            onFilter={setFilter}
+            attended={attended}
+            isLoggedIn={isLoggedIn}
+            onAttend={openAttend}
+            onOpenDetail={setDetailSeminar}
           />
         )}
       </section>
@@ -193,8 +131,6 @@ export default function SeminarPage() {
           onSubmit={submitAttend}
         />
       )}
-
-      {createOpen && <CreateModal form={createForm} onClose={() => setCreateOpen(false)} onSubmit={submitCreate} pending={createM.isPending} />}
 
       {detailSeminar && (
         <DetailModal

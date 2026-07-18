@@ -119,6 +119,8 @@ export const SCHEMAS = {
       { key: 'startsAt', label: '일시', type: 'text', width: '1fr' },
       { key: 'place', label: '장소', type: 'text', width: '0.9fr' },
       { key: 'mode', label: '진행 방식', type: 'text', width: '0.7fr' },
+      { key: 'description', label: '상세 설명', type: 'text', width: '1.4fr' },
+      { key: 'materialUrl', label: '발표자료 링크', type: 'text', width: '1fr' },
       { key: 'target', label: '대상', type: 'multiselect', width: '1.6fr', options: labelsOf(TARGET_GRADE_LABELS) },
       { key: 'attendanceCode', label: '출석코드', type: 'text', width: '0.7fr', align: 'center' },
       { key: 'status', label: '상태', type: 'select', width: '0.8fr', options: labelsOf(SEMINAR_STATUS_LABELS) },
