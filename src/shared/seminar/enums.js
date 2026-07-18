@@ -21,3 +21,11 @@ export function targetGradeLabels(keys) {
   if (!keys || keys.length === 0) return '전체';
   return keys.map((k) => TARGET_GRADE_LABELS[k]).join('·');
 }
+
+export const SCHEDULE_STATUS_LABELS = { OPEN: '모집 중', LOCKED: '잠김' };
+export const SCHEDULE_STATUSES = Object.keys(SCHEDULE_STATUS_LABELS);
+
+/** Schedule status 키 → 한글 라벨. 모르는/빈 키는 null. */
+export function scheduleStatusLabel(key) {
+  return key ? SCHEDULE_STATUS_LABELS[key] ?? null : null;
+}
