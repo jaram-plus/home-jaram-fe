@@ -312,7 +312,9 @@ paths:
     delete:
       tags: [schedule]
       summary: 슬롯 자진취소 (본인)
-      description: Schedule.status가 OPEN이고 본인 슬롯일 때만. LOCKED 이후엔 403.
+      description: >-
+        Schedule.status가 OPEN이고 본인 슬롯일 때만. LOCKED 이후엔 403.
+        잠금 해제 후에도 seminarId가 남아 있는 슬롯은 403 — 임원 반려·강제해제를 거쳐야 한다.
       security: [{ bearerAuth: [] }]
       parameters:
         - $ref: '#/components/parameters/ScheduleId'
@@ -781,7 +783,9 @@ paths:
     delete:
       tags: [schedule]
       summary: 슬롯 강제 해제 (임원)
-      description: seminarId가 있으면 409 — 먼저 그 세미나를 반려해야 한다.
+      description: >-
+        seminarId가 있으면 409 — 먼저 그 세미나를 반려해야 한다.
+        해제 시 그 세미나의 scheduleId도 null로 끊긴다.
       security: [{ bearerAuth: [] }]
       parameters:
         - $ref: '#/components/parameters/ScheduleId'
