@@ -156,9 +156,9 @@ export default function SeminarPage() {
       return;
     }
     if (seminarSlot.editing) {
-      resubmitSeminarM.mutate({ id: seminarSlot.slot.seminarId, form: seminarSlotForm.values });
+      resubmitSeminarM.mutate({ id: seminarSlot.slot.seminarId, form: seminarSlotForm.values, startsAt: seminarSlot.schedule.startsAt });
     } else {
-      submitSeminarM.mutate({ scheduleId: seminarSlot.schedule.id, index: seminarSlot.slot.index, form: seminarSlotForm.values });
+      submitSeminarM.mutate({ scheduleId: seminarSlot.schedule.id, index: seminarSlot.slot.index, form: seminarSlotForm.values, startsAt: seminarSlot.schedule.startsAt });
     }
   }
 

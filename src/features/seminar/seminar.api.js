@@ -26,9 +26,11 @@ export async function getSeminar(id) {
 /**
  * REJECTED 세미나를 본인이 수정해 재제출한다 — 같은 id, approvalStatus는 PENDING으로,
  * rejectReason은 null로 돌아간다. attendanceCode는 보내지 않는다 — 임원이 "세미나 관리"
- * 표에서 직접 설정하는 값이라 재제출로 건드리지 않는다.
+ * 표에서 직접 설정하는 값이라 재제출로 건드리지 않는다. startsAt은 슬롯 연동 세미나라면
+ * 서버가 무시하고 Schedule 값을 유지하지만, SeminarCreateRequest가 @NotNull이라 값을
+ * 보내야 검증을 통과한다 — 호출부에서 schedule.startsAt을 그대로 실어 보낸다.
  */
-export async function resubmitSeminar(id, form) {
+export async function resubmitSeminar(id, form, startsAt) {
   const opt = (v) => (v && v.trim() ? v.trim() : null);
   const payload = {
     title: form.title.trim(),
@@ -37,6 +39,7 @@ export async function resubmitSeminar(id, form) {
     description: opt(form.description),
     materialUrl: opt(form.materialUrl),
     target: form.target || [],
+    startsAt,
   };
   const { data } = await client.patch(`/api/seminars/${id}`, payload);
   return data;

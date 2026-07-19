@@ -54,7 +54,7 @@ export function useSeminar(id, options) {
 export function useResubmitSeminar(options) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, form }) => api.resubmitSeminar(id, form),
+    mutationFn: ({ id, form, startsAt }) => api.resubmitSeminar(id, form, startsAt),
     ...options,
     onSuccess: (...args) => {
       qc.invalidateQueries({ queryKey: seminarKeys.all });

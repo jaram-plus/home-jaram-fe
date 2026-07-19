@@ -30,11 +30,13 @@ export async function cancelSlot({ scheduleId, index }) {
 }
 
 /**
- * 슬롯에서 세미나 제출. SeminarCreateRequest와 같은 필드를 쓰되 startsAt/place/mode는
- * Schedule 값으로 서버가 채우므로 보내지 않는다. attendanceCode도 보내지 않는다 — 학회원이
- * 스스로 정하지 않고, 승인 후 임원이 "세미나 관리" 표에서 직접 설정한다.
+ * 슬롯에서 세미나 제출. SeminarCreateRequest와 같은 필드를 쓰되 place/mode는 Schedule
+ * 값으로 서버가 채우므로 보내지 않는다. startsAt은 서버가 무시하고 Schedule 값을 쓰지만,
+ * SeminarCreateRequest가 @NotNull이라 값을 보내야 검증을 통과한다 — schedule.startsAt을
+ * 그대로 실어 보낸다. attendanceCode도 보내지 않는다 — 학회원이 스스로 정하지 않고,
+ * 승인 후 임원이 "세미나 관리" 표에서 직접 설정한다.
  */
-export async function submitSlotSeminar({ scheduleId, index, form }) {
+export async function submitSlotSeminar({ scheduleId, index, form, startsAt }) {
   const opt = (v) => (v && v.trim() ? v.trim() : null);
   const payload = {
     title: form.title.trim(),
@@ -43,6 +45,7 @@ export async function submitSlotSeminar({ scheduleId, index, form }) {
     description: opt(form.description),
     materialUrl: opt(form.materialUrl),
     target: form.target || [],
+    startsAt,
   };
   const { data } = await client.post(`/api/schedules/${scheduleId}/slots/${index}/seminar`, payload);
   return data;
