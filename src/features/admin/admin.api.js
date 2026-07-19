@@ -133,12 +133,13 @@ async function fetchPendingApplications({ q = '', page = 1, size = 8 } = {}) {
 
 /**
  * seminarApprovals도 applications와 같은 이유로 전용 엔드포인트를 쓴다:
- * GET /api/admin/seminars?approvalStatus=PENDING → Seminar[] (officer 전용 조회).
+ * GET /api/admin/seminars/pending → Seminar[] (officer 전용 조회). /api/admin/seminars 는
+ * {resource} 일반 목록에 걸려 승인상태로 걸러지지 않으므로 쓰면 안 된다.
  * 화면 스키마(admin.data SCHEMAS.seminarApprovals)에 맞춰 정제하고, 검색·페이지는
  * 이 계층에서 처리한다.
  */
 async function fetchPendingSeminarApprovals({ q = '', page = 1, size = 8 } = {}) {
-  const { data } = await client.get('/api/admin/seminars', { params: { approvalStatus: 'PENDING' } });
+  const { data } = await client.get('/api/admin/seminars/pending');
   const rows = (data || []).map((s) => ({
     id: s.id,
     title: s.title,

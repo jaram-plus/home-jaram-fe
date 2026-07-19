@@ -798,6 +798,26 @@ paths:
         '409': { $ref: '#/components/responses/Conflict' }
         '5XX': { $ref: '#/components/responses/ServerError' }
 
+  /api/admin/seminars/pending:
+    get:
+      tags: [seminar]
+      summary: 승인 대기 세미나 목록 (임원)
+      description: >-
+        approvalStatus=PENDING인 세미나를 startsAt 내림차순으로. 어드민 승인 큐 전용.
+        일반 목록 /api/admin/seminars(={resource})는 승인상태로 거르지 않는다.
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: PENDING 세미나 목록
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Seminar' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '5XX': { $ref: '#/components/responses/ServerError' }
+
   /api/admin/seminars/{id}/approve:
     post:
       tags: [seminar]
