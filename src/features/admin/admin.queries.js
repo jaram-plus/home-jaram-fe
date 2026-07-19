@@ -20,7 +20,9 @@ export function useResourceList(resource, params, options = {}) {
   return useQuery({
     queryKey: adminKeys.list(resource, params),
     queryFn: () => api.fetchList(resource, params),
-    placeholderData: (prev) => prev, // 페이지·필터 전환 시 이전 데이터 유지 (keepPreviousData)
+    // 페이지·필터 전환 시 이전 데이터 유지(keepPreviousData). 단, 이전 쿼리가 같은
+    // resource 였을 때만 — 아니면 탭을 바꿀 때 이전 탭 데이터가 잠깐 비쳐 보인다.
+    placeholderData: (prev, prevQuery) => (prevQuery?.queryKey[2] === resource ? prev : undefined),
     ...options,
   });
 }
