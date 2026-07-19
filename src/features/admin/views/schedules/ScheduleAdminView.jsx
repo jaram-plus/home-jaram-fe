@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/design-system';
 import { useAdminStore } from '../../admin.store';
-import { useSchedulesAdmin, useCreateSchedule, useLockSchedule, useForceUnassignSlot } from '../../admin.queries';
+import { useSchedulesAdmin, useCreateSchedule, useLockSchedule, useUnlockSchedule, useForceUnassignSlot } from '../../admin.queries';
 import { ScheduleAdminCard } from './ScheduleAdminCard';
 import { CreateScheduleModal } from './CreateScheduleModal';
 
@@ -32,6 +32,10 @@ export function ScheduleAdminView() {
   const lockM = useLockSchedule({
     onSuccess: () => showToast('일정을 잠갔습니다.'),
     onError: () => showToast('잠금 처리 중 오류가 발생했습니다.'),
+  });
+  const unlockM = useUnlockSchedule({
+    onSuccess: () => showToast('일정 잠금을 해제했습니다.'),
+    onError: () => showToast('잠금 해제 중 오류가 발생했습니다.'),
   });
   const unassignM = useForceUnassignSlot({
     onSuccess: () => { setUnassignTarget(null); showToast('슬롯을 해제했습니다.'); },
@@ -69,7 +73,7 @@ export function ScheduleAdminView() {
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
         <div>
           <p style={{ margin: '0 0 10px', fontSize: 12, fontWeight: 600, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--brand)' }}>SEMINAR</p>
-          <h1 style={{ margin: '0 0 6px', fontFamily: 'var(--font-display)', fontSize: 40, lineHeight: 1.1, color: 'var(--text-strong)' }}>일정 관리</h1>
+          <h1 style={{ margin: '0 0 6px', fontFamily: 'var(--font-display)', fontSize: 40, lineHeight: 1.1, color: 'var(--text-strong)' }}>세미나 일정</h1>
           <p style={{ margin: 0, fontSize: 15, color: 'var(--text-muted)' }}>일정을 만들고, 자기등록 마감 후 잠근 뒤 슬롯을 관리하세요.</p>
         </div>
         <Button onClick={openCreate}>일정 만들기</Button>
@@ -86,8 +90,10 @@ export function ScheduleAdminView() {
               key={s.id}
               schedule={s}
               onLock={(id) => lockM.mutate(id)}
+              onUnlock={(id) => unlockM.mutate(id)}
               onForceUnassign={onForceUnassign}
               locking={lockM.isPending && lockM.variables === s.id}
+              unlocking={unlockM.isPending && unlockM.variables === s.id}
               unassigningIndex={unassignTarget?.scheduleId === s.id ? unassignTarget.index : null}
             />
           ))}

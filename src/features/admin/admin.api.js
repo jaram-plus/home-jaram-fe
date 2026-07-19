@@ -96,9 +96,11 @@ export function toWire(resource, fields) {
   return out;
 }
 
-/* ── 목록 조회 (검색·필터·정렬·페이지) ───────────────────────────────── */
+/* ── 목록 조회 (검색·필터·정렬·페이지) ─────────────────────────────────
+ * seminars는 백엔드 연동 완료로 USE_MOCK 여부와 무관하게 항상 실 서버를 쓴다.
+ */
 export async function fetchList(resource, params = {}) {
-  if (USE_MOCK) {
+  if (USE_MOCK && resource !== 'seminars') {
     await delay(200);
     return mockList(resource, params);
   }
@@ -180,7 +182,7 @@ export async function saveBatch(resource, { updates = [], creates = [], deletes 
     creates: creates.map((c) => ({ tempId: c.tempId, fields: toWire(resource, c.fields) })),
     deletes,
   };
-  if (USE_MOCK) {
+  if (USE_MOCK && resource !== 'seminars') {
     await delay(600);
     return mockBatch(resource, body);
   }
@@ -288,26 +290,14 @@ export async function rejectSeminar(id, reason) {
  * 슬롯별 개별 액션(해제)이 필요해 TableView 배치저장 모델에 안 맞는다 — 즉시 반영되는
  * 단건 액션으로 구현한다. 목록 조회는 공개 GET과 같은 데이터를 admin 전용 화면에서
  * 다시 쓰는 것뿐이라 별도 admin 전용 조회 엔드포인트를 만들지 않는다.
+ * 백엔드 연동 완료로 USE_MOCK 여부와 무관하게 항상 실 서버를 쓴다.
  */
 export async function fetchSchedules() {
-  if (USE_MOCK) { await delay(200); return SEED.schedules; }
   const { data } = await client.get('/api/schedules');
   return data;
 }
 
 export async function createSchedule(payload) {
-  if (USE_MOCK) {
-    await delay(400);
-    return {
-      id: 'srv-' + Date.now(),
-      ...payload,
-      day: '—', month: '—', weekday: '—', time: '—',
-      status: 'OPEN',
-      slots: Array.from({ length: payload.capacity || 3 }, (_, index) => ({
-        index, member: null, seminarId: null, seminarApprovalStatus: null, seminarRejectReason: null,
-      })),
-    };
-  }
   try {
     const { data } = await client.post('/api/admin/schedules', payload);
     return data;
@@ -317,7 +307,6 @@ export async function createSchedule(payload) {
 }
 
 export async function lockSchedule(id) {
-  if (USE_MOCK) { await delay(300); return { ok: true, id }; }
   try {
     const { data } = await client.patch(`/api/admin/schedules/${id}/lock`);
     return data;
@@ -326,8 +315,16 @@ export async function lockSchedule(id) {
   }
 }
 
+export async function unlockSchedule(id) {
+  try {
+    const { data } = await client.patch(`/api/admin/schedules/${id}/unlock`);
+    return data;
+  } catch (error) {
+    throwWireError(error, 'NOT_FOUND');
+  }
+}
+
 export async function forceUnassignSlot(scheduleId, index) {
-  if (USE_MOCK) { await delay(300); return { ok: true }; }
   try {
     const { data } = await client.delete(`/api/admin/schedules/${scheduleId}/slots/${index}`);
     return data;

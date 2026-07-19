@@ -743,13 +743,32 @@ paths:
     patch:
       tags: [schedule]
       summary: 일정 잠금 (임원)
-      description: OPEN→LOCKED. 역방향 없음.
+      description: OPEN→LOCKED.
       security: [{ bearerAuth: [] }]
       parameters:
         - $ref: '#/components/parameters/ScheduleId'
       responses:
         '200':
           description: 잠김
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Schedule' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '5XX': { $ref: '#/components/responses/ServerError' }
+
+  /api/admin/schedules/{id}/unlock:
+    patch:
+      tags: [schedule]
+      summary: 일정 잠금 해제 (임원)
+      description: LOCKED→OPEN.
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: '#/components/parameters/ScheduleId'
+      responses:
+        '200':
+          description: 잠금 해제됨
           content:
             application/json:
               schema: { $ref: '#/components/schemas/Schedule' }
@@ -1176,7 +1195,7 @@ components:
     ScheduleStatus:
       type: string
       enum: [OPEN, LOCKED]
-      description: 임원 수동 토글로만 LOCKED. 역방향(재오픈) 없음.
+      description: 임원 수동 토글로 LOCKED/OPEN 전환.
     SlotMember:
       type: object
       required: [id, name]

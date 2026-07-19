@@ -93,6 +93,18 @@ export function useLockSchedule(options = {}) {
   });
 }
 
+export function useUnlockSchedule(options = {}) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id) => api.unlockSchedule(id),
+    ...options,
+    onSuccess: (...a) => {
+      qc.invalidateQueries({ queryKey: adminKeys.schedules() });
+      options.onSuccess?.(...a);
+    },
+  });
+}
+
 export function useForceUnassignSlot(options = {}) {
   const qc = useQueryClient();
   return useMutation({

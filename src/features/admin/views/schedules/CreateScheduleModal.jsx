@@ -19,7 +19,7 @@ export function CreateScheduleModal({ values, errors, onChange, onClose, onSubmi
           <button type="button" onClick={onClose} aria-label="닫기" style={{ background: 'none', border: 'none', fontSize: 24, cursor: 'pointer', color: 'var(--text-faint)', lineHeight: 1 }}>×</button>
         </div>
         <div style={{ marginTop: 18, display: 'grid', gap: 14 }}>
-          <Input label="일시" type="datetime-local" value={values.startsAt} onChange={onChange('startsAt')} error={errors.startsAt} />
+          <Input label="일시" type="datetime-local" value={values.startsAt} onChange={onChange('startsAt')} error={errors.startsAt} style={{ maxWidth: 220 }} />
           <Input label="장소" placeholder="제3공학관 401호 / 온라인" value={values.place} onChange={onChange('place')} />
           <Input label="진행 방식" placeholder="오프라인 / 온라인" value={values.mode} onChange={onChange('mode')} />
           <Input label="정원" type="number" min={1} value={values.capacity} onChange={onChange('capacity')} />

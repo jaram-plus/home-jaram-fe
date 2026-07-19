@@ -7,7 +7,7 @@ import { SCHEDULE_STATUS_LABELS } from '@/shared/seminar/enums';
  * 빈 슬롯 문구('비어있음')는 회원용 ScheduleCard의 SLOT_EMPTY('미정')와 다른 단어를
  * 쓴다 — admin 표에서는 이 리소스가 "비어있는 자리"라는 관리 관점 문구가 자연스럽다.
  */
-export function ScheduleAdminCard({ schedule, onLock, onForceUnassign, locking, unassigningIndex }) {
+export function ScheduleAdminCard({ schedule, onLock, onUnlock, onForceUnassign, locking, unlocking, unassigningIndex }) {
   const locked = schedule.status === 'LOCKED';
 
   return (
@@ -32,9 +32,15 @@ export function ScheduleAdminCard({ schedule, onLock, onForceUnassign, locking, 
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <Tag tone={locked ? 'neutral' : 'brand'} size="sm">{SCHEDULE_STATUS_LABELS[schedule.status]}</Tag>
-          <Button variant="secondary" size="sm" disabled={locked || locking} onClick={() => onLock(schedule.id)}>
-            {locking ? '잠그는 중…' : locked ? '잠김' : '잠금'}
-          </Button>
+          {locked ? (
+            <Button variant="secondary" size="sm" disabled={unlocking} onClick={() => onUnlock(schedule.id)}>
+              {unlocking ? '해제하는 중…' : '잠금 해제'}
+            </Button>
+          ) : (
+            <Button variant="secondary" size="sm" disabled={locking} onClick={() => onLock(schedule.id)}>
+              {locking ? '잠그는 중…' : '잠금'}
+            </Button>
+          )}
         </div>
       </div>
 

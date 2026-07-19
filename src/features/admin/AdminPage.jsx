@@ -15,7 +15,7 @@ import { ScheduleAdminView } from './views';
  * 하위 화면은 여기 중첩 라우트로 나눠 URL 로 상태화합니다 (새로고침·공유·뒤로가기 보존).
  *   /admin/dashboard  /admin/members(?tab=member|exec|contrib|graduate)
  *   /admin/seminars   /admin/studies   /admin/applications   /admin/settings
- *   /admin/schedules(일정 관리)   /admin/seminar-approvals(세미나 승인)
+ *   /admin/schedules(세미나 일정)   /admin/seminar-approvals(세미나 승인)
  * 표의 검색·필터·정렬·페이지도 searchParams(?q=&sort=&page=…)로 직렬화됩니다 (TableView).
  * `schedules`만 예외 — 슬롯별 개별 액션 때문에 TableView가 아니라 커스텀 뷰다.
  *

@@ -229,37 +229,9 @@ export const SEED = {
     { id: 'g5', name: '백지안', gen: '36기', gradYear: '2022', org: '토스', job: 'iOS 개발자' },
     { id: 'g6', name: '남기훈', gen: '31기', gradYear: '2017', org: '삼성전자', job: 'SW 엔지니어' },
   ],
-  seminars: [
-    { id: 's1', title: 'Git 협업 워크플로우', speaker: '강준혁', topic: 'Git', startsAt: '2026-03-07T19:00', place: '제3공학관 401호', mode: '오프라인', target: [], attendanceCode: 'GIT7', status: '종료' },
-    { id: 's2', title: 'React 상태관리 심화', speaker: '최유나', topic: 'Frontend', startsAt: '2026-03-14T19:00', place: '제3공학관 401호', mode: '오프라인', target: ['수습회원'], attendanceCode: 'RCT2', status: '종료' },
-    { id: 's3', title: '네트워크 기초', speaker: '박도윤', topic: 'Network', startsAt: '2026-03-21T19:00', place: '온라인', mode: '온라인', target: ['수습회원'], attendanceCode: 'NET9', status: '진행 중' },
-    { id: 's4', title: '자료구조 스터디 OT', speaker: '윤서아', topic: 'CS', startsAt: '2026-03-28T19:00', place: '제3공학관 401호', mode: '오프라인', target: [], attendanceCode: 'DS55', status: '예정' },
-    { id: 's5', title: '알고리즘 문제풀이', speaker: '정시우', topic: 'Algorithm', startsAt: '2026-04-04T19:00', place: '제3공학관 502호', mode: '오프라인', target: ['준회원', '정회원'], attendanceCode: 'ALG1', status: '예정' },
-    { id: 's6', title: 'DB 인덱스 원리', speaker: '이하은', topic: 'Backend', startsAt: '2026-04-11T19:00', place: '온라인', mode: '온라인', target: ['수습회원'], attendanceCode: 'DBIX', status: '예정' },
-  ],
   seminarApprovals: [
     { id: 'sa1', title: 'Redis 캐시 전략 실습', speaker: '이하은', topic: 'Backend', startsAt: '2026-07-25 19:00', status: '대기' },
     { id: 'sa2', title: 'TypeScript 제네릭 딥다이브', speaker: '박도윤', topic: 'Frontend', startsAt: '2026-08-01 19:00', status: '대기' },
-  ],
-  schedules: [
-    {
-      id: 'sc1', startsAt: '2026-07-25T19:00', day: '25', month: '7월', weekday: '토', time: '19:00',
-      place: '제3공학관 401호', mode: '오프라인', capacity: 3, status: 'OPEN',
-      slots: [
-        { index: 0, member: { id: 'm2', name: '이하은' }, seminarId: null, seminarApprovalStatus: null, seminarRejectReason: null },
-        { index: 1, member: null, seminarId: null, seminarApprovalStatus: null, seminarRejectReason: null },
-        { index: 2, member: null, seminarId: null, seminarApprovalStatus: null, seminarRejectReason: null },
-      ],
-    },
-    {
-      id: 'sc2', startsAt: '2026-08-01T19:00', day: '01', month: '8월', weekday: '토', time: '19:00',
-      place: '제3공학관 401호', mode: '오프라인', capacity: 3, status: 'LOCKED',
-      slots: [
-        { index: 0, member: { id: 'm3', name: '박도윤' }, seminarId: 'sa2', seminarApprovalStatus: 'PENDING', seminarRejectReason: null },
-        { index: 1, member: null, seminarId: null, seminarApprovalStatus: null, seminarRejectReason: null },
-        { index: 2, member: null, seminarId: null, seminarApprovalStatus: null, seminarRejectReason: null },
-      ],
-    },
   ],
   studies: [
     { id: 'st1', title: '알고리즘 코테반', leader: '강준혁', count: '12명', schedule: '월 20:00', period: '2026-03 ~ 06', rate: '92%', status: '진행' },
