@@ -97,10 +97,10 @@ export function toWire(resource, fields) {
 }
 
 /* ── 목록 조회 (검색·필터·정렬·페이지) ─────────────────────────────────
- * seminars는 백엔드 연동 완료로 USE_MOCK 여부와 무관하게 항상 실 서버를 쓴다.
+ * seminars·seminarApprovals는 백엔드 연동 완료로 USE_MOCK 여부와 무관하게 항상 실 서버를 쓴다.
  */
 export async function fetchList(resource, params = {}) {
-  if (USE_MOCK && resource !== 'seminars') {
+  if (USE_MOCK && resource !== 'seminars' && resource !== 'seminarApprovals') {
     await delay(200);
     return mockList(resource, params);
   }
@@ -182,7 +182,7 @@ export async function saveBatch(resource, { updates = [], creates = [], deletes 
     creates: creates.map((c) => ({ tempId: c.tempId, fields: toWire(resource, c.fields) })),
     deletes,
   };
-  if (USE_MOCK && resource !== 'seminars') {
+  if (USE_MOCK && resource !== 'seminars' && resource !== 'seminarApprovals') {
     await delay(600);
     return mockBatch(resource, body);
   }
@@ -268,7 +268,6 @@ export async function rejectApplication(id, reason) {
 }
 
 export async function approveSeminar(id) {
-  if (USE_MOCK) { await delay(400); return { ok: true, id }; }
   try {
     const { data } = await client.post(`/api/admin/seminars/${id}/approve`);
     return data;
@@ -277,7 +276,6 @@ export async function approveSeminar(id) {
   }
 }
 export async function rejectSeminar(id, reason) {
-  if (USE_MOCK) { await delay(300); return { ok: true, id }; }
   try {
     const { data } = await client.post(`/api/admin/seminars/${id}/reject`, { reason });
     return data;

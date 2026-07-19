@@ -229,10 +229,6 @@ export const SEED = {
     { id: 'g5', name: '백지안', gen: '36기', gradYear: '2022', org: '토스', job: 'iOS 개발자' },
     { id: 'g6', name: '남기훈', gen: '31기', gradYear: '2017', org: '삼성전자', job: 'SW 엔지니어' },
   ],
-  seminarApprovals: [
-    { id: 'sa1', title: 'Redis 캐시 전략 실습', speaker: '이하은', topic: 'Backend', startsAt: '2026-07-25 19:00', status: '대기' },
-    { id: 'sa2', title: 'TypeScript 제네릭 딥다이브', speaker: '박도윤', topic: 'Frontend', startsAt: '2026-08-01 19:00', status: '대기' },
-  ],
   studies: [
     { id: 'st1', title: '알고리즘 코테반', leader: '강준혁', count: '12명', schedule: '월 20:00', period: '2026-03 ~ 06', rate: '92%', status: '진행' },
     { id: 'st2', title: 'CS 전공 스터디', leader: '최유나', count: '8명', schedule: '수 19:00', period: '2026-03 ~ 06', rate: '85%', status: '진행' },
