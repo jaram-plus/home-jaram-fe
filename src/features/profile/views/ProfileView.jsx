@@ -19,7 +19,7 @@ export function ProfileView({ me, onEdit, onLogout }) {
   const readonlyValue = (key) => {
     if (key === 'authority') return AUTHORITY_LABELS[me[key]] ?? me[key];
     if (key === 'department') return departmentLabel(me[key]) ?? empty;
-    if (key === 'title') return titleLabel(me[key]) ?? empty;
+    if (key === 'title') return titleLabel(me.title, me.department) ?? empty;
     if (key === 'studentId') {
       return me[key]
         ? <span style={{ fontFamily: 'var(--font-serif)', letterSpacing: '0.01em' }}>{me[key]}</span>

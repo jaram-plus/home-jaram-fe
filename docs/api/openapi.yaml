@@ -1002,6 +1002,7 @@ components:
     # ── enum ──
     Authority:
       type: string
+      description: 권한. 서버가 title에서 파생한다 (title이 있으면 OFFICER, 없으면 MEMBER).
       enum: [MEMBER, OFFICER]
     MemberDepartment:
       type: [string, 'null']
@@ -1009,8 +1010,11 @@ components:
       enum: [LEADERSHIP, ACADEMIC, PR, FINANCE, INFRA, null]
     MemberTitle:
       type: [string, 'null']
-      description: 직책(임원 배정). 등급은 MemberGrade로 분리. enum name으로 전송 (라벨은 FE 매핑).
-      enum: [PRESIDENT, VICE_PRESIDENT, ACADEMIC_LEAD, ACADEMIC_MEMBER, PR_LEAD, PR_MEMBER, FINANCE_LEAD, FINANCE_MEMBER, SERVER_ADMIN, null]
+      description: >
+        직책. department와 조합해 표시 라벨을 만든다 (ACADEMIC+LEAD → 학술부장).
+        LEADERSHIP은 PRESIDENT|VICE_PRESIDENT, ACADEMIC|PR|FINANCE는 LEAD|STAFF,
+        INFRA는 SERVER_ADMIN만 허용. null이면 일반 회원.
+      enum: [PRESIDENT, VICE_PRESIDENT, LEAD, STAFF, SERVER_ADMIN, null]
     MemberGrade:
       type: string
       description: 회원 등급. 가입 승인 시 gen 파생(gen==현재년도-1984→NEWCOMER, 그 외 ASSOCIATE). enum name으로 전송.
