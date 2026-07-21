@@ -8,6 +8,7 @@ import { DataTable } from './DataTable';
 import { Pagination } from './Pagination';
 import { SaveBar } from './SaveBar';
 import { EmptyState } from './EmptyState';
+import { ConfirmDialog } from '../forms/ConfirmDialog';
 
 const PAGE_SIZE = 8;
 
@@ -122,11 +123,20 @@ export function TableView({ resource: fixedResource }) {
     onError: () => showToast(MESSAGES.savePartialFail),
   });
 
+  // 졸업생 전환은 진행 중인 임원 임기를 종료시킨다. 되돌릴 수 없으므로 저장 전에 확인을 받는다.
+  const [graduating, setGraduating] = React.useState(null);
+
   const onSave = () => {
     if (!slice || dcount === 0) return;
     const updates = Object.entries(slice.edits).map(([id, fields]) => ({ id, fields, version: origById[id]?.updatedAt }));
     const creates = slice.creates.map(({ id, _new, ...fields }) => ({ tempId: id, fields }));
     const deletes = Object.keys(slice.deletes);
+
+    const ending = updates.filter((u) => u.fields.grade === '졸업생' && origById[u.id]?.title);
+    if (ending.length) {
+      setGraduating({ count: ending.length, payload: { updates, creates, deletes } });
+      return;
+    }
     save.mutate({ updates, creates, deletes });
   };
 
@@ -208,6 +218,16 @@ export function TableView({ resource: fixedResource }) {
       />
 
       <SaveBar count={dcount} saving={save.isPending} onSave={onSave} onCancel={() => reset(resource)} />
+
+      {graduating && (
+        <ConfirmDialog
+          title="졸업생으로 변경할까요?"
+          message={MESSAGES.confirmGraduate(graduating.count)}
+          confirmLabel="변경하고 저장"
+          onConfirm={() => { save.mutate(graduating.payload); setGraduating(null); }}
+          onCancel={() => setGraduating(null)}
+        />
+      )}
     </div>
   );
 }
