@@ -5,6 +5,20 @@ import React from 'react';
  * 검색·필터 값은 URL searchParams 에서 내려오고, 변경은 콜백으로 위임합니다.
  */
 export function TableToolbar({ schema, q, filters, onSearch, onFilter, onExport, onAddRow, exporting }) {
+  /* 검색어는 URL(searchParams)까지 왕복하므로, 그 값을 그대로 input 의 value 로 쓰면
+   * 한글 조합 중에 옛 값이 되돌아와 글자가 덧붙습니다('자람' → 'ㅈ자잘자라람람').
+   * 입력은 로컬 상태로 받고, 조합이 끝난 뒤에만 URL 로 올립니다. */
+  const [term, setTerm] = React.useState(q);
+  const composing = React.useRef(false);
+  const pushed = React.useRef(q);
+
+  const push = (v) => { pushed.current = v; onSearch(v); };
+
+  // 탭 전환처럼 밖에서 q 가 비워진 경우에만 입력칸을 맞춥니다.
+  React.useEffect(() => {
+    if (q !== pushed.current) { pushed.current = q; setTerm(q); }
+  }, [q]);
+
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginBottom: 16 }}>
       <div style={{ position: 'relative', flex: 1, minWidth: 220, maxWidth: 320 }}>
@@ -12,8 +26,10 @@ export function TableToolbar({ schema, q, filters, onSearch, onFilter, onExport,
         <input
           type="text"
           placeholder="이름·학번·내용 검색"
-          value={q}
-          onChange={(e) => onSearch(e.target.value)}
+          value={term}
+          onChange={(e) => { setTerm(e.target.value); if (!composing.current) push(e.target.value); }}
+          onCompositionStart={() => { composing.current = true; }}
+          onCompositionEnd={(e) => { composing.current = false; push(e.target.value); }}
           style={{ width: '100%', boxSizing: 'border-box', padding: '9px 12px 9px 36px', fontFamily: 'var(--font-sans)', fontSize: 14, color: 'var(--text-strong)', background: 'var(--surface-raised)', border: '1.5px solid var(--border-strong)', borderRadius: 8, outline: 'none' }}
           onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--brand)'; e.currentTarget.style.boxShadow = '0 0 0 3px var(--brand-tint)'; }}
           onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--border-strong)'; e.currentTarget.style.boxShadow = 'none'; }}
