@@ -42,7 +42,7 @@ export async function login({ email, password }) {
   }
 }
 
-// 와이어 필드: name/studentId/email/password/gen/faculty/phone/enrolled.
+// 와이어 필드: name/studentId/email/password/gen(정수)/faculty/phone/enrolled.
 // studentType은 gen 산출용 클라 전용 값이라 서버로 보내지 않는다(SignupRequest 미포함).
 export async function signup({ name, studentId, email, password, gen, faculty, phone, enrolled }) {
   try {

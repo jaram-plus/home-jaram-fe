@@ -32,7 +32,7 @@ function ProfileInner() {
   const { data: me, isLoading, isError } = useMe();
   const [editing, setEditing] = useState(false);
   const [formError, setFormError] = useState('');
-  const form = useForm({ bio: '', githubUrl: '', blogUrl: '' });
+  const form = useForm({ phone: '', bio: '', githubUrl: '', blogUrl: '' });
 
   const [toast, setToast] = useState(null);
   const toastTimer = useRef(null);
@@ -58,6 +58,7 @@ function ProfileInner() {
 
   const startEdit = () => {
     form.setValues({
+      phone: me.phone ?? '',
       bio: me.bio ?? '',
       githubUrl: me.githubUrl ?? '',
       blogUrl: me.blogUrl ?? '',

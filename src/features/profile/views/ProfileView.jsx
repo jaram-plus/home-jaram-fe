@@ -3,7 +3,7 @@ import { Card, Button } from '@/design-system';
 import { departmentLabel, titleLabel } from '@/shared/member/enums';
 import jaramMark from '@/design-system/assets/logos/jaram-mark.png';
 import { Eyebrow, GroupLabel, FieldRow } from './parts';
-import { EYEBROW, GROUPS, READONLY_LABELS, LABELS, MESSAGES, AUTHORITY_LABELS, ACTIONS } from '../profile.data';
+import { EYEBROW, GROUPS, READONLY_LABELS, LABELS, MESSAGES, AUTHORITY_LABELS, ACTIONS, TERMS_EMPTY, termPeriod } from '../profile.data';
 
 const markSrc = typeof jaramMark === 'string' ? jaramMark : jaramMark.src;
 
@@ -58,9 +58,9 @@ export function ProfileView({ me, onEdit, onLogout }) {
             <h1 style={{ margin: 0, fontFamily: 'var(--font-display)', fontSize: 'var(--fs-title-1)', lineHeight: 'var(--lh-tight)', color: 'var(--text-strong)' }}>
               {me.name}
             </h1>
-            {me.gen && (
+            {me.gen != null && (
               <span style={{ fontFamily: 'var(--font-serif)', fontSize: 'var(--fs-body)', color: 'var(--text-muted)' }}>
-                {me.gen}
+                {me.gen}기
               </span>
             )}
           </div>
@@ -81,6 +81,19 @@ export function ProfileView({ me, onEdit, onLogout }) {
             <FieldRow key={key} label={label}>{readonlyValue(key)}</FieldRow>
           );
         })}
+        <FieldRow label={LABELS.phone}>{me.phone || empty}</FieldRow>
+      </div>
+
+      {/* 임기: 맡았던 직책의 이력(오래된 순). 현직은 종료 기수 자리를 비운다. */}
+      <div style={{ marginTop: 'var(--space-6)' }}>
+        <GroupLabel>{GROUPS.terms}</GroupLabel>
+        {me.terms?.length
+          ? me.terms.map((t, i) => (
+              <FieldRow key={i} label={termPeriod(t)}>
+                {titleLabel(t.title, t.department) ?? departmentLabel(t.department) ?? empty}
+              </FieldRow>
+            ))
+          : <p style={{ margin: '8px 0 0', fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-sm)', color: 'var(--text-muted)' }}>{TERMS_EMPTY}</p>}
       </div>
 
       {/* 소개: 본인이 직접 채우는 프로필. */}

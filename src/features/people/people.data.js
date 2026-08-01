@@ -7,7 +7,7 @@
  * labels, descriptions, empty strings) here.
  *
  * Per person:
- *   gen     기수 badge ('41기'); null hides the badge.
+ *   gen     기수 badge (정수 41; FE가 '기'를 붙인다); null hides the badge.
  *   github  show the GitHub social link (href wired in the app).
  *   blog    show the blog/globe social link.
  */
@@ -26,36 +26,36 @@ export const PEOPLE = {
       {
         heading: '회장단',
         members: [
-          { name: '김자람', role: '회장', gen: '41기', bio: '백엔드와 클라우드 인프라에 관심이 많습니다.', github: true, blog: true },
-          { name: '이성장', role: '부회장', gen: '41기', bio: '학회 운영과 프론트엔드를 함께 챙기고 있어요.', github: true, blog: false },
+          { name: '김자람', role: '회장', gen: 41, bio: '백엔드와 클라우드 인프라에 관심이 많습니다.', github: true, blog: true },
+          { name: '이성장', role: '부회장', gen: 41, bio: '학회 운영과 프론트엔드를 함께 챙기고 있어요.', github: true, blog: false },
         ],
       },
       {
         heading: '학술부',
         members: [
-          { name: '박학술', role: '학술부장', gen: '41기', bio: '세미나와 스터디 커리큘럼을 설계합니다.', github: true, blog: true },
-          { name: '정알고', role: '학술부원', gen: '41기', bio: '알고리즘 스터디를 이끌고 있습니다.', github: true, blog: false },
-          { name: '한자료', role: '학술부원', gen: '41기', bio: 'CS 기초 자료를 정리해 공유합니다.', github: true, blog: false },
+          { name: '박학술', role: '학술부장', gen: 41, bio: '세미나와 스터디 커리큘럼을 설계합니다.', github: true, blog: true },
+          { name: '정알고', role: '학술부원', gen: 41, bio: '알고리즘 스터디를 이끌고 있습니다.', github: true, blog: false },
+          { name: '한자료', role: '학술부원', gen: 41, bio: 'CS 기초 자료를 정리해 공유합니다.', github: true, blog: false },
         ],
       },
       {
         heading: '홍보부',
         members: [
-          { name: '최홍보', role: '홍보부장', gen: '41기', bio: '자람의 소식을 안팎으로 전합니다.', github: false, blog: true },
-          { name: '오디자', role: '홍보부원', gen: '41기', bio: '포스터와 SNS 콘텐츠를 만듭니다.', github: false, blog: true },
+          { name: '최홍보', role: '홍보부장', gen: 41, bio: '자람의 소식을 안팎으로 전합니다.', github: false, blog: true },
+          { name: '오디자', role: '홍보부원', gen: 41, bio: '포스터와 SNS 콘텐츠를 만듭니다.', github: false, blog: true },
         ],
       },
       {
         heading: '회계부',
         members: [
-          { name: '윤회계', role: '회계부장', gen: '41기', bio: '학회 예산을 투명하게 관리합니다.', github: false, blog: false },
-          { name: '강예산', role: '회계부원', gen: '41기', bio: '회비와 행사 정산을 담당합니다.', github: false, blog: false },
+          { name: '윤회계', role: '회계부장', gen: 41, bio: '학회 예산을 투명하게 관리합니다.', github: false, blog: false },
+          { name: '강예산', role: '회계부원', gen: 41, bio: '회비와 행사 정산을 담당합니다.', github: false, blog: false },
         ],
       },
       {
         heading: '인프라',
         members: [
-          { name: '서관리', role: '서버 관리자', gen: '41기', bio: '자람 서비스의 인프라를 운영합니다.', github: true, blog: true },
+          { name: '서관리', role: '서버 관리자', gen: 41, bio: '자람 서비스의 인프라를 운영합니다.', github: true, blog: true },
         ],
       },
     ],
@@ -67,8 +67,8 @@ export const PEOPLE = {
       {
         heading: null,
         members: [
-          { name: '박나눔', role: '전 회장', gen: '38기', bio: '현직 프론트엔드 개발자로 후배 멘토링을 이어갑니다.', github: true, blog: true },
-          { name: '김선배', role: '전 학술부장', gen: '37기', bio: '세미나 운영 노하우를 전수해 주셨습니다.', github: true, blog: false },
+          { name: '박나눔', role: '전 회장', gen: 38, bio: '현직 프론트엔드 개발자로 후배 멘토링을 이어갑니다.', github: true, blog: true },
+          { name: '김선배', role: '전 학술부장', gen: 37, bio: '세미나 운영 노하우를 전수해 주셨습니다.', github: true, blog: false },
           { name: '이멘토', role: '외부 멘토', gen: null, bio: '실무 코드 리뷰와 커리어 상담을 도와주십니다.', github: true, blog: true },
         ],
       },

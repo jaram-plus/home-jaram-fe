@@ -55,7 +55,7 @@ const flip = (map) => Object.fromEntries(Object.entries(map).map(([k, v]) => [v,
  * 백엔드 행 필드명은 gen (계약상 정수, 예 41). 화면은 '41기' 라벨을 다룹니다.
  * '41기'|'41' → 41. 비숫자('외부' 등)는 그대로 통과(계약 미정의 자유값).
  */
-const GEN_RESOURCES = new Set(['member', 'exec', 'contrib', 'graduate']);
+const GEN_RESOURCES = new Set(['member', 'exec', 'contrib', 'grad']);
 const genToWire = (v) => {
   if (typeof v !== 'string') return v;
   const m = v.match(/^(\d{1,2})기?$/);

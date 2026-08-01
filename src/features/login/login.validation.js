@@ -19,8 +19,8 @@ export const isPhone = (x) => /^01[016789]\d{7,8}$/.test(String(x).replace(/[\s-
 // 기수 — 숫자만(예: 41) 또는 "41기" 형태.
 export const isGen = (x) => /^\d{1,3}기?$/.test(String(x).trim());
 
-// 와이어 정규화: 기수는 숫자만 남긴다("41기" → "41").
-export const genDigits = (x) => String(x).replace(/\D/g, '');
+// 와이어 정규화: 기수는 정수로 보낸다("41기" → 41). 계약상 SignupRequest.gen은 integer.
+export const genNumber = (x) => Number(String(x).replace(/\D/g, ''));
 
 // 와이어 정규화: 휴대전화는 하이픈 포함 형식으로(010-1234-5678).
 // 11자리는 3-4-4, 10자리는 3-3-4. 그 외 길이는 입력값 그대로 둔다.

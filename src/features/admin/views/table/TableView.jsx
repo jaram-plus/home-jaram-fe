@@ -19,7 +19,7 @@ const PAGE_SIZE = 8;
  * PATCH …:batch 한 번으로 커밋됩니다. (기획.md §3·§8)
  *
  * @param resource 고정 리소스('seminars'|'studies'|'applications'). 인원 관리는 생략 →
- *                 ?tab= 로 member|exec|contrib|graduate 를 고릅니다.
+ *                 ?tab= 로 member|exec|contrib|grad 를 고릅니다.
  */
 export function TableView({ resource: fixedResource }) {
   const [sp, setSp] = useSearchParams();

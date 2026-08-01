@@ -38,7 +38,7 @@ export function PersonCard({ person }) {
         >
           {name.slice(0, 1)}
         </div>
-        {gen && (
+        {gen != null && (
           <span
             style={{
               position: 'absolute',
@@ -56,7 +56,7 @@ export function PersonCard({ person }) {
               whiteSpace: 'nowrap',
             }}
           >
-            {gen}
+            {gen}기
           </span>
         )}
       </div>

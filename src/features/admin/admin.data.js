@@ -31,7 +31,7 @@ export const RESOURCES = {
   member: { path: 'members', unit: '명', tab: 'member' },
   exec: { path: 'members', unit: '명', tab: 'exec' },
   contrib: { path: 'members', unit: '명', tab: 'contrib' },
-  graduate: { path: 'members', unit: '명', tab: 'graduate' },
+  grad: { path: 'members', unit: '명', tab: 'grad' },
   seminars: { path: 'seminars', unit: '건' },
   studies: { path: 'studies', unit: '건' },
   applications: { path: 'applications', unit: '건' },
@@ -43,7 +43,7 @@ export const PEOPLE_TABS = [
   { key: 'member', label: '회원' },
   { key: 'exec', label: '임원진' },
   { key: 'contrib', label: '기여자' },
-  { key: 'graduate', label: '졸업생' },
+  { key: 'grad', label: '졸업생' },
 ];
 
 /* ── 리소스별 컬럼 스키마 ─────────────────────────────────────────────
@@ -98,7 +98,7 @@ export const SCHEMAS = {
       { key: '__act', label: '', type: 'actions', width: '0.6fr', align: 'center', actions: ['delete'] },
     ],
   },
-  graduate: {
+  grad: {
     eyebrow: 'PEOPLE', title: '인원 관리', addLabel: '졸업생 추가',
     desc: '졸업생 명단과 현재 소속·직무입니다.',
     filters: [{ key: 'gen', label: '기수', options: ['전체', '36기', '35기', '34기', '33기', '32기', '31기'] }],
@@ -225,7 +225,7 @@ export const SEED = {
     { id: 'c5', name: '유강연', gen: '외부', type: '멘토', contribution: '외부 연사 · AI 트렌드 특별 세미나 2회 진행', link: 'blog.yukang.io' },
     { id: 'c6', name: '한동문', gen: '32기', type: '후원자', contribution: '동문 · 학회 서버 비용 및 정기 세미나 다과 후원', link: '—' },
   ],
-  graduate: [
+  grad: [
     { id: 'g1', name: '한지호', gen: '35기', gradYear: '2021', org: '네이버', job: '백엔드 엔지니어' },
     { id: 'g2', name: '오세훈', gen: '34기', gradYear: '2020', org: '카카오', job: '안드로이드 개발자' },
     { id: 'g3', name: '임채원', gen: '33기', gradYear: '2019', org: '라인', job: '프론트엔드 개발자' },

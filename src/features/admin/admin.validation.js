@@ -45,7 +45,7 @@ export const contribSchema = z.object({
   link: z.string().optional(),
 });
 
-export const graduateSchema = z.object({
+export const gradSchema = z.object({
   name: z.string().min(1, '이름을 입력하세요.'),
   gen,
   gradYear: z.string().regex(/^\d{4}$/, '졸업연도 4자리를 입력하세요.'),
@@ -85,7 +85,7 @@ export const SCHEMA_BY_RESOURCE = {
   member: memberSchema,
   exec: execSchema,
   contrib: contribSchema,
-  graduate: graduateSchema,
+  grad: gradSchema,
   seminars: seminarSchema,
   studies: studySchema,
   applications: applicationSchema,
