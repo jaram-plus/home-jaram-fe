@@ -20,6 +20,7 @@ export { EmptyState } from './table/EmptyState';
 export { SettingsView } from './settings/SettingsView';
 export { AddRowModal } from './forms/AddRowModal';
 export { ConfirmDialog } from './forms/ConfirmDialog';
+export { MemberDetailModal } from './forms/MemberDetailModal';
 export { Toast } from './Toast';
 
 export { ScheduleAdminView } from './schedules/ScheduleAdminView';
