@@ -597,6 +597,28 @@ paths:
         '422': { $ref: '#/components/responses/Validation' }
         '5XX': { $ref: '#/components/responses/ServerError' }
 
+  /api/admin/members/{id}:
+    get:
+      tags: [admin]
+      summary: 회원 상세 조회
+      description: >
+        admin 「인원 관리」 회원 탭 상세 모달의 소스. 관리 목록(AdminListResponse)이 주지 않는
+        연락처·학부·자기소개·링크·신청일·임기 이력까지 반환한다. 조회 전용이며, 수정은
+        {resource}:batch 로만 한다.
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: '#/components/parameters/MemberId'
+      responses:
+        '200':
+          description: 회원 상세
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MemberDetail' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '5XX': { $ref: '#/components/responses/ServerError' }
+
   # ─────────────────────────── admin (management surface) ───────────────────────────
   /api/admin/{resource}:
     get:
@@ -1025,6 +1047,10 @@ components:
       type: string
       description: 활동 상태(승인축과 별개). 가입 시 SignupRequest.enrolled로 파생(true→ACTIVE, false→ON_LEAVE), 이후 admin이 변경.
       enum: [ACTIVE, ON_LEAVE, WITHDRAWN]
+    MemberApproval:
+      type: string
+      description: 가입 승인 상태(활동축 MemberStatus와 별개). 가입 시 PENDING, admin이 승인/반려한다.
+      enum: [PENDING, APPROVED, REJECTED]
     MemberTerm:
       type: object
       description: 한 회원이 한 직책을 맡은 기간. 오래된 순(startGen ASC)으로 정렬해 보낸다.
@@ -1435,6 +1461,40 @@ components:
         studentId: { type: string }
         email: { type: string, format: email }
         createdAt: { type: string, format: date-time }
+    MemberDetail:
+      type: object
+      description: >
+        admin 회원 상세(조회 전용). 관리 목록 행보다 넓은 표현이다.
+        createdAt 은 레코드 생성 시각 — 승인 시점이 아니라 가입 신청 시점이다.
+      required: [id, name, studentId, email, approval, contributor, terms, createdAt]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        studentId: { type: string }
+        email: { type: string, format: email }
+        phone: { type: [string, 'null'], example: 010-1234-5678 }
+        faculty: { type: [string, 'null'], example: 컴퓨터학부 }
+        gen: { type: [integer, 'null'], example: 41 }
+        # 승인 전 회원은 등급이 없다(AdminMemberService.approve 가 gen 으로 파생한다).
+        # MemberGrade 를 nullable 로 바꾸면 그것을 공유하는 MeProfile 까지 느슨해지므로
+        # MemberDepartment·MemberTitle 과 같은 방식으로 여기서만 null 을 허용한다.
+        grade:
+          type: [string, 'null']
+          description: 회원 등급. 값은 MemberGrade 와 같고, 승인 전에는 null 이다.
+          enum: [NEWCOMER, ASSOCIATE, REGULAR, OB, null]
+        status: { $ref: '#/components/schemas/MemberStatus' }
+        approval: { $ref: '#/components/schemas/MemberApproval' }
+        contributor: { type: boolean, description: 기여자 등록 여부 }
+        department: { $ref: '#/components/schemas/MemberDepartment' }
+        title: { $ref: '#/components/schemas/MemberTitle' }
+        terms:
+          type: array
+          description: 임기 이력(오래된 순 startGen ASC). 임기가 없으면 빈 배열.
+          items: { $ref: '#/components/schemas/MemberTerm' }
+        bio: { type: [string, 'null'] }
+        githubUrl: { type: [string, 'null'], format: uri }
+        blogUrl: { type: [string, 'null'], format: uri }
+        createdAt: { type: string, format: date-time, description: 가입 신청 시각 }
 
     # ── admin (management surface) ──
     AdminResource:
