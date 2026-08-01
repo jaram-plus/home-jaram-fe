@@ -23,6 +23,10 @@ import {
 const USE_MOCK = import.meta.env.VITE_ADMIN_MOCK !== 'false';
 const delay = (ms) => new Promise((r) => setTimeout(r, ms));
 
+// 백엔드 연동이 끝난 리소스 — USE_MOCK 여부와 무관하게 항상 실 서버를 쓴다.
+const LIVE_RESOURCES = new Set(['seminars', 'seminarApprovals', 'applications']);
+const mocked = (resource) => USE_MOCK && !LIVE_RESOURCES.has(resource);
+
 /**
  * 서버 에러 → code 를 붙인 Error (seminar.api.js checkAttendance 와 동일 규약).
  * 4xx 는 서버가 보낸 ErrorResponse.code(예: VALIDATION·NOT_FOUND)를 우선하고,
@@ -96,11 +100,9 @@ export function toWire(resource, fields) {
   return out;
 }
 
-/* ── 목록 조회 (검색·필터·정렬·페이지) ─────────────────────────────────
- * seminars·seminarApprovals는 백엔드 연동 완료로 USE_MOCK 여부와 무관하게 항상 실 서버를 쓴다.
- */
+/* ── 목록 조회 (검색·필터·정렬·페이지) ─────────────────────────────── */
 export async function fetchList(resource, params = {}) {
-  if (USE_MOCK && resource !== 'seminars' && resource !== 'seminarApprovals') {
+  if (mocked(resource)) {
     await delay(200);
     return mockList(resource, params);
   }
@@ -183,7 +185,7 @@ export async function saveBatch(resource, { updates = [], creates = [], deletes 
     creates: creates.map((c) => ({ tempId: c.tempId, fields: toWire(resource, c.fields) })),
     deletes,
   };
-  if (USE_MOCK && resource !== 'seminars' && resource !== 'seminarApprovals') {
+  if (mocked(resource)) {
     await delay(600);
     return mockBatch(resource, body);
   }
@@ -202,8 +204,8 @@ export async function saveBatch(resource, { updates = [], creates = [], deletes 
 /**
  * applications 는 AdminResource(members/seminars/studies)에 없어 batch 대상이
  * 아니다. 화면에서 스테이지된 승인/반려(status 필드 변경)를 단건 승인/반려
- * 엔드포인트 호출로 변환해 순차 처리한다. 수기 등록(creates)·삭제(deletes)는
- * 대응하는 엔드포인트가 없어 아직 지원하지 않는다(스펙 확정 시 반영).
+ * 엔드포인트 호출로 변환해 순차 처리한다. 수기 등록(creates)·삭제(deletes)는 대응하는
+ * 엔드포인트가 없어 지원하지 않는다 — 화면에서도 추가 버튼을 두지 않는다(SCHEMAS.applications).
  */
 async function saveApplicationsQueue(updates, deletes) {
   const updated = [];
@@ -248,7 +250,6 @@ async function saveSeminarApprovalsQueue(updates, deletes) {
 
 /* ── 단건 · 액션 ─────────────────────────────────────────────────────── */
 export async function approveApplication(id) {
-  if (USE_MOCK) { await delay(400); return { ok: true, id }; }
   try {
     // 승인 시 서버가 gen 파생(gen==현재년도-1984→NEWCOMER, 그 외 ASSOCIATE)으로 등급 부여 후 status=ACTIVE.
     const { data } = await client.post(`/api/admin/members/${id}/approve`);
@@ -258,7 +259,6 @@ export async function approveApplication(id) {
   }
 }
 export async function rejectApplication(id, reason) {
-  if (USE_MOCK) { await delay(300); return { ok: true, id }; }
   try {
     // RejectRequest.reason 필수 (openapi).
     const { data } = await client.post(`/api/admin/members/${id}/reject`, { reason });
