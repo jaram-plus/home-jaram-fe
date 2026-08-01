@@ -17,7 +17,7 @@ const labelEnum = (map) => z.enum(Object.values(map));
 export const studentId = z.string().regex(/^\d{8,10}$/, '학번은 8~10자리 숫자여야 합니다.');
 /** 기수(gen): '41기' 형태 또는 정수 문자열. */
 export const gen = z.string().regex(/^\d{1,2}기$|^\d{1,2}$/, "기수는 '41기' 형태로 입력하세요.");
-const phone = z.string().regex(/^01\d-?\d{3,4}-?\d{4}$/, '연락처 형식이 올바르지 않습니다.').or(z.literal('')).optional();
+const email = z.string().email('이메일 형식이 올바르지 않습니다.').or(z.literal('')).optional();
 
 export const memberSchema = z.object({
   name: z.string().min(1, '이름을 입력하세요.'),
@@ -25,7 +25,7 @@ export const memberSchema = z.object({
   gen,
   grade: labelEnum(GRADE_LABEL),
   status: labelEnum(STATUS_LABEL),
-  phone,
+  email,
 });
 
 export const execSchema = z.object({

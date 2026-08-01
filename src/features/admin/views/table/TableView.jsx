@@ -128,7 +128,9 @@ export function TableView({ resource: fixedResource }) {
 
   const onSave = () => {
     if (!slice || dcount === 0) return;
-    const updates = Object.entries(slice.edits).map(([id, fields]) => ({ id, fields, version: origById[id]?.updatedAt }));
+    // version 은 서버 행의 낙관적 잠금 값(AdminBatchRequest.Update.version). 빠뜨리면
+    // 서버가 충돌 검사를 건너뛰어 남의 수정을 덮어쓴다.
+    const updates = Object.entries(slice.edits).map(([id, fields]) => ({ id, fields, version: origById[id]?.version }));
     const creates = slice.creates.map(({ id, _new, ...fields }) => ({ tempId: id, fields }));
     const deletes = Object.keys(slice.deletes);
 

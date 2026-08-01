@@ -5,7 +5,7 @@
  *   - SCHEMAS          : DataTable 을 구동하는 리소스별 컬럼 정의 (화면 스키마)
  *   - *_LABEL          : enum 키 ↔ 한글 라벨 맵. 가능하면 @/shared/member/enums 로 승격하세요.
  *   - MESSAGES / TOAST : 문구 (존댓말 · 이모지 금지)
- *   - SEED / DASHBOARD_SEED : USE_MOCK=true 개발용 시드. 백엔드 연동 시 삭제하세요.
+ *   - SEED             : USE_MOCK=true 개발용 시드. 리소스가 백엔드에 붙으면 지우세요.
  *
  * 화면은 한글 라벨로 다루고, 와이어(백엔드)는 enum 키로 주고받습니다. 라벨↔키 매핑은
  * admin.api.js 의 toWire / fromWire 경계 한 곳에서만 수행합니다 (DEVELOPMENT.md §5 도메인 enum).
@@ -53,8 +53,10 @@ export const PEOPLE_TABS = [
  */
 export const SCHEMAS = {
   member: {
-    eyebrow: 'PEOPLE', title: '인원 관리', addLabel: '회원 추가',
-    desc: '회원 명단입니다. 셀을 눌러 바로 수정하고, 변경분을 모아 저장하세요.',
+    // 수기 등록(creates)은 서버가 거부한다("회원은 일괄 생성이 지원되지 않습니다") —
+    // 가입은 신청·승인 절차로만 이뤄지므로 추가 버튼을 두지 않는다.
+    eyebrow: 'PEOPLE', title: '인원 관리', addLabel: '',
+    desc: '승인된 회원 명단입니다. 셀을 눌러 바로 수정하고, 변경분을 모아 저장하세요.',
     filters: [
       { key: 'grade', label: '등급', options: ['전체', '수습회원', '준회원', '정회원', '졸업생'] },
       { key: 'gen', label: '기수', options: ['전체', '41기', '40기', '39기', '38기'] },
@@ -66,7 +68,8 @@ export const SCHEMAS = {
       { key: 'gen', label: '기수', type: 'text', width: '0.6fr', align: 'center' },
       { key: 'grade', label: '등급', type: 'select', width: '1fr', options: ['수습회원', '준회원', '정회원', '졸업생'] },
       { key: 'status', label: '상태', type: 'select', width: '0.8fr', options: ['활동', '휴학', '탈퇴'] },
-      { key: 'phone', label: '연락처', type: 'text', width: '1.1fr' },
+      // 이메일은 서버가 내려주지만 일괄 수정 화이트리스트에 없어 읽기 전용이다.
+      { key: 'email', label: '이메일', type: 'static', width: '1.4fr' },
       { key: '__act', label: '', type: 'actions', width: '0.6fr', align: 'center', actions: ['delete'] },
     ],
   },
@@ -200,15 +203,7 @@ export const EMPTY = {
 
 /* ── 개발용 시드 (USE_MOCK=true) — 백엔드 연동 시 삭제 ────────────────── */
 export const SEED = {
-  member: [
-    { id: 'm1', name: '김서준', studentId: '2024093117', gen: '41기', grade: '수습회원', status: '활동', phone: '010-2841-5573' },
-    { id: 'm2', name: '이하은', studentId: '2024093208', gen: '41기', grade: '수습회원', status: '활동', phone: '010-7712-0094' },
-    { id: 'm3', name: '박도윤', studentId: '2023091144', gen: '40기', grade: '준회원', status: '활동', phone: '010-3390-8821' },
-    { id: 'm4', name: '정시우', studentId: '2023090021', gen: '40기', grade: '준회원', status: '휴학', phone: '010-5560-1187' },
-    { id: 'm5', name: '최유나', studentId: '2022089910', gen: '39기', grade: '정회원', status: '활동', phone: '010-2201-7746' },
-    { id: 'm6', name: '강준혁', studentId: '2022088804', gen: '39기', grade: '정회원', status: '활동', phone: '010-9983-2210' },
-    { id: 'm7', name: '윤서아', studentId: '2021087700', gen: '38기', grade: '정회원', status: '활동', phone: '010-4417-6650' },
-  ],
+  // member 는 실 서버(GET /api/admin/members)로 전환되어 시드를 두지 않는다.
   exec: [
     { id: 'e1', name: '강준혁', studentId: '2022088804', gen: '39기', department: '회장단', position: '회장', term: '2026' },
     { id: 'e2', name: '윤서아', studentId: '2021087700', gen: '38기', department: '회장단', position: '부회장', term: '2026' },
@@ -241,31 +236,6 @@ export const SEED = {
     { id: 'st5', title: 'AI 논문 리딩', leader: '윤서아', count: '7명', schedule: '목 19:00', period: '2026-03 ~ 06', rate: '81%', status: '진행' },
     { id: 'st6', title: '자바 백엔드', leader: '정시우', count: '9명', schedule: '토 14:00', period: '2025-09 ~ 12', rate: '88%', status: '종료' },
   ],
-};
-
-/** 대시보드 시드 — DashboardStats 계약과 동일한 모양 (admin.api.js §fetchDashboardStats). */
-export const DASHBOARD_SEED = {
-  totalMembers: 142,
-  alumniCount: 512,
-  seminarAttendanceRate: 87,
-  studyAttendanceRate: 79,
-  deltas: { members: 12, seminarRate: 3, studyRate: -2 },
-  gradeBreakdown: { probationary: 28, associate: 41, regular: 73 },
-  genBreakdown: [
-    { gen: 37, count: 6 },
-    { gen: 38, count: 11 },
-    { gen: 39, count: 22 },
-    { gen: 40, count: 34 },
-    { gen: 41, count: 69 },
-  ],
-  attendanceTrend: [
-    { month: '3월', seminar: 82, study: 80 },
-    { month: '4월', seminar: 90, study: 84 },
-    { month: '5월', seminar: 93, study: 89 },
-    { month: '6월', seminar: 92, study: 85 },
-  ],
-  pendingApplications: 4,
-  pendingBreakdown: { freshman: 3, enrolled: 1 },
 };
 
 export const SETTINGS_SEED = {

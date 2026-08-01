@@ -2,7 +2,7 @@ import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/shared/auth/auth.store';
 import { NavItem } from './NavItem';
-import { useDashboardStats } from '../../admin.queries';
+import { useResourceList } from '../../admin.queries';
 
 const stroke = { fill: 'none', stroke: 'currentColor', strokeWidth: 1.8, strokeLinecap: 'round', strokeLinejoin: 'round' };
 const I = (d) => (
@@ -22,12 +22,15 @@ const NAV = [
 
 /**
  * 관리자 사이드바 — JR 마크 + ADMIN 라벨, 네비(활성/대기 배지), 하단 운영진 칩.
- * 활성 표시는 현재 경로 기준. 대기 건수 배지는 대시보드 통계에서 가져옵니다.
+ * 활성 표시는 현재 경로 기준. 대기 건수 배지는 해당 목록의 total 에서 가져옵니다
+ * (승인·거절 mutation 이 같은 쿼리키를 invalidate 하므로 자동으로 갱신됩니다).
  */
 export function Sidebar({ onNavigate }) {
   const { pathname } = useLocation();
   const navigate = useNavigate();
-  const { data: stats } = useDashboardStats();
+  // 배지 숫자만 필요하므로 최소 페이지(size 1)로 total 만 받는다.
+  const { data: pendingApplications } = useResourceList('applications', { page: 1, size: 1 });
+  const badges = { pendingApplications: pendingApplications?.total ?? 0 };
   const user = useAuthStore((s) => s.user);
   const clear = useAuthStore((s) => s.clear);
 
@@ -59,7 +62,7 @@ export function Sidebar({ onNavigate }) {
             label={n.label}
             icon={n.icon}
             active={isActive(n.to)}
-            badge={n.badgeKey ? stats?.[n.badgeKey] : 0}
+            badge={n.badgeKey ? badges[n.badgeKey] : 0}
             onNavigate={onNavigate}
           />
         ))}

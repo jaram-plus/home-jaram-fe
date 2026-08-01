@@ -13,7 +13,7 @@
  */
 import { client } from '@/shared/api/client';
 import {
-  SEED, DASHBOARD_SEED, SETTINGS_SEED, RESOURCES,
+  SEED, SETTINGS_SEED, RESOURCES,
   GRADE_LABEL, STATUS_LABEL, DEPARTMENT_LABEL,
   APPLICATION_STATUS_LABEL,
   SEMINAR_STATUS_LABELS, TARGET_GRADE_LABELS, STUDY_STATUS_LABEL,
@@ -24,7 +24,7 @@ const USE_MOCK = import.meta.env.VITE_ADMIN_MOCK !== 'false';
 const delay = (ms) => new Promise((r) => setTimeout(r, ms));
 
 // 백엔드 연동이 끝난 리소스 — USE_MOCK 여부와 무관하게 항상 실 서버를 쓴다.
-const LIVE_RESOURCES = new Set(['seminars', 'seminarApprovals', 'applications']);
+const LIVE_RESOURCES = new Set(['member', 'seminars', 'seminarApprovals', 'applications']);
 const mocked = (resource) => USE_MOCK && !LIVE_RESOURCES.has(resource);
 
 /**
@@ -106,6 +106,7 @@ export async function fetchList(resource, params = {}) {
     await delay(200);
     return mockList(resource, params);
   }
+  if (resource === 'member') return fetchMembers(params);
   if (resource === 'applications') return fetchPendingApplications(params);
   if (resource === 'seminarApprovals') return fetchPendingSeminarApprovals(params);
   // GET /api/admin/{resource}?tab=&q=&grade=&gen=&status=&sort=&page=&size= (AdminListResponse)
@@ -115,13 +116,32 @@ export async function fetchList(resource, params = {}) {
   return { ...data, items: (data.items || []).map((r) => fromWire(resource, r)) };
 }
 
+/** 서버가 페이지를 나눠주지 않는 목록을 한 번에 받을 때 쓰는 넉넉한 size. */
+const ALL_ROWS_SIZE = 1000;
+
+/**
+ * 회원 명단(member 탭). 서버 목록은 tab·q·sort·page 만 처리하고 등급·기수·상태
+ * 필터는 무시하므로(BE AdminResourceService.list), 필터가 조용히 먹통이 되지 않도록
+ * 전체를 받아 검색·필터·정렬·페이지를 이 계층에서 처리한다. 회원 규모(수백)에서 안전하다.
+ * 승인 대기·반려 회원은 '가입 신청·승인' 화면이 다루므로 명단에서 뺀다.
+ */
+async function fetchMembers(params = {}) {
+  const { data } = await client.get('/api/admin/members', {
+    params: { tab: 'member', page: 1, size: ALL_ROWS_SIZE },
+  });
+  const rows = (data.items || [])
+    .filter((m) => m.approval === 'APPROVED')
+    .map((m) => fromWire('member', m));
+  return queryLocally(rows, params);
+}
+
 /**
  * applications 는 AdminResource(members/seminars/studies)에 없는 큐 모델이라
  * 전용 엔드포인트를 쓴다: GET /api/admin/members/pending → PendingMember[]
  * (페이지네이션 없음). 화면 스키마(admin.data SCHEMAS.applications)에 맞춰 정제하고,
- * 검색·페이지는 이 계층에서 처리한다.
+ * 검색·정렬·페이지는 이 계층에서 처리한다.
  */
-async function fetchPendingApplications({ q = '', page = 1, size = 8 } = {}) {
+async function fetchPendingApplications(params = {}) {
   const { data } = await client.get('/api/admin/members/pending');
   const rows = (data || []).map((m) => ({
     id: m.id,
@@ -130,17 +150,17 @@ async function fetchPendingApplications({ q = '', page = 1, size = 8 } = {}) {
     appliedAt: (m.createdAt || '').slice(0, 10),
     status: APPLICATION_STATUS_LABEL.PENDING,
   }));
-  return paginate(rows, { q, page, size });
+  return queryLocally(rows, params);
 }
 
 /**
  * seminarApprovals도 applications와 같은 이유로 전용 엔드포인트를 쓴다:
  * GET /api/admin/seminars/pending → Seminar[] (officer 전용 조회). /api/admin/seminars 는
  * {resource} 일반 목록에 걸려 승인상태로 걸러지지 않으므로 쓰면 안 된다.
- * 화면 스키마(admin.data SCHEMAS.seminarApprovals)에 맞춰 정제하고, 검색·페이지는
+ * 화면 스키마(admin.data SCHEMAS.seminarApprovals)에 맞춰 정제하고, 검색·정렬·페이지는
  * 이 계층에서 처리한다.
  */
-async function fetchPendingSeminarApprovals({ q = '', page = 1, size = 8 } = {}) {
+async function fetchPendingSeminarApprovals(params = {}) {
   const { data } = await client.get('/api/admin/seminars/pending');
   const rows = (data || []).map((s) => ({
     id: s.id,
@@ -150,18 +170,35 @@ async function fetchPendingSeminarApprovals({ q = '', page = 1, size = 8 } = {})
     startsAt: `${s.month} ${s.day}일 ${s.time}`,
     status: APPLICATION_STATUS_LABEL.PENDING,
   }));
-  return paginate(rows, { q, page, size });
+  return queryLocally(rows, params);
 }
 
-/** 서버가 페이지네이션을 지원하지 않는 목록에 검색·페이지를 얹는다. */
-function paginate(rows, { q = '', page = 1, size = 8 }) {
+/**
+ * 서버가 검색·필터·정렬·페이지를 지원하지 않는 목록에 그것들을 얹는다.
+ * 행은 이미 화면 표현(한글 라벨)이므로 filters 값도 라벨 그대로 비교한다.
+ */
+function queryLocally(rows, { q = '', filters = {}, sort, page = 1, size = 8 } = {}) {
   const needle = String(q).trim().toLowerCase();
-  const filtered = needle
+  let out = needle
     ? rows.filter((r) => Object.values(r).some((v) => String(v).toLowerCase().includes(needle)))
-    : rows;
-  const total = filtered.length;
+    : rows.slice();
+  Object.entries(filters).forEach(([k, v]) => {
+    if (v && v !== '전체') out = out.filter((r) => String(r[k]) === v);
+  });
+  if (sort) {
+    const [key, dir] = sort.split(',');
+    out.sort((a, b) => {
+      const av = a[key], bv = b[key];
+      const an = parseFloat(String(av).replace(/[^0-9.-]/g, ''));
+      const bn = parseFloat(String(bv).replace(/[^0-9.-]/g, ''));
+      const numeric = !isNaN(an) && !isNaN(bn) && /[0-9]/.test(String(av)) && /[0-9]/.test(String(bv));
+      const cmp = numeric ? an - bn : String(av).localeCompare(String(bv), 'ko');
+      return dir === 'desc' ? -cmp : cmp;
+    });
+  }
+  const total = out.length;
   const start = (page - 1) * size;
-  return { items: filtered.slice(start, start + size), page, size, total };
+  return { items: out.slice(start, start + size), page, size, total };
 }
 
 /** searchParams → 서버 쿼리. tab 은 members 계열에서 리소스 구분에 사용. */
@@ -333,8 +370,8 @@ export async function forceUnassignSlot(scheduleId, index) {
 }
 
 /* ── 대시보드 · 설정 · 내보내기 ─────────────────────────────────────── */
+// 백엔드 연동 완료(AdminDashboardController) — USE_MOCK 여부와 무관하게 항상 실 서버.
 export async function fetchDashboardStats() {
-  if (USE_MOCK) { await delay(250); return DASHBOARD_SEED; }
   const { data } = await client.get('/api/admin/dashboard/stats');
   return data; // DashboardStats
 }
@@ -369,29 +406,8 @@ export async function exportToDrive(resource, { filters, columns } = {}) {
 }
 
 /* ── 개발용 mock 구현 (USE_MOCK 전용 — 백엔드 연동 시 통째로 삭제) ───── */
-function mockList(resource, { q = '', filters = {}, sort, page = 1, size = 8 }) {
-  let rows = (SEED[resource] || []).slice();
-  const needle = String(q).trim().toLowerCase();
-  if (needle) {
-    rows = rows.filter((r) => Object.values(r).some((v) => String(v).toLowerCase().includes(needle)));
-  }
-  Object.entries(filters).forEach(([k, v]) => {
-    if (v && v !== '전체') rows = rows.filter((r) => String(r[k]) === v);
-  });
-  if (sort) {
-    const [key, dir] = sort.split(',');
-    rows.sort((a, b) => {
-      const av = a[key], bv = b[key];
-      const an = parseFloat(String(av).replace(/[^0-9.-]/g, ''));
-      const bn = parseFloat(String(bv).replace(/[^0-9.-]/g, ''));
-      const numeric = !isNaN(an) && !isNaN(bn) && /[0-9]/.test(String(av)) && /[0-9]/.test(String(bv));
-      const cmp = numeric ? an - bn : String(av).localeCompare(String(bv), 'ko');
-      return dir === 'desc' ? -cmp : cmp;
-    });
-  }
-  const total = rows.length;
-  const start = (page - 1) * size;
-  return { items: rows.slice(start, start + size), page, size, total };
+function mockList(resource, params) {
+  return queryLocally(SEED[resource] || [], params);
 }
 
 function mockBatch(resource, body) {
