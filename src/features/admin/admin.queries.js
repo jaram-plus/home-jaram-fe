@@ -10,6 +10,7 @@ import * as api from './admin.api';
 export const adminKeys = {
   all: ['admin'],
   list: (resource, params) => ['admin', 'list', resource, params],
+  memberDetail: (id) => ['admin', 'member', id],
   dashboard: () => ['admin', 'dashboard'],
   settings: () => ['admin', 'settings'],
   schedules: () => ['admin', 'schedules'],
@@ -116,6 +117,16 @@ export function useForceUnassignSlot(options = {}) {
       qc.invalidateQueries({ queryKey: adminKeys.schedules() });
       options.onSuccess?.(...a);
     },
+  });
+}
+
+/** 회원 상세. 모달이 열려 id 가 있을 때만 조회합니다. */
+export function useMemberDetail(id, options = {}) {
+  return useQuery({
+    queryKey: adminKeys.memberDetail(id),
+    queryFn: () => api.fetchMemberDetail(id),
+    enabled: !!id,
+    ...options,
   });
 }
 

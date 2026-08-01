@@ -136,6 +136,20 @@ async function fetchMembers(params = {}) {
 }
 
 /**
+ * 회원 상세 (GET /api/admin/members/{id}). 조회 전용 — 수정은 표의 일괄 저장이 유일한 경로다.
+ * grade·status·gen 은 fromWire 로 화면 라벨이 되지만, department·title·terms[] 는
+ * 항목마다 부서가 달라 라벨이 (부서, 직책) 조합으로 파생되므로 렌더 시점에 titleLabel 로 처리한다.
+ */
+export async function fetchMemberDetail(id) {
+  try {
+    const { data } = await client.get(`/api/admin/members/${id}`);
+    return fromWire('member', data);
+  } catch (error) {
+    throwWireError(error, 'NOT_FOUND');
+  }
+}
+
+/**
  * applications 는 AdminResource(members/seminars/studies)에 없는 큐 모델이라
  * 전용 엔드포인트를 쓴다: GET /api/admin/members/pending → PendingMember[]
  * (페이지네이션 없음). 화면 스키마(admin.data SCHEMAS.applications)에 맞춰 정제하고,
