@@ -100,12 +100,14 @@ function focusOff(e) {
 
 function actionLabel(kind, pendingDelete) {
   if (kind === 'delete') return pendingDelete ? '취소' : '삭제';
+  if (kind === 'detail') return '상세';
   if (kind === 'approve') return '승인';
   if (kind === 'reject') return '반려';
   return kind;
 }
 function actionStyle(kind, pendingDelete) {
   const base = { fontFamily: 'var(--font-sans)', fontWeight: 600, fontSize: 12, padding: '5px 12px', borderRadius: 6, cursor: 'pointer', lineHeight: 1, whiteSpace: 'nowrap' };
+  if (kind === 'detail') return { ...base, background: 'transparent', color: 'var(--text-body)', border: '1px solid var(--border-strong)' };
   if (kind === 'approve') return { ...base, background: 'var(--brand)', color: '#fff', border: '1px solid transparent' };
   if (kind === 'reject') return { ...base, background: 'transparent', color: 'var(--red-600)', border: '1px solid var(--red-100)' };
   if (pendingDelete) return { ...base, background: 'var(--surface-sunken)', color: 'var(--text-body)', border: '1px solid var(--border-strong)' };

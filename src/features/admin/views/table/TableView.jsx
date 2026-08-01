@@ -9,6 +9,7 @@ import { Pagination } from './Pagination';
 import { SaveBar } from './SaveBar';
 import { EmptyState } from './EmptyState';
 import { ConfirmDialog } from '../forms/ConfirmDialog';
+import { MemberDetailModal } from '../forms/MemberDetailModal';
 
 const PAGE_SIZE = 8;
 
@@ -88,8 +89,13 @@ export function TableView({ resource: fixedResource }) {
     else setEdit(resource, row.id, col.key, value, origById[row.id]?.[col.key]);
   };
 
+  // 조회 전용 상세 모달. 표의 편집 상태와 무관하게 열고 닫힌다.
+  const [detailRow, setDetailRow] = React.useState(null);
+
   const onAction = (kind, row) => {
-    if (kind === 'delete') {
+    if (kind === 'detail') {
+      setDetailRow(row);
+    } else if (kind === 'delete') {
       if (row._new) dropCreate(resource, row.id);
       else toggleDelete(resource, row.id);
     } else if (kind === 'approve') {
@@ -230,6 +236,8 @@ export function TableView({ resource: fixedResource }) {
           onCancel={() => setGraduating(null)}
         />
       )}
+
+      {detailRow && <MemberDetailModal row={detailRow} onClose={() => setDetailRow(null)} />}
     </div>
   );
 }
