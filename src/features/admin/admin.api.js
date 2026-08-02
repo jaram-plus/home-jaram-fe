@@ -205,6 +205,27 @@ export async function fetchAssignableMembers() {
 }
 
 /**
+ * 기여자로 등록할 수 있는 회원 — 아직 기여자가 아닌 승인 회원.
+ * 임원 지정 후보와 달리 졸업생(OB)을 빼지 않는다 — 졸업한 선배야말로 기여자로
+ * 등록할 대상이다. 등록 모달의 목록이라 페이지를 나누지 않고 한 번에 받는다.
+ */
+export async function fetchContribCandidates() {
+  const { data } = await client.get('/api/admin/members', {
+    params: { tab: 'member', page: 1, size: ALL_ROWS_SIZE },
+  });
+  return (data.items || [])
+    .filter((m) => m.approval === 'APPROVED' && !m.contributor)
+    .map((m) => ({
+      id: m.id,
+      name: m.name,
+      studentId: m.studentId,
+      gen: genFromWire(m.gen),
+      faculty: m.faculty || '',
+      version: m.version,
+    }));
+}
+
+/**
  * 회원 상세 (GET /api/admin/members/{id}). 조회 전용 — 수정은 표의 일괄 저장이 유일한 경로다.
  * grade·status·gen 은 fromWire 로 화면 라벨이 되지만, department·title·terms[] 는
  * 항목마다 부서가 달라 라벨이 (부서, 직책) 조합으로 파생되므로 렌더 시점에 titleLabel 로 처리한다.
@@ -388,6 +409,29 @@ export async function assignExec({ member, department, title, handoverFrom }) {
   if (failed.length) {
     const first = failed[0];
     const message = first.message || Object.values(first.fieldErrors || {})[0] || '임원으로 지정하지 못했습니다.';
+    throw Object.assign(new Error(message), { code: first.message ? 'CONFLICT' : 'VALIDATION' });
+  }
+  return data;
+}
+
+/**
+ * 기여자 등록 — 회원 한 명의 기여자 플래그를 켠다. 표의 모아 저장과 달리 즉시 커밋한다.
+ * 해제는 반대로 표에서 스테이지했다가 일괄 저장으로 커밋한다(TableView 의 uncontrib).
+ *
+ * 배치는 행이 실패해도 200 + errors[] 로 돌아오므로 여기서 열어보고 실패면 던진다.
+ */
+export async function addContributor({ member }) {
+  const updates = [{ id: member.id, version: member.version, fields: { contributor: true } }];
+  let data;
+  try {
+    ({ data } = await client.patch('/api/admin/members:batch', { updates, creates: [], deletes: [] }));
+  } catch (error) {
+    throwWireError(error, 'VALIDATION');
+  }
+  const failed = [...(data.conflicts || []), ...(data.errors || [])];
+  if (failed.length) {
+    const first = failed[0];
+    const message = first.message || Object.values(first.fieldErrors || {})[0] || '기여자로 등록하지 못했습니다.';
     throw Object.assign(new Error(message), { code: first.message ? 'CONFLICT' : 'VALIDATION' });
   }
   return data;

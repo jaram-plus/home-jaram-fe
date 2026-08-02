@@ -11,6 +11,8 @@ export const adminKeys = {
   all: ['admin'],
   list: (resource, params) => ['admin', 'list', resource, params],
   memberDetail: (id) => ['admin', 'member', id],
+  assignable: () => ['admin', 'assignable'],
+  contribCandidates: () => ['admin', 'contribCandidates'],
   dashboard: () => ['admin', 'dashboard'],
   settings: () => ['admin', 'settings'],
   schedules: () => ['admin', 'schedules'],
@@ -116,6 +118,54 @@ export function useForceUnassignSlot(options = {}) {
     onSuccess: (...a) => {
       qc.invalidateQueries({ queryKey: adminKeys.schedules() });
       options.onSuccess?.(...a);
+    },
+  });
+}
+
+/** 임원으로 지정할 수 있는 회원 목록 (임원 지정 모달). */
+export function useAssignableMembers(options = {}) {
+  return useQuery({ queryKey: adminKeys.assignable(), queryFn: api.fetchAssignableMembers, ...options });
+}
+
+/**
+ * 임원 지정. 성공하면 임원진·회원 목록과 지정 후보를 모두 다시 불러옵니다 —
+ * 회장을 넘겼다면 내 임기도 끝나므로 내 상세(권한 판정 근거)까지 무효화합니다.
+ */
+export function useAssignExec(options = {}) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: api.assignExec,
+    ...options,
+    onSuccess: (data, vars, ctx) => {
+      qc.invalidateQueries({ queryKey: ['admin', 'list'] });
+      qc.invalidateQueries({ queryKey: adminKeys.assignable() });
+      qc.invalidateQueries({ queryKey: ['admin', 'member'] });
+      qc.invalidateQueries({ queryKey: adminKeys.dashboard() });
+      options.onSuccess?.(data, vars, ctx);
+    },
+  });
+}
+
+/** 기여자로 등록할 수 있는 회원 목록 (기여자 추가 모달). */
+export function useContribCandidates(options = {}) {
+  return useQuery({ queryKey: adminKeys.contribCandidates(), queryFn: api.fetchContribCandidates, ...options });
+}
+
+/**
+ * 기여자 등록. 성공하면 기여자 목록과 후보 목록을 함께 다시 불러옵니다 —
+ * 방금 등록한 회원은 후보에서 빠지고 기여자 표에 나타나야 합니다.
+ */
+export function useAddContributor(options = {}) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: api.addContributor,
+    ...options,
+    onSuccess: (data, vars, ctx) => {
+      qc.invalidateQueries({ queryKey: ['admin', 'list'] });
+      qc.invalidateQueries({ queryKey: adminKeys.contribCandidates() });
+      qc.invalidateQueries({ queryKey: ['admin', 'member'] });
+      qc.invalidateQueries({ queryKey: adminKeys.dashboard() });
+      options.onSuccess?.(data, vars, ctx);
     },
   });
 }
