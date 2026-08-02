@@ -5,7 +5,7 @@ import { EditableCell } from './EditableCell';
  * 제네릭 표 — 컬럼 스키마(admin.data SCHEMAS)로 구동. 헤더(정렬)+행(선택·인라인 편집).
  * 리소스마다 새 표를 만들지 않고 이 컴포넌트 하나를 재사용합니다 (기획.md §2).
  */
-export function DataTable({ schema, rows, sort, loading, allSelected, selected, onToggleAll, onToggleSelect, onSort, onCellChange, onAction, memberIndex }) {
+export function DataTable({ schema, rows, sort, loading, allSelected, selected, onToggleAll, onToggleSelect, onSort, onCellChange, onAction, grants }) {
   const gridCols = `40px ${schema.cols.map((c) => c.width).join(' ')}`;
   const [sortKey, sortDir] = (sort || '').split(',');
 
@@ -17,7 +17,7 @@ export function DataTable({ schema, rows, sort, loading, allSelected, selected, 
           <input type="checkbox" checked={allSelected} onChange={onToggleAll} style={{ width: 15, height: 15, accentColor: 'var(--brand)', cursor: 'pointer' }} aria-label="전체 선택" />
         </div>
         {schema.cols.map((c) => {
-          const sortable = !['actions', 'tag', 'match'].includes(c.type);
+          const sortable = !['actions', 'tag'].includes(c.type);
           const indicator = sortKey === c.key ? (sortDir === 'asc' ? '  ↑' : '  ↓') : '';
           return (
             <div
@@ -58,7 +58,7 @@ export function DataTable({ schema, rows, sort, loading, allSelected, selected, 
                   dirty={(row._dirtyFields || []).includes(c.key)}
                   onChange={(v) => onCellChange(row, c, v)}
                   onAction={onAction}
-                  memberIndex={memberIndex}
+                  grants={grants}
                 />
               </div>
             ))}

@@ -26,6 +26,15 @@ export const TITLE_SUFFIX = {
   STAFF: '원',
 };
 
+// 부서마다 허용되는 직책 (백엔드 MemberTitle.allowedIn 과 동일 규칙)
+export const TITLES_BY_DEPARTMENT = {
+  LEADERSHIP: ['PRESIDENT', 'VICE_PRESIDENT'],
+  ACADEMIC: ['LEAD', 'STAFF'],
+  PR: ['LEAD', 'STAFF'],
+  FINANCE: ['LEAD', 'STAFF'],
+  INFRA: ['SERVER_ADMIN'],
+};
+
 // 키 배열 — 셀렉터 옵션 등에 사용 (표시·선택 순서 유지)
 export const DEPARTMENTS = Object.keys(DEPARTMENT_LABELS);
 export const TITLES = ['PRESIDENT', 'VICE_PRESIDENT', 'LEAD', 'STAFF', 'SERVER_ADMIN'];
@@ -33,6 +42,11 @@ export const TITLES = ['PRESIDENT', 'VICE_PRESIDENT', 'LEAD', 'STAFF', 'SERVER_A
 /** 부서 키 → 한글 라벨. 모르는/빈 키는 null. */
 export function departmentLabel(key) {
   return key ? DEPARTMENT_LABELS[key] ?? null : null;
+}
+
+/** 한글 라벨 → 부서 키. 모르는/빈 라벨은 null. */
+export function departmentKey(label) {
+  return DEPARTMENTS.find((k) => DEPARTMENT_LABELS[k] === label) ?? null;
 }
 
 /**
@@ -45,4 +59,17 @@ export function titleLabel(title, department) {
   const suffix = TITLE_SUFFIX[title];
   if (!suffix) return null;
   return (departmentLabel(department) ?? '부') + suffix;
+}
+
+/**
+ * 한글 직책 라벨 → 직책 키. 허용 조합의 라벨은 전부 유일해서(회장·부회장·서버 관리자·
+ * 학술부장·학술부원…) 부서 없이도 역인덱스가 성립한다. 모르는/빈 라벨은 null.
+ */
+export function titleKey(label) {
+  if (!label) return null;
+  for (const [department, titles] of Object.entries(TITLES_BY_DEPARTMENT)) {
+    const hit = titles.find((t) => titleLabel(t, department) === label);
+    if (hit) return hit;
+  }
+  return null;
 }
