@@ -23,6 +23,7 @@ export { ConfirmDialog } from './forms/ConfirmDialog';
 export { MemberDetailModal } from './forms/MemberDetailModal';
 export { PickerModal, PickerHeader, MemberPicker, PickerNote, PickerFooter } from './forms/PickerModal';
 export { ExecAssignModal } from './forms/ExecAssignModal';
+export { ContribAddModal } from './forms/ContribAddModal';
 export { Toast } from './Toast';
 
 export { ScheduleAdminView } from './schedules/ScheduleAdminView';

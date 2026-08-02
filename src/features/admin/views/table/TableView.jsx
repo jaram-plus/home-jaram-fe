@@ -1,8 +1,11 @@
 import React from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { departmentKey, titleLabel } from '@/shared/member/enums';
+import { useAuthStore } from '@/shared/auth/auth.store';
 import { SCHEMAS, PEOPLE_TABS, RESOURCES, TOAST, MESSAGES } from '../../admin.data';
 import { useAdminStore, dirtyCount, mergeRows } from '../../admin.store';
-import { useResourceList, useBatchSave, useDriveExport } from '../../admin.queries';
+import { canAssign, grantsOf, titleOptions } from '../../exec.roles';
+import { useResourceList, useBatchSave, useDriveExport, useMemberDetail } from '../../admin.queries';
 import { TableToolbar } from './TableToolbar';
 import { DataTable } from './DataTable';
 import { Pagination } from './Pagination';
@@ -10,6 +13,8 @@ import { SaveBar } from './SaveBar';
 import { EmptyState } from './EmptyState';
 import { ConfirmDialog } from '../forms/ConfirmDialog';
 import { MemberDetailModal } from '../forms/MemberDetailModal';
+import { ExecAssignModal } from '../forms/ExecAssignModal';
+import { ContribAddModal } from '../forms/ContribAddModal';
 
 const PAGE_SIZE = 8;
 
@@ -57,13 +62,12 @@ export function TableView({ resource: fixedResource }) {
   const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const origById = React.useMemo(() => Object.fromEntries(items.map((r) => [r.id, r])), [items]);
 
-  // 임원진 탭의 '대조' 컬럼용 회원 명부 인덱스(학번 → 회원). exec 일 때만 조회.
-  const roster = useResourceList('member', { size: 200, page: 1 }, { enabled: resource === 'exec' });
-  const memberIndex = React.useMemo(() => {
-    const map = {};
-    (roster.data?.items || []).forEach((m) => { map[String(m.studentId).trim()] = m; });
-    return map;
-  }, [roster.data]);
+  /* 임원 지정 권한 — 로그인한 임원의 현직 부서·직책으로 판정한다(exec 탭에서만 조회).
+   * 서버는 (부서, 직책) 조합만 검증하고 "누가 줄 수 있는가"는 보지 않으므로, 이 판정이
+   * 화면에서의 유일한 관문이다. */
+  const authUser = useAuthStore((s) => s.user);
+  const { data: me } = useMemberDetail(authUser?.id, { enabled: resource === 'exec' && !!authUser?.id });
+  const grants = React.useMemo(() => (resource === 'exec' ? grantsOf(me) : {}), [resource, me]);
 
   /* ── 로컬 편집 상태 ────────────────────────────────────────── */
   const slice = useAdminStore((s) => s.byResource[resource]);
@@ -87,14 +91,28 @@ export function TableView({ resource: fixedResource }) {
   const onCellChange = (row, col, value) => {
     if (row._new) setCreateField(resource, row.id, col.key, value);
     else setEdit(resource, row.id, col.key, value, origById[row.id]?.[col.key]);
+    // 부서를 바꾸면 이전 직책이 그 부서에서 허용되지 않을 수 있다 — 함께 맞춰 준다.
+    if (resource === 'exec' && col.key === 'department') {
+      const next = titleOptions(grants, departmentKey(value))[0];
+      setEdit(resource, row.id, 'title', titleLabel(next, departmentKey(value)) ?? '', origById[row.id]?.title);
+    }
   };
 
   // 조회 전용 상세 모달. 표의 편집 상태와 무관하게 열고 닫힌다.
   const [detailRow, setDetailRow] = React.useState(null);
+  const [assigning, setAssigning] = React.useState(false);
+  const [addingContrib, setAddingContrib] = React.useState(false);
 
   const onAction = (kind, row) => {
     if (kind === 'detail') {
       setDetailRow(row);
+    } else if (kind === 'unassign') {
+      // 임원진 표의 '삭제'는 회원 삭제가 아니라 임기 해제다 — 부서·직책을 비워 저장한다.
+      // 이미 비워 둔 행이면 원래 값으로 되돌린다.
+      const orig = origById[row.id] || {};
+      const clearing = !!row.title;
+      setEdit(resource, row.id, 'department', clearing ? '' : orig.department, orig.department);
+      setEdit(resource, row.id, 'title', clearing ? '' : orig.title, orig.title);
     } else if (kind === 'delete') {
       if (row._new) dropCreate(resource, row.id);
       else toggleDelete(resource, row.id);
@@ -109,6 +127,10 @@ export function TableView({ resource: fixedResource }) {
   };
 
   const onAddRow = () => {
+    // 임원진은 회원 명부에서 골라 임명하는 것이지 표에 빈 행을 만드는 게 아니다.
+    if (resource === 'exec') { setAssigning(true); return; }
+    // 기여자도 회원 명부에서 골라 등록한다 — 표에 빈 행을 만드는 게 아니다.
+    if (resource === 'contrib') { setAddingContrib(true); return; }
     const fields = {};
     schema.cols.forEach((c) => {
       if (c.type === 'actions' || c.type === 'match') return;
@@ -161,6 +183,8 @@ export function TableView({ resource: fixedResource }) {
 
   const unit = RESOURCES[resource]?.unit || '건';
   const empty = !isLoading && rows.length === 0;
+  // 지정 권한이 없는 임원에게는 '임원 지정' 버튼 자체를 내주지 않는다.
+  const toolbarSchema = resource === 'exec' && !canAssign(grants) ? { ...schema, addLabel: '' } : schema;
 
   return (
     <div>
@@ -187,7 +211,7 @@ export function TableView({ resource: fixedResource }) {
       )}
 
       <TableToolbar
-        schema={schema}
+        schema={toolbarSchema}
         q={q}
         filters={filters}
         onSearch={(v) => patch({ q: v }, { resetPage: true })}
@@ -209,7 +233,7 @@ export function TableView({ resource: fixedResource }) {
         onSort={onSort}
         onCellChange={onCellChange}
         onAction={onAction}
-        memberIndex={memberIndex}
+        grants={grants}
       />
 
       {empty && <EmptyState searching={!!q || Object.keys(filters).length > 0} />}
@@ -238,6 +262,22 @@ export function TableView({ resource: fixedResource }) {
       )}
 
       {detailRow && <MemberDetailModal row={detailRow} onClose={() => setDetailRow(null)} />}
+
+      {assigning && (
+        <ExecAssignModal
+          grants={grants}
+          me={me}
+          onClose={() => setAssigning(false)}
+          onDone={showToast}
+        />
+      )}
+
+      {addingContrib && (
+        <ContribAddModal
+          onClose={() => setAddingContrib(false)}
+          onDone={showToast}
+        />
+      )}
     </div>
   );
 }
