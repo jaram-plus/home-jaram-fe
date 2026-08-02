@@ -28,21 +28,16 @@ export const memberSchema = z.object({
   email,
 });
 
+// 임원진 표는 회원 정보를 고치지 않는다 — 부서·직책(임기)만 열려 있고, 둘 다 비우면 임기 해제다.
 export const execSchema = z.object({
-  name: z.string().min(1, '이름을 입력하세요.'),
-  studentId,
-  gen,
-  department: labelEnum(DEPARTMENT_LABEL),
-  position: z.string().min(1, '직책을 입력하세요.'),
-  term: z.string().min(1, '임기를 입력하세요.'),
+  department: labelEnum(DEPARTMENT_LABEL).or(z.literal('')),
+  title: z.string(),
 });
 
+// 기여자 표도 회원 정보를 고치지 않는다 — 기여자 여부 하나만 열려 있고,
+// 등록은 모달이, 해제는 표의 액션이 담당하므로 사람이 입력하는 칸은 없다.
 export const contribSchema = z.object({
-  name: z.string().min(1, '이름을 입력하세요.'),
-  gen: z.string().min(1),
-  type: z.string().min(1),
-  contribution: z.string().min(1, '기여 내용을 입력하세요.'),
-  link: z.string().optional(),
+  contributor: z.boolean(),
 });
 
 export const gradSchema = z.object({

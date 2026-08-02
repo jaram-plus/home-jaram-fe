@@ -1,11 +1,16 @@
 import React from 'react';
 import { Tag } from '@/design-system';
+import { departmentKey, departmentLabel, titleLabel } from '@/shared/member/enums';
+import { canEditRow, departmentOptions, titleOptions } from '../../exec.roles';
 
 /**
- * 인라인 편집 셀 — 컬럼 타입별(text/select/tag/static/match/actions) 렌더.
+ * 인라인 편집 셀 — 컬럼 타입별(text/select/tag/static/assign/actions) 렌더.
  * 편집 가능한 셀은 원본과 다르면 dirty 표시(brand-tint + 레드 텍스트)를 답니다.
+ *
+ * grants 는 임원진 표(assign 타입)에서만 씁니다 — 로그인한 임원이 줄 수 있는
+ * (부서, 직책) 범위이며, 범위 밖의 행·값은 아예 읽기 전용으로 그립니다.
  */
-export function EditableCell({ col, row, dirty, onChange, onAction, memberIndex }) {
+export function EditableCell({ col, row, dirty, onChange, onAction, grants }) {
   const align = col.align || 'left';
   const value = row[col.key];
 
@@ -59,26 +64,28 @@ export function EditableCell({ col, row, dirty, onChange, onAction, memberIndex 
     return <span style={{ fontSize: 'var(--fs-sm)', color: 'var(--text-muted)', display: 'block', textAlign: align, ...s }}>{value}</span>;
   }
 
-  if (col.type === 'match') {
-    const info = matchInfo(row, memberIndex);
+  if (col.type === 'assign') {
+    const options = assignOptions(col.key, row, grants);
+    // 권한 밖의 자리이거나 고를 값이 없으면 셀렉트를 아예 내주지 않는다.
+    if (!canEditRow(grants, row) || options.length === 0) {
+      return <span style={{ fontSize: 'var(--fs-sm)', color: 'var(--text-muted)', display: 'block', textAlign: align }}>{value || '—'}</span>;
+    }
     return (
-      <span style={{ display: 'flex', justifyContent: 'center' }}>
-        <span style={info.style}>
-          {info.ok && (
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
-          )}
-          {info.label}
-        </span>
-      </span>
+      <select value={value ?? ''} onChange={(e) => onChange(e.target.value)} style={{ ...baseInput, cursor: 'pointer', ...dirtyStyle }}>
+        {!value && <option value="">선택</option>}
+        {options.map((o) => <option key={o} value={o}>{o}</option>)}
+      </select>
     );
   }
 
   if (col.type === 'actions') {
+    // 임기 해제는 그 자리를 지정할 수 있는 사람만 누를 수 있다.
+    const actions = col.actions.filter((a) => a !== 'unassign' || canEditRow(grants, row));
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}>
-        {col.actions.map((a) => (
+        {actions.map((a) => (
           <button key={a} type="button" onClick={() => onAction(a, row)} style={actionStyle(a, row._pendingDelete)}>
-            {actionLabel(a, row._pendingDelete)}
+            {actionLabel(a, row)}
           </button>
         ))}
       </div>
@@ -98,8 +105,16 @@ function focusOff(e) {
   e.currentTarget.style.boxShadow = 'none';
 }
 
-function actionLabel(kind, pendingDelete) {
-  if (kind === 'delete') return pendingDelete ? '취소' : '삭제';
+/** assign 셀의 선택지(한글 라벨). 직책은 그 행의 부서에서 허용된 것만 남긴다. */
+function assignOptions(key, row, grants) {
+  if (key === 'department') return departmentOptions(grants).map(departmentLabel);
+  return titleOptions(grants, departmentKey(row.department)).map((t) => titleLabel(t, departmentKey(row.department)));
+}
+
+function actionLabel(kind, row) {
+  if (kind === 'delete') return row._pendingDelete ? '취소' : '삭제';
+  if (kind === 'unassign') return row.title ? '임기 해제' : '해제 취소';
+  if (kind === 'uncontrib') return row.contributor === false ? '해제 취소' : '기여자 해제';
   if (kind === 'detail') return '상세';
   if (kind === 'approve') return '승인';
   if (kind === 'reject') return '반려';
@@ -112,17 +127,4 @@ function actionStyle(kind, pendingDelete) {
   if (kind === 'reject') return { ...base, background: 'transparent', color: 'var(--red-600)', border: '1px solid var(--red-100)' };
   if (pendingDelete) return { ...base, background: 'var(--surface-sunken)', color: 'var(--text-body)', border: '1px solid var(--border-strong)' };
   return { ...base, background: 'transparent', color: 'var(--text-muted)', border: '1px solid var(--border)' };
-}
-
-/** 임원 학번을 회원 명부와 대조 (기획.md §3.3). memberIndex: studentId → member. */
-function matchInfo(row, memberIndex = {}) {
-  const sid = String(row.studentId || '').trim();
-  const nm = String(row.name || '').trim();
-  const hit = sid ? memberIndex[sid] : null;
-  const pill = { display: 'inline-flex', alignItems: 'center', gap: 5, fontFamily: 'var(--font-sans)', fontWeight: 600, fontSize: 11, padding: '4px 10px', borderRadius: 999, lineHeight: 1.3, whiteSpace: 'nowrap' };
-  const warn = { ...pill, background: 'var(--brand-tint)', color: 'var(--red-600)', border: '1px solid var(--red-100)' };
-  if (!sid) return { ok: false, label: '학번 미입력', style: { ...pill, background: 'transparent', color: 'var(--text-faint)', border: '1px dashed var(--border-strong)' } };
-  if (!hit) return { ok: false, label: '미등록 학번', style: warn };
-  if (String(hit.name).trim() !== nm) return { ok: false, label: '이름 불일치', style: warn };
-  return { ok: true, label: '회원 일치', style: { ...pill, background: 'var(--surface-sunken)', color: 'var(--text-muted)', border: '1px solid var(--border)' } };
 }

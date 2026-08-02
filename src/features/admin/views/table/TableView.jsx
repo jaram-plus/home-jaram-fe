@@ -113,6 +113,11 @@ export function TableView({ resource: fixedResource }) {
       const clearing = !!row.title;
       setEdit(resource, row.id, 'department', clearing ? '' : orig.department, orig.department);
       setEdit(resource, row.id, 'title', clearing ? '' : orig.title, orig.title);
+    } else if (kind === 'uncontrib') {
+      // 기여자 표의 '해제'는 회원 삭제가 아니라 기여자 플래그 내리기다.
+      // 이미 내려 둔 행이면 원래 값으로 되돌린다(setEdit 이 편집분을 지운다).
+      const orig = origById[row.id] || {};
+      setEdit(resource, row.id, 'contributor', row.contributor === false ? orig.contributor : false, orig.contributor);
     } else if (kind === 'delete') {
       if (row._new) dropCreate(resource, row.id);
       else toggleDelete(resource, row.id);
