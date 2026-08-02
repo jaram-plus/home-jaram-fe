@@ -12,6 +12,7 @@
  *   - 실패 계약: code 를 붙인 Error 로 던져 UI 가 필드/서버 에러를 구분 (기획.md §6)
  */
 import { client } from '@/shared/api/client';
+import { titleKey, titleLabel } from '@/shared/member/enums';
 import {
   SEED, SETTINGS_SEED, RESOURCES,
   GRADE_LABEL, STATUS_LABEL, DEPARTMENT_LABEL,
@@ -24,7 +25,7 @@ const USE_MOCK = import.meta.env.VITE_ADMIN_MOCK !== 'false';
 const delay = (ms) => new Promise((r) => setTimeout(r, ms));
 
 // 백엔드 연동이 끝난 리소스 — USE_MOCK 여부와 무관하게 항상 실 서버를 쓴다.
-const LIVE_RESOURCES = new Set(['member', 'seminars', 'seminarApprovals', 'applications']);
+const LIVE_RESOURCES = new Set(['member', 'exec', 'contrib', 'seminars', 'seminarApprovals', 'applications']);
 const mocked = (resource) => USE_MOCK && !LIVE_RESOURCES.has(resource);
 
 /**
@@ -49,6 +50,7 @@ function throwWireError(error, fallbackCode) {
 const ENUM_FIELDS = {
   member: { grade: GRADE_LABEL, status: STATUS_LABEL },
   exec: { department: DEPARTMENT_LABEL },
+  contrib: { grade: GRADE_LABEL },
   seminars: { status: SEMINAR_STATUS_LABELS, target: TARGET_GRADE_LABELS },
   studies: { status: STUDY_STATUS_LABEL },
   applications: { status: APPLICATION_STATUS_LABEL },
@@ -73,6 +75,9 @@ export function fromWire(resource, row) {
   const hasGen = GEN_RESOURCES.has(resource);
   if ((!fields && !hasGen) || !row) return row;
   const out = { ...row };
+  // 직책 라벨은 부서와 조합해 파생하므로(ACADEMIC+LEAD→'학술부장') 단순 맵이 아니다.
+  // 부서가 아직 와이어 키인 지금 계산한다.
+  if (resource === 'exec') out.title = titleLabel(out.title, out.department) ?? '';
   for (const [field, map] of Object.entries(fields || {})) {
     if (out[field] == null) continue;
     out[field] = Array.isArray(out[field])
@@ -90,7 +95,9 @@ export function toWire(resource, fields) {
   const out = {};
   for (const [k, v] of Object.entries(fields)) {
     let val = v;
-    if (maps[k]) {
+    if (resource === 'exec' && k === 'title') {
+      val = titleKey(v); // 라벨 역인덱스. 비우면 null → 서버가 현직 임기를 종료한다.
+    } else if (maps[k]) {
       const flipped = flip(maps[k]);
       val = Array.isArray(v) ? v.map((x) => flipped[x] ?? x) : (flipped[v] ?? v);
     } else if (hasGen && k === 'gen') val = genToWire(v);
@@ -107,6 +114,8 @@ export async function fetchList(resource, params = {}) {
     return mockList(resource, params);
   }
   if (resource === 'member') return fetchMembers(params);
+  if (resource === 'exec') return fetchExecs(params);
+  if (resource === 'contrib') return fetchContribs(params);
   if (resource === 'applications') return fetchPendingApplications(params);
   if (resource === 'seminarApprovals') return fetchPendingSeminarApprovals(params);
   // GET /api/admin/{resource}?tab=&q=&grade=&gen=&status=&sort=&page=&size= (AdminListResponse)
@@ -133,6 +142,66 @@ async function fetchMembers(params = {}) {
     .filter((m) => m.approval === 'APPROVED')
     .map((m) => fromWire('member', m));
   return queryLocally(rows, params);
+}
+
+/**
+ * 임원진 명단(exec 탭) — 현직 임기가 있는 회원. member 탭과 같은 이유로 서버가
+ * 부서 필터를 보지 않으므로 전체를 받아 이 계층에서 검색·필터·정렬·페이지를 처리한다.
+ * '임기' 칸은 서버의 termStartGen(현직 임기 시작 기수)에서 파생한 표시 전용 값이다.
+ */
+async function fetchExecs(params = {}) {
+  const { data } = await client.get('/api/admin/members', {
+    params: { tab: 'exec', page: 1, size: ALL_ROWS_SIZE },
+  });
+  const rows = (data.items || []).map((m) => ({
+    ...fromWire('exec', m),
+    term: m.termStartGen == null ? '' : `${m.termStartGen}기~`,
+  }));
+  return queryLocally(rows, params);
+}
+
+/**
+ * 기여자 명단(contrib 탭) — 임원 이력이 있거나 직접 등록된 회원. member·exec 탭과
+ * 같은 이유로 서버가 등급 필터를 보지 않으므로 전체를 받아 이 계층에서 검색·필터·
+ * 정렬·페이지를 처리한다. '직책 이력' 칸은 서버가 내려주는 마지막 임기에서 파생한
+ * 표시 전용 값이다 — 끝난 임기면 '전 ' 을 붙이고, 임기가 없으면(직접 등록) '—'.
+ */
+async function fetchContribs(params = {}) {
+  const { data } = await client.get('/api/admin/members', {
+    params: { tab: 'contrib', page: 1, size: ALL_ROWS_SIZE },
+  });
+  const rows = (data.items || []).map((m) => ({
+    ...fromWire('contrib', m),
+    role: roleLabel(m),
+  }));
+  return queryLocally(rows, params);
+}
+
+/** 마지막 임기(현직 우선) → '학술부장' | '전 학술부장' | '—'. */
+function roleLabel(m) {
+  const label = titleLabel(m.termTitle, m.termDepartment);
+  if (!label) return '—';
+  return m.termEndGen == null ? label : `전 ${label}`;
+}
+
+/**
+ * 임원으로 지정할 수 있는 회원 — 현직 임기가 없고 졸업생(OB)도 아닌 승인 회원.
+ * 지정 모달의 목록이라 페이지를 나누지 않고 한 번에 받는다.
+ */
+export async function fetchAssignableMembers() {
+  const { data } = await client.get('/api/admin/members', {
+    params: { tab: 'member', page: 1, size: ALL_ROWS_SIZE },
+  });
+  return (data.items || [])
+    .filter((m) => m.approval === 'APPROVED' && m.grade !== 'OB' && !m.title)
+    .map((m) => ({
+      id: m.id,
+      name: m.name,
+      studentId: m.studentId,
+      gen: genFromWire(m.gen),
+      faculty: m.faculty || '',
+      version: m.version,
+    }));
 }
 
 /**
@@ -297,6 +366,31 @@ async function saveSeminarApprovalsQueue(updates, deletes) {
   }
   deletes.forEach((id) => errors.push({ id, fieldErrors: { _: '세미나 승인 대기열은 삭제를 지원하지 않습니다.' } }));
   return { updated, created: [], deleted: [], conflicts: [], errors };
+}
+
+/**
+ * 임원 지정 — 회원 한 명에게 (부서, 직책) 임기를 준다. 표의 모아 저장과 달리 즉시 커밋한다.
+ * department·title 은 이미 와이어 키라 라벨을 받는 saveBatch/toWire 를 거치지 않고 직접 조립한다.
+ * handoverFrom 이 있으면(회장 인계) 그 사람의 임기를 같은 요청에서 함께 끝낸다.
+ *
+ * 배치는 행이 실패해도 200 + errors[] 로 돌아오므로 여기서 열어보고 실패면 던진다.
+ */
+export async function assignExec({ member, department, title, handoverFrom }) {
+  const updates = [{ id: member.id, version: member.version, fields: { department, title } }];
+  if (handoverFrom) updates.push({ id: handoverFrom, version: null, fields: { department: null, title: null } });
+  let data;
+  try {
+    ({ data } = await client.patch('/api/admin/members:batch', { updates, creates: [], deletes: [] }));
+  } catch (error) {
+    throwWireError(error, 'VALIDATION');
+  }
+  const failed = [...(data.conflicts || []), ...(data.errors || [])];
+  if (failed.length) {
+    const first = failed[0];
+    const message = first.message || Object.values(first.fieldErrors || {})[0] || '임원으로 지정하지 못했습니다.';
+    throw Object.assign(new Error(message), { code: first.message ? 'CONFLICT' : 'VALIDATION' });
+  }
+  return data;
 }
 
 /* ── 단건 · 액션 ─────────────────────────────────────────────────────── */

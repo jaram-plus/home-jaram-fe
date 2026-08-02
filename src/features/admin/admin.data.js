@@ -74,31 +74,34 @@ export const SCHEMAS = {
     ],
   },
   exec: {
+    // 이름·학번·기수는 회원 정보라 이 표에서 고치지 않는다(회원 탭이 담당). 여기서 바꾸는 건
+    // 부서·직책, 즉 임기뿐이며 그마저도 로그인한 임원의 권한만큼만 열린다(exec.roles.js).
     eyebrow: 'PEOPLE', title: '인원 관리', addLabel: '임원 지정',
-    desc: '임원진 부서·직책 배정입니다. 학번으로 회원 명부와 대조한 뒤 회장단·학술부·홍보부·회계부·인프라로 지정하세요.',
+    desc: '임원진 부서·직책 배정입니다. 임원 지정으로 회원을 임명하고, 부서·직책은 권한 범위 안에서 바꿀 수 있습니다.',
     filters: [{ key: 'department', label: '부서', options: ['전체', '회장단', '학술부', '홍보부', '회계부', '인프라'] }],
     cols: [
-      { key: 'name', label: '이름', type: 'text', width: '0.9fr' },
-      { key: 'studentId', label: '학번', type: 'text', width: '1fr' },
-      { key: '__match', label: '대조', type: 'match', width: '1fr', align: 'center' },
-      { key: 'gen', label: '기수', type: 'text', width: '0.5fr', align: 'center' },
-      { key: 'department', label: '부서', type: 'select', width: '0.9fr', options: ['회장단', '학술부', '홍보부', '회계부', '인프라'] },
-      { key: 'position', label: '직책', type: 'text', width: '0.8fr' },
-      { key: 'term', label: '임기', type: 'text', width: '0.55fr', align: 'center' },
-      { key: '__act', label: '', type: 'actions', width: '0.55fr', align: 'center', actions: ['delete'] },
+      { key: 'name', label: '이름', type: 'static', width: '0.9fr' },
+      { key: 'studentId', label: '학번', type: 'static', width: '1fr' },
+      { key: 'gen', label: '기수', type: 'static', width: '0.6fr', align: 'center' },
+      { key: 'department', label: '부서', type: 'assign', width: '1fr' },
+      { key: 'title', label: '직책', type: 'assign', width: '1fr' },
+      { key: 'term', label: '임기', type: 'static', width: '0.7fr', align: 'center' },
+      { key: '__act', label: '', type: 'actions', width: '0.9fr', align: 'center', actions: ['unassign'] },
     ],
   },
   contrib: {
+    // 이름·학번·기수·등급은 회원 정보라 이 표에서 고치지 않는다(회원 탭이 담당).
+    // 여기서 바꾸는 건 기여자 여부뿐이며, 그것도 '기여자 해제'로만 이뤄진다.
     eyebrow: 'PEOPLE', title: '인원 관리', addLabel: '기여자 추가',
-    desc: '자람에 힘을 더해주신 분들입니다. 전 임원·멘토·외부 자문·후원자의 기여 내역을 기록합니다.',
-    filters: [{ key: 'type', label: '구분', options: ['전체', '전 임원', '멘토', '외부 자문', '후원자'] }],
+    desc: '자람에 힘을 더해주신 분들입니다. 임원 임기를 받으면 자동으로 등록되고, 기여자 추가로 직접 등록할 수 있습니다.',
+    filters: [{ key: 'grade', label: '등급', options: ['전체', '수습회원', '준회원', '정회원', '졸업생'] }],
     cols: [
-      { key: 'name', label: '이름', type: 'text', width: '0.9fr' },
-      { key: 'gen', label: '기수', type: 'text', width: '0.6fr', align: 'center' },
-      { key: 'type', label: '구분', type: 'select', width: '0.9fr', options: ['전 임원', '멘토', '외부 자문', '후원자'] },
-      { key: 'contribution', label: '기여 내용', type: 'text', width: '2fr' },
-      { key: 'link', label: '링크', type: 'text', width: '1.1fr' },
-      { key: '__act', label: '', type: 'actions', width: '0.6fr', align: 'center', actions: ['delete'] },
+      { key: 'name', label: '이름', type: 'static', width: '0.9fr' },
+      { key: 'studentId', label: '학번', type: 'static', width: '1fr' },
+      { key: 'gen', label: '기수', type: 'static', width: '0.6fr', align: 'center' },
+      { key: 'role', label: '직책 이력', type: 'static', width: '1.1fr' },
+      { key: 'grade', label: '등급', type: 'static', width: '0.8fr' },
+      { key: '__act', label: '', type: 'actions', width: '1fr', align: 'center', actions: ['detail', 'uncontrib'] },
     ],
   },
   grad: {
@@ -184,10 +187,17 @@ export const MESSAGES = {
   deleteRefWarn: '임원·스터디장으로 배정된 회원입니다. 삭제하면 배정도 함께 해제됩니다.',
   driveNotConnected: '표를 스프레드시트로 내보내려면 설정에서 Google Drive를 먼저 연결하세요.',
   confirmGraduate: (n) => `졸업생으로 변경하는 회원 ${n}명의 진행 중인 임원 임기가 종료됩니다. 임기 이력은 남으며 임원진 명단에서는 빠집니다. 계속할까요?`,
+  noAssignPermission: '임원을 지정할 권한이 없습니다. 회장·부회장 또는 각 부처의 부장에게 요청해 주세요.',
+  handoverPresident: '회장 자리를 넘기면 본인의 회장 임기가 함께 종료되어 임원 권한을 잃습니다. 계속할까요?',
+  noAssignable: '지정할 수 있는 회원이 없습니다. 이미 임기가 있거나 졸업생인 회원은 목록에 나오지 않습니다.',
+  noContribCandidate: '등록할 수 있는 회원이 없습니다. 이미 기여자로 등록된 회원은 목록에 나오지 않습니다.',
 };
 
 export const TOAST = {
   saved: (n) => `변경분 ${n}건이 저장되었습니다.`,
+  // 직책마다 조사가 갈려(회장'으로' / 서버 관리자'로') '직책으로' 로 묶는다.
+  assigned: (name, title) => `${name} 님을 ${title} 직책으로 지정했습니다.`,
+  contribAdded: (name) => `${name} 님을 기여자로 등록했습니다.`,
   approved: '신청을 승인했습니다. 저장 시 회원으로 편입됩니다.',
   rejected: '신청을 반려했습니다.',
   seminarApproved: '세미나를 승인했습니다. 저장 시 정식 목록에 노출됩니다.',
@@ -203,23 +213,7 @@ export const EMPTY = {
 
 /* ── 개발용 시드 (USE_MOCK=true) — 백엔드 연동 시 삭제 ────────────────── */
 export const SEED = {
-  // member 는 실 서버(GET /api/admin/members)로 전환되어 시드를 두지 않는다.
-  exec: [
-    { id: 'e1', name: '강준혁', studentId: '2022088804', gen: '39기', department: '회장단', position: '회장', term: '2026' },
-    { id: 'e2', name: '윤서아', studentId: '2021087700', gen: '38기', department: '회장단', position: '부회장', term: '2026' },
-    { id: 'e3', name: '최유나', studentId: '2022089910', gen: '39기', department: '학술부', position: '부장', term: '2026' },
-    { id: 'e4', name: '박도윤', studentId: '2023091144', gen: '40기', department: '홍보부', position: '부장', term: '2026' },
-    { id: 'e5', name: '정시우', studentId: '2023090021', gen: '40기', department: '회계부', position: '부장', term: '2026' },
-    { id: 'e6', name: '이하은', studentId: '2024093208', gen: '41기', department: '인프라', position: '부원', term: '2026' },
-  ],
-  contrib: [
-    { id: 'c1', name: '박나눔', gen: '38기', type: '전 임원', contribution: '전 회장 · 재학생 대상 백엔드·인프라 정기 멘토링', link: 'github.com/parknanum' },
-    { id: 'c2', name: '김선배', gen: '37기', type: '전 임원', contribution: '전 학술부장 · 세미나 운영 노하우 문서화 및 인수인계', link: 'blog.jaram.dev/kim' },
-    { id: 'c3', name: '이멘토', gen: '외부', type: '외부 자문', contribution: '실무 코드 리뷰·커리어 상담 (현 카카오 시니어 개발자)', link: 'github.com/leementor' },
-    { id: 'c4', name: '정오픈', gen: '39기', type: '전 임원', contribution: '전 인프라 담당 · 자람 홈페이지 오픈소스 유지보수 기여', link: 'github.com/jeongopen' },
-    { id: 'c5', name: '유강연', gen: '외부', type: '멘토', contribution: '외부 연사 · AI 트렌드 특별 세미나 2회 진행', link: 'blog.yukang.io' },
-    { id: 'c6', name: '한동문', gen: '32기', type: '후원자', contribution: '동문 · 학회 서버 비용 및 정기 세미나 다과 후원', link: '—' },
-  ],
+  // member·exec·contrib 는 실 서버(GET /api/admin/members)로 전환되어 시드를 두지 않는다.
   grad: [
     { id: 'g1', name: '한지호', gen: '35기', gradYear: '2021', org: '네이버', job: '백엔드 엔지니어' },
     { id: 'g2', name: '오세훈', gen: '34기', gradYear: '2020', org: '카카오', job: '안드로이드 개발자' },
