@@ -74,17 +74,21 @@ public void assignTerm(MemberDepartment d, MemberTitle t, int currentGen) {
 
 ### 2. 기존 데이터 백필
 
-Flyway 가 없고 `ddl-auto: update` 라 마이그레이션 파일을 둘 자리가 없다.
-`com.jaram.be.member.ContributorBackfill` 을 `ApplicationRunner` 로 둔다.
+Flyway 가 없고 `ddl-auto: update` 지만, 이 프로젝트에는 **손으로 실행하는 SQL
+스크립트** 관례가 이미 있다 (`docs/migrations/2026-07-20-member-refactor.sql`).
+같은 자리에 `docs/migrations/2026-08-02-contributor-backfill.sql` 을 둔다.
 
-```java
-members.findAll().stream()
-    .filter(m -> !m.isContributor() && !m.getTerms().isEmpty())
-    .forEach(m -> m.setContributor(true));
+```sql
+BEGIN;
+UPDATE member SET contributor = true
+ WHERE contributor = false
+   AND id IN (SELECT DISTINCT member_id FROM member_term);
+COMMIT;
 ```
 
-멱등하고(두 번째 실행부터는 대상이 0건), 회원 수백 규모라 부팅 비용이 무시할
-수준이다. 그래서 실행 후에도 지우지 않고 남겨 자가 치유되게 둔다.
+멱등하다 — 두 번째 실행부터는 대상이 0건이다. 부팅 코드를 영구히 남기지 않아도
+되고, 기존 마이그레이션 문서와 실행 규약(새 코드 기동 직후, 트래픽 열기 전)이
+그대로 적용된다.
 
 ### 3. 일괄 저장 화이트리스트 — `AdminBatchExecutor.updateMember`
 
@@ -135,7 +139,12 @@ r.put("termEndGen", last == null ? null : last.getEndGen());
 - `AdminResourceTest` — `tab=contrib` 행에 `contributor`·`termTitle`·`termEndGen` 이
   실린다. `contributor: false` 업데이트가 적용된다.
 - `PeopleTest` — 현직 임원은 기여자 탭에 없고, 임기가 끝난 회원은 있다.
-  기존 `returnsActiveMembersGroupedByTab` 이 §1·§4 로 깨지지 않는지 함께 확인한다.
+
+  **기존 테스트 `officerWhoIsAlsoAContributorAppearsInBothTabs` 를 뒤집는다.**
+  이 테스트는 "현직 임원이면서 기여자로 등록된 사람은 두 탭에 모두 뜬다"를
+  의도적으로 고정하고 있다 — §4 는 그 결정을 정면으로 바꾸는 것이므로,
+  테스트 이름과 주석까지 새 규칙으로 다시 쓴다. 수동으로 `contributor = true` 를
+  찍어 둔 회원이라도 현직 임기가 있는 동안에는 공개 기여자 탭에서 빠진다.
 
 ## 프론트엔드 (home-jaram-fe)
 
@@ -291,3 +300,4 @@ if (kind === 'uncontrib') return row.contributor === false ? '해제 취소' : '
 | 해제에 전용 API 를 두지 않는다 | 표의 일괄 저장이 이미 유일한 수정 경로다. 저장 경로를 둘로 만들면 같은 행의 충돌 처리가 늘어난다. |
 | 역할 게이트를 두지 않는다 | `/admin` 이 이미 `OFFICER`·`ADMIN` 만 통과시킨다. 기여자 등록은 임기 부여만큼 민감하지 않다. |
 | 모달 공용 셸을 추출한다 | 복사하면 ~180줄이 중복된다. `ExecAssignModal` 이 아직 커밋 전이라 지금이 가장 싸다. |
+| 백필을 부팅 코드가 아니라 SQL 스크립트로 | `docs/migrations/` 에 같은 방식의 선례가 있다. 일회성 작업을 위해 영구 `ApplicationRunner` 를 남기지 않는다. |
