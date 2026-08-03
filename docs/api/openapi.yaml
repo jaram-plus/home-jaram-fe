@@ -1041,7 +1041,7 @@ components:
       enum: [PRESIDENT, VICE_PRESIDENT, LEAD, STAFF, SERVER_ADMIN, null]
     MemberGrade:
       type: string
-      description: 회원 등급. 가입 승인 시 gen 파생(gen==현재년도-1984→NEWCOMER, 그 외 ASSOCIATE). enum name으로 전송.
+      description: 회원 등급. 가입 신청 시 SignupRequest.newcomer로 파생(true→NEWCOMER, false→ASSOCIATE). enum name으로 전송.
       enum: [NEWCOMER, ASSOCIATE, REGULAR, OB]
     MemberStatus:
       type: string
@@ -1141,7 +1141,7 @@ components:
         user: { $ref: '#/components/schemas/UserSummary' }
     SignupRequest:
       type: object
-      required: [name, studentId, email, password, gen, faculty, phone, enrolled]
+      required: [name, studentId, email, password, gen, faculty, phone, enrolled, newcomer]
       properties:
         name: { type: string }
         studentId: { type: string, pattern: '^\d{8,10}$', example: '2023012345' }
@@ -1158,7 +1158,7 @@ components:
           type: integer
           minimum: 1
           example: 41
-          description: 기수. 신입생은 가입 연도 기준 FE 자동 산출.
+          description: 기수. 신입생은 가입 연도 기준 FE 자동 산출. 등급과는 무관하다.
         faculty:
           type: string
           example: 컴퓨터학부
@@ -1173,6 +1173,12 @@ components:
           description: >
             재학여부. 서버가 가입 시 MemberStatus로 파생한다
             (true→ACTIVE, false→ON_LEAVE). WITHDRAWN은 가입 시 도달 불가·admin만 설정.
+        newcomer:
+          type: boolean
+          example: false
+          description: >
+            신입생/재학생 구분. 서버가 가입 시 MemberGrade로 파생한다
+            (true→NEWCOMER, false→ASSOCIATE). 기수와 무관하며 저장하지 않는다.
     PasswordResetRequest:
       type: object
       required: [email]

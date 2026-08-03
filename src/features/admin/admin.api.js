@@ -440,7 +440,7 @@ export async function addContributor({ member }) {
 /* ── 단건 · 액션 ─────────────────────────────────────────────────────── */
 export async function approveApplication(id) {
   try {
-    // 승인 시 서버가 gen 파생(gen==현재년도-1984→NEWCOMER, 그 외 ASSOCIATE)으로 등급 부여 후 status=ACTIVE.
+    // 등급은 가입 신청 때 이미 정해져 있다(신입생→NEWCOMER, 재학생→ASSOCIATE). 승인은 승인축만 바꾼다.
     const { data } = await client.post(`/api/admin/members/${id}/approve`);
     return data;
   } catch (error) {

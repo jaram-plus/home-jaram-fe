@@ -42,9 +42,9 @@ export async function login({ email, password }) {
   }
 }
 
-// 와이어 필드: name/studentId/email/password/gen(정수)/faculty/phone/enrolled.
-// studentType은 gen 산출용 클라 전용 값이라 서버로 보내지 않는다(SignupRequest 미포함).
-export async function signup({ name, studentId, email, password, gen, faculty, phone, enrolled }) {
+// 와이어 필드: name/studentId/email/password/gen(정수)/faculty/phone/enrolled/newcomer.
+// studentType 자체는 보내지 않고, gen 산출과 newcomer(불리언) 두 갈래로 풀어서 보낸다.
+export async function signup({ name, studentId, email, password, gen, faculty, phone, enrolled, newcomer }) {
   try {
     const { data } = await client.post('/api/auth/signup', {
       name,
@@ -55,6 +55,7 @@ export async function signup({ name, studentId, email, password, gen, faculty, p
       faculty,
       phone,
       enrolled,
+      newcomer,
     });
     return data;
   } catch (error) {

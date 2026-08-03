@@ -123,12 +123,14 @@ export default function LoginPage({ initialView = 'login' }) {
         studentId: v.sid,
         email: v.email,
         password: v.pw,
-        // studentType은 와이어로 보내지 않는다 — 아래 gen 산출에만 쓰는 클라 전용 값.
-        // 재학생은 입력값, 신입생은 가입 연도 기준 자동 계산. 와이어는 정수.
+        // studentType은 그대로 보내지 않고 두 값으로 풀어 보낸다.
+        // 기수: 재학생은 입력값, 신입생은 가입 연도 기준 자동 계산. 와이어는 정수.
         gen: genNumber(v.studentType === 'current' ? v.gen : String(newcomerGen())),
         faculty: v.facultyChoice === FACULTY_ETC ? v.facultyEtc.trim() : v.facultyChoice,
         phone: formatPhone(v.phone),
         enrolled: v.enrolled,
+        // 등급: 서버가 이 값으로 정한다(신입생→수습회원, 재학생→준회원). 기수와 무관하다.
+        newcomer: v.studentType === 'new',
       });
       setView('signupDone');
     } catch (err) {
