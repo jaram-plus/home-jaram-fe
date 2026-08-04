@@ -765,6 +765,24 @@ paths:
         '422': { $ref: '#/components/responses/Validation' }
         '5XX': { $ref: '#/components/responses/ServerError' }
 
+  /api/admin/schedules/{id}:
+    delete:
+      tags: [schedule]
+      summary: 일정 삭제 (임원)
+      description: >-
+        슬롯이 모두 비어 있을 때만 삭제한다. 맡은 회원이 남아 있으면 409 —
+        먼저 그 슬롯들을 해제해야 한다.
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: '#/components/parameters/ScheduleId'
+      responses:
+        '204': { description: 삭제됨 }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '5XX': { $ref: '#/components/responses/ServerError' }
+
   /api/admin/schedules/{id}/lock:
     patch:
       tags: [schedule]

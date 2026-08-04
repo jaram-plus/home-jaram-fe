@@ -6,9 +6,13 @@ import { SCHEDULE_STATUS_LABELS } from '@/shared/seminar/enums';
  * 일정 관리 카드 — 슬롯별 맡은 회원 + 해제 버튼, 잠금 토글.
  * 빈 슬롯 문구('비어있음')는 회원용 ScheduleCard의 SLOT_EMPTY('미정')와 다른 단어를
  * 쓴다 — admin 표에서는 이 리소스가 "비어있는 자리"라는 관리 관점 문구가 자연스럽다.
+ *
+ * 삭제 버튼은 슬롯이 전부 비어 있을 때만 나온다. 누군가 맡고 있다면 그 슬롯을 먼저
+ * 해제해야 하므로, 눌러도 막히는 버튼을 보여주는 대신 아예 감춘다.
  */
-export function ScheduleAdminCard({ schedule, onLock, onUnlock, onForceUnassign, locking, unlocking, unassigningIndex }) {
+export function ScheduleAdminCard({ schedule, onLock, onUnlock, onForceUnassign, onDelete, locking, unlocking, deleting, unassigningIndex }) {
   const locked = schedule.status === 'LOCKED';
+  const emptied = schedule.slots.every((slot) => !slot.member);
 
   return (
     <div
@@ -39,6 +43,11 @@ export function ScheduleAdminCard({ schedule, onLock, onUnlock, onForceUnassign,
           ) : (
             <Button variant="secondary" size="sm" disabled={locking} onClick={() => onLock(schedule.id)}>
               {locking ? '잠그는 중…' : '잠금'}
+            </Button>
+          )}
+          {emptied && (
+            <Button variant="ghost" size="sm" disabled={deleting} onClick={() => onDelete(schedule.id)}>
+              {deleting ? '삭제하는 중…' : '삭제'}
             </Button>
           )}
         </div>

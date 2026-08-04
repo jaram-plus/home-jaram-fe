@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { Button } from '@/design-system';
 import { useAdminStore } from '../../admin.store';
-import { useSchedulesAdmin, useCreateSchedule, useLockSchedule, useUnlockSchedule, useForceUnassignSlot } from '../../admin.queries';
+import { useSchedulesAdmin, useCreateSchedule, useLockSchedule, useUnlockSchedule, useForceUnassignSlot, useDeleteSchedule } from '../../admin.queries';
 import { ScheduleAdminCard } from './ScheduleAdminCard';
 import { CreateScheduleModal } from './CreateScheduleModal';
+import { ConfirmDialog } from '../forms/ConfirmDialog';
 
 const CREATE_DEFAULTS = { startsAt: '', place: '', mode: '', capacity: 3 };
 
@@ -20,6 +21,7 @@ export function ScheduleAdminView() {
   const [createValues, setCreateValues] = useState(CREATE_DEFAULTS);
   const [createErrors, setCreateErrors] = useState({});
   const [unassignTarget, setUnassignTarget] = useState(null); // { scheduleId, index }
+  const [deleteTarget, setDeleteTarget] = useState(null); // 삭제를 확인받는 일정
 
   const createM = useCreateSchedule({
     onSuccess: () => {
@@ -36,6 +38,14 @@ export function ScheduleAdminView() {
   const unlockM = useUnlockSchedule({
     onSuccess: () => showToast('일정 잠금을 해제했습니다.'),
     onError: () => showToast('잠금 해제 중 오류가 발생했습니다.'),
+  });
+  const deleteM = useDeleteSchedule({
+    onSuccess: () => showToast('일정을 삭제했습니다.'),
+    onError: (err) => showToast(
+      err.code === 'CONFLICT'
+        ? '맡은 사람이 있는 일정은 삭제할 수 없습니다. 슬롯을 먼저 해제해 주세요.'
+        : '일정 삭제 중 오류가 발생했습니다.',
+    ),
   });
   const unassignM = useForceUnassignSlot({
     onSuccess: () => { setUnassignTarget(null); showToast('슬롯을 해제했습니다.'); },
@@ -92,8 +102,10 @@ export function ScheduleAdminView() {
               onLock={(id) => lockM.mutate(id)}
               onUnlock={(id) => unlockM.mutate(id)}
               onForceUnassign={onForceUnassign}
+              onDelete={() => setDeleteTarget(s)}
               locking={lockM.isPending && lockM.variables === s.id}
               unlocking={unlockM.isPending && unlockM.variables === s.id}
+              deleting={deleteM.isPending && deleteM.variables === s.id}
               unassigningIndex={unassignTarget?.scheduleId === s.id ? unassignTarget.index : null}
             />
           ))}
@@ -108,6 +120,17 @@ export function ScheduleAdminView() {
           onClose={() => setCreateOpen(false)}
           onSubmit={submitCreate}
           pending={createM.isPending}
+        />
+      )}
+
+      {deleteTarget && (
+        <ConfirmDialog
+          title="일정을 삭제할까요?"
+          message={`${deleteTarget.month} ${deleteTarget.day}일 (${deleteTarget.weekday}) ${deleteTarget.time} 일정을 삭제합니다. 되돌릴 수 없습니다.`}
+          confirmLabel="삭제"
+          tone="danger"
+          onConfirm={() => { deleteM.mutate(deleteTarget.id); setDeleteTarget(null); }}
+          onCancel={() => setDeleteTarget(null)}
         />
       )}
     </div>

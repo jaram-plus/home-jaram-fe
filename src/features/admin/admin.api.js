@@ -512,6 +512,16 @@ export async function unlockSchedule(id) {
   }
 }
 
+/** 일정 삭제 — 슬롯이 모두 비어 있을 때만. 남아 있으면 서버가 409(CONFLICT). */
+export async function deleteSchedule(id) {
+  try {
+    const { data } = await client.delete(`/api/admin/schedules/${id}`);
+    return data;
+  } catch (error) {
+    throwWireError(error, 'CONFLICT');
+  }
+}
+
 export async function forceUnassignSlot(scheduleId, index) {
   try {
     const { data } = await client.delete(`/api/admin/schedules/${scheduleId}/slots/${index}`);
