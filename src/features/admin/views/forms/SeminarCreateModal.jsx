@@ -62,11 +62,21 @@ export function SeminarCreateModal({ onClose, onDone }) {
 
         <div style={{ marginTop: 20, display: 'grid', gap: 14 }}>
           <Input label="세미나명" placeholder="예: 클린 아키텍처로 배우는 백엔드 설계" value={values.title} onChange={field('title')} error={errors.title} />
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-            <Input label="일시" type="datetime-local" value={values.startsAt} onChange={field('startsAt')} error={errors.startsAt} />
+          {/* 날짜·시간 입력은 브라우저가 만드는 위젯이라 폭이 넓다 — 칸을 조금 더 주고
+              글자·여백을 한 단계 줄여 옆 칸을 밀지 않게 한다. minmax(0,…) 는 칸이
+              내용 폭 아래로도 줄어들 수 있게 하는 안전장치다. */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.15fr) minmax(0, 1fr)', gap: 14 }}>
+            <Input
+              label="일시"
+              type="datetime-local"
+              value={values.startsAt}
+              onChange={field('startsAt')}
+              error={errors.startsAt}
+              style={{ fontSize: 'var(--fs-sm)', padding: '12px 10px' }}
+            />
             <Input label="발표자" placeholder="홍길동" value={values.speaker} onChange={field('speaker')} />
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.15fr) minmax(0, 1fr)', gap: 14 }}>
             <Input label="장소" placeholder="제3공학관 401호 / 온라인" value={values.place} onChange={field('place')} />
             <Input label="진행 방식" placeholder="오프라인 / 온라인" value={values.mode} onChange={field('mode')} />
           </div>
