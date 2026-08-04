@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import './people.css';
-import { TABS } from './people.data';
+import { TABS, orderExecGroups } from './people.data';
 import { usePeople } from './people.queries';
 import { AppHeader, Eyebrow, TabButton, GroupSection, EmptyState } from './views';
 
@@ -18,7 +18,9 @@ export default function PeoplePage() {
 
   const { data: people, isLoading, isError } = usePeople();
   const data = people?.[tab] ?? { desc: '', empty: '', groups: [] };
-  const total = data.groups.reduce((n, g) => n + g.members.length, 0);
+  // 임원은 부서·직책 순서를 화면에서 고정한다 (기여자·졸업자는 그룹이 하나뿐이라 그대로).
+  const groups = tab === 'exec' ? orderExecGroups(data.groups) : data.groups;
+  const total = groups.reduce((n, g) => n + g.members.length, 0);
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--surface-page)' }}>
@@ -65,7 +67,7 @@ export default function PeoplePage() {
           <EmptyState>사람들 정보를 불러오지 못했습니다.</EmptyState>
         ) : total > 0 ? (
           <div className="jr-anim" key={tab} style={{ display: 'grid', gap: 48 }}>
-            {data.groups.map((g, i) => (
+            {groups.map((g, i) => (
               <GroupSection key={g.heading || `g${i}`} group={g} />
             ))}
           </div>

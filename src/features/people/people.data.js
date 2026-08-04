@@ -12,11 +12,34 @@
  *   blog    show the blog/globe social link.
  */
 
+import { DEPARTMENTS, TITLES, departmentKey, titleKey } from '@/shared/member/enums';
+
 export const TABS = [
   { key: 'exec', label: '임원' },
   { key: 'contrib', label: '기여자' },
   { key: 'grad', label: '졸업자' },
 ];
+
+/** 순서 목록에서의 자리. 모르는 키는 맨 뒤로 보냅니다(정렬이 안정적이라 서로의 순서는 유지). */
+function rank(order, key) {
+  const at = order.indexOf(key);
+  return at === -1 ? order.length : at;
+}
+
+/**
+ * 임원 그룹을 화면 순서로 맞춥니다 — 부서는 `enums`의 순서(회장단·학술부·홍보부·
+ * 회계부·인프라), 부서 안에서는 직책 순서(장 → 부원). 서버가 어떤 순서로 주든 화면은
+ * 늘 같은 순서로 보이고, 아무도 지정되지 않은 부서는 빼서 제목만 남지 않게 합니다.
+ */
+export function orderExecGroups(groups = []) {
+  return groups
+    .filter((group) => group.members?.length)
+    .map((group) => ({
+      ...group,
+      members: [...group.members].sort((a, b) => rank(TITLES, titleKey(a.role)) - rank(TITLES, titleKey(b.role))),
+    }))
+    .sort((a, b) => rank(DEPARTMENTS, departmentKey(a.heading)) - rank(DEPARTMENTS, departmentKey(b.heading)));
+}
 
 export const PEOPLE = {
   exec: {
