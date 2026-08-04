@@ -8,24 +8,10 @@ import * as api from './seminar.api';
 
 export const seminarKeys = {
   all: ['seminars'],
-  attendees: (id) => ['seminar-attendees', id],
 };
 
 export function useSeminars() {
   return useQuery({ queryKey: seminarKeys.all, queryFn: api.listSeminars });
-}
-
-/**
- * 참석자 미리보기 — 상세 모달이 열릴 때만 조회한다(`options.enabled`).
- * 비로그인이면 서버가 401이므로 호출부가 enabled=false로 막는다.
- */
-export function useAttendeePreview(id, options) {
-  return useQuery({
-    queryKey: seminarKeys.attendees(id),
-    queryFn: () => api.getAttendeePreview(id),
-    enabled: !!id,
-    ...options,
-  });
 }
 
 export function useAttend(options) {

@@ -53,7 +53,7 @@ export function EditableCell({ col, row, dirty, onChange, onAction, grants }) {
   }
 
   if (col.type === 'tag') {
-    const tone = value === '대기' ? 'brand' : value === '반려' ? 'seal' : 'neutral';
+    const tone = value === '대기' || value === '진행' ? 'brand' : value === '반려' ? 'seal' : 'neutral';
     return <span style={{ display: 'flex', justifyContent: align === 'center' ? 'center' : 'flex-start' }}><Tag tone={tone}>{value}</Tag></span>;
   }
 

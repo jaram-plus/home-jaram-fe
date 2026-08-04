@@ -118,11 +118,39 @@ export async function fetchList(resource, params = {}) {
   if (resource === 'contrib') return fetchContribs(params);
   if (resource === 'applications') return fetchPendingApplications(params);
   if (resource === 'seminarApprovals') return fetchPendingSeminarApprovals(params);
+  if (resource === 'seminars') return fetchSeminars(params);
   // GET /api/admin/{resource}?tab=&q=&grade=&gen=&status=&sort=&page=&size= (AdminListResponse)
   const { path } = RESOURCES[resource];
   const query = toListQuery(resource, params);
   const { data } = await client.get(`/api/admin/${path}`, { params: query });
   return { ...data, items: (data.items || []).map((r) => fromWire(resource, r)) };
+}
+
+/**
+ * 세미나 목록. 서버가 상태 필터를 보지 않으므로(AdminResourceService.list) 전체를 받아
+ * 이 계층에서 검색·필터·정렬·페이지를 처리한다 — 다른 목록들과 같은 이유다.
+ * 표의 '일시' 칸은 서버가 파생해 준 표시값(month/day/weekday/time)을 이어 붙이고,
+ * 원본 ISO 는 startsAtIso 로 남겨 둔다(상세 모달이 쓴다).
+ */
+async function fetchSeminars(params = {}) {
+  const { data } = await client.get('/api/admin/seminars', {
+    params: { page: 1, size: ALL_ROWS_SIZE },
+  });
+  const rows = (data.items || []).map((s) => ({
+    ...fromWire('seminars', s),
+    startsAtIso: s.startsAt,
+    startsAt: s.startsAt ? `${s.month} ${s.day}일 (${s.weekday}) ${s.time}` : '',
+  }));
+  // '일시'로 정렬할 때는 표시값('6월 30일…')이 아니라 ISO 로 비교해야 달이 넘어가도 맞는다.
+  if (params.sort?.startsWith('startsAt,')) {
+    const dir = params.sort.endsWith(',desc') ? -1 : 1;
+    const { sort: _sort, ...rest } = params;
+    return queryLocally(
+      [...rows].sort((a, b) => dir * String(a.startsAtIso).localeCompare(String(b.startsAtIso))),
+      rest,
+    );
+  }
+  return queryLocally(rows, params);
 }
 
 /** 서버가 페이지를 나눠주지 않는 목록을 한 번에 받을 때 쓰는 넉넉한 size. */
@@ -455,6 +483,98 @@ export async function rejectApplication(id, reason) {
   } catch (error) {
     throwWireError(error, 'VALIDATION');
   }
+}
+
+/* ── 세미나 상세 · 출석 관리 ────────────────────────────────────────────
+ * 표의 모아 저장과 달리 모두 즉시 커밋한다. 출석 코드·마감·수기 출석은 그 자리에서
+ * 효력이 생겨야 하는 일이라 저장을 기다릴 성질이 아니다.
+ */
+
+/**
+ * 상세 모달의 내용 저장 — 행 하나짜리 배치. 배치는 행이 실패해도 200 + errors[] 로
+ * 돌아오므로 여기서 열어보고 실패면 던진다(assignExec 과 같은 규약).
+ */
+export async function saveSeminarDetail({ id, version, fields }) {
+  let data;
+  try {
+    ({ data } = await client.patch('/api/admin/seminars:batch', {
+      updates: [{ id, version, fields: toWire('seminars', fields) }],
+      creates: [],
+      deletes: [],
+    }));
+  } catch (error) {
+    throwWireError(error, 'VALIDATION');
+  }
+  const failed = [...(data.conflicts || []), ...(data.errors || [])];
+  if (failed.length) {
+    const first = failed[0];
+    const message = first.message || Object.values(first.fieldErrors || {})[0] || '저장하지 못했습니다.';
+    throw Object.assign(new Error(message), { code: first.message ? 'CONFLICT' : 'VALIDATION' });
+  }
+  return data;
+}
+
+/** 출석 코드 발급 — 누르는 즉시 서버에 저장된다. 다시 부르면 이전 코드는 못 쓴다. */
+export async function generateAttendanceCode(id) {
+  try {
+    const { data } = await client.post(`/api/admin/seminars/${id}/attendance-code`);
+    return data; // { attendanceCode }
+  } catch (error) {
+    throwWireError(error, 'NOT_FOUND');
+  }
+}
+
+/** 출석 마감 — 출석창이 남아 있어도 지금부터 받지 않는다. */
+export async function closeSeminarAttendance(id) {
+  try {
+    const { data } = await client.post(`/api/admin/seminars/${id}/close-attendance`);
+    return data; // Seminar
+  } catch (error) {
+    throwWireError(error, 'NOT_FOUND');
+  }
+}
+
+export async function fetchSeminarAttendees(id) {
+  const { data } = await client.get(`/api/admin/seminars/${id}/attendees`);
+  return data; // { title, cap, list: [{ memberId, name, sid, at }] }
+}
+
+/** 수기 출석 처리 — 코드를 놓친 회원을 임원이 직접 명단에 넣는다. */
+export async function addSeminarAttendee({ id, memberId }) {
+  try {
+    const { data } = await client.post(`/api/admin/seminars/${id}/attendees`, { memberId });
+    return data;
+  } catch (error) {
+    throwWireError(error, 'NOT_FOUND');
+  }
+}
+
+export async function removeSeminarAttendee({ id, memberId }) {
+  try {
+    const { data } = await client.delete(`/api/admin/seminars/${id}/attendees/${memberId}`);
+    return data;
+  } catch (error) {
+    throwWireError(error, 'NOT_FOUND');
+  }
+}
+
+/**
+ * 수기 출석 처리 후보 — 승인된 회원 전체. 임원 지정 후보와 달리 임기·등급으로 거르지
+ * 않는다(졸업생도 세미나를 들으러 올 수 있다). 이미 출석한 회원은 호출부가 뺀다.
+ */
+export async function fetchAttendanceCandidates() {
+  const { data } = await client.get('/api/admin/members', {
+    params: { tab: 'member', page: 1, size: ALL_ROWS_SIZE },
+  });
+  return (data.items || [])
+    .filter((m) => m.approval === 'APPROVED')
+    .map((m) => ({
+      id: m.id,
+      name: m.name,
+      studentId: m.studentId,
+      gen: genFromWire(m.gen),
+      faculty: m.faculty || '',
+    }));
 }
 
 export async function approveSeminar(id) {

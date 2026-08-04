@@ -118,22 +118,18 @@ export const SCHEMAS = {
     ],
   },
   seminars: {
-    eyebrow: 'SEMINAR', title: '세미나 관리', addLabel: '세미나 개설',
-    desc: '세미나 일정·발표자·공개 대상·출석코드·상태를 관리합니다.',
+    // 표는 훑어보는 자리다 — 내용 수정·출석 관리는 행마다 여는 상세 모달이 담당한다.
+    // 상태는 서버가 시각으로 파생하므로(예정/진행/종료) 사람이 고르는 값이 아니다.
+    eyebrow: 'SEMINAR', title: '세미나 관리', addLabel: '',
+    desc: '세미나 목록입니다. 상세보기에서 내용을 고치고 출석을 관리하세요.',
     filters: [{ key: 'status', label: '상태', options: ['전체', ...labelsOf(SEMINAR_STATUS_LABELS)] }],
     cols: [
-      { key: 'title', label: '세미나명', type: 'text', width: '1.3fr' },
-      { key: 'speaker', label: '발표자', type: 'text', width: '0.7fr' },
-      { key: 'topic', label: '주제', type: 'text', width: '0.7fr' },
-      { key: 'startsAt', label: '일시', type: 'text', width: '1fr' },
-      { key: 'place', label: '장소', type: 'text', width: '0.9fr' },
-      { key: 'mode', label: '진행 방식', type: 'text', width: '0.7fr' },
-      { key: 'description', label: '상세 설명', type: 'text', width: '1.4fr' },
-      { key: 'materialUrl', label: '발표자료 링크', type: 'text', width: '1fr' },
-      { key: 'target', label: '대상', type: 'multiselect', width: '1.6fr', options: labelsOf(TARGET_GRADE_LABELS) },
-      { key: 'attendanceCode', label: '출석코드', type: 'text', width: '0.7fr', align: 'center' },
-      { key: 'status', label: '상태', type: 'select', width: '0.8fr', options: labelsOf(SEMINAR_STATUS_LABELS) },
-      { key: '__act', label: '', type: 'actions', width: '0.6fr', align: 'center', actions: ['delete'] },
+      { key: 'title', label: '세미나명', type: 'static', width: '1.6fr' },
+      { key: 'speaker', label: '발표자', type: 'static', width: '0.8fr' },
+      { key: 'startsAt', label: '일시', type: 'static', width: '1.1fr' },
+      { key: 'place', label: '장소', type: 'static', width: '1fr' },
+      { key: 'status', label: '상태', type: 'tag', width: '0.7fr', align: 'center' },
+      { key: '__act', label: '', type: 'actions', width: '1fr', align: 'center', actions: ['detail', 'delete'] },
     ],
   },
   seminarApprovals: {
@@ -191,6 +187,12 @@ export const MESSAGES = {
   handoverPresident: '회장 자리를 넘기면 본인의 회장 임기가 함께 종료되어 임원 권한을 잃습니다. 계속할까요?',
   noAssignable: '지정할 수 있는 회원이 없습니다. 이미 임기가 있거나 졸업생인 회원은 목록에 나오지 않습니다.',
   noContribCandidate: '등록할 수 있는 회원이 없습니다. 이미 기여자로 등록된 회원은 목록에 나오지 않습니다.',
+  seminarSaveFail: '세미나 내용을 저장하지 못했습니다.',
+  attendanceFail: '출석 처리 중 오류가 발생했습니다.',
+  noAttendee: '아직 출석한 회원이 없습니다.',
+  noAttendCandidate: '출석 처리할 수 있는 회원이 없습니다. 이미 출석한 회원은 목록에 나오지 않습니다.',
+  codeNotIssued: '아직 발급하지 않았습니다.',
+  closeAttendanceWarn: '마감하면 출석 시간이 남아 있어도 더 받지 않습니다. 되돌릴 수 없습니다.',
 };
 
 export const TOAST = {
@@ -202,6 +204,11 @@ export const TOAST = {
   rejected: '신청을 반려했습니다.',
   seminarApproved: '세미나를 승인했습니다. 저장 시 정식 목록에 노출됩니다.',
   seminarRejected: '세미나를 반려했습니다.',
+  seminarSaved: '세미나 내용을 저장했습니다.',
+  codeIssued: '출석 코드를 발급했습니다.',
+  attendanceClosed: '출석을 마감했습니다.',
+  attendeeAdded: (name) => `${name} 님을 출석 처리했습니다.`,
+  attendeeRemoved: (name) => `${name} 님의 출석을 취소했습니다.`,
   exported: '현재 목록을 Google Drive 스프레드시트로 내보냈습니다.',
   settingsSaved: '설정이 저장되었습니다.',
 };

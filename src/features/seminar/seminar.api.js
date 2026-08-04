@@ -45,15 +45,6 @@ export async function resubmitSeminar(id, form, startsAt) {
   return data;
 }
 
-/**
- * 참석자 미리보기 — 로그인한 회원 누구나 조회한다. officer 전용 roster와 달리
- * 학번(sid)이 없다. 응답: { count, list: [{ name, at }] }.
- */
-export async function getAttendeePreview(seminarId) {
-  const { data } = await client.get(`/api/seminars/${seminarId}/attendees`);
-  return data;
-}
-
 export async function checkAttendance({ seminarId, code }) {
   try {
     const { data } = await client.post(`/api/seminars/${seminarId}/attend`, { code });

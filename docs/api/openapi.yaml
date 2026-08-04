@@ -906,6 +906,112 @@ paths:
         '422': { $ref: '#/components/responses/Validation' }
         '5XX': { $ref: '#/components/responses/ServerError' }
 
+  /api/admin/seminars/{id}/attendance-code:
+    post:
+      tags: [seminar]
+      summary: 출석 코드 발급 (임원)
+      description: >-
+        새 코드를 만들어 즉시 저장하고 돌려준다(일괄 저장을 거치지 않는다).
+        다시 부르면 이전 코드는 더 이상 통하지 않는다.
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: '#/components/parameters/SeminarId'
+      responses:
+        '200':
+          description: 발급된 코드
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AttendanceCodeResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '5XX': { $ref: '#/components/responses/ServerError' }
+
+  /api/admin/seminars/{id}/close-attendance:
+    post:
+      tags: [seminar]
+      summary: 출석 마감 (임원)
+      description: >-
+        출석창(startsAt + 출석 인정 시간)이 남아 있어도 지금부터 출석을 받지 않는다.
+        이미 마감된 세미나면 처음 마감한 시각을 유지한다(멱등).
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: '#/components/parameters/SeminarId'
+      responses:
+        '200':
+          description: 마감됨
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Seminar' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '5XX': { $ref: '#/components/responses/ServerError' }
+
+  /api/admin/seminars/{id}/attendees:
+    get:
+      tags: [seminar]
+      summary: 출석 명단 조회 (임원)
+      description: /api/seminars/{id}/roster 와 같은 명단이다. 임원 화면이 관리 경로에서 함께 쓴다.
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: '#/components/parameters/SeminarId'
+      responses:
+        '200':
+          description: 출석 명단
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/RosterResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '5XX': { $ref: '#/components/responses/ServerError' }
+    post:
+      tags: [seminar]
+      summary: 수기 출석 처리 (임원)
+      description: >-
+        코드를 놓친 회원을 임원이 직접 명단에 넣는다 — 출석창·코드를 보지 않는다.
+        이미 출석한 회원이면 그대로 둔다(멱등). 응답은 갱신된 명단.
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: '#/components/parameters/SeminarId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AttendeeRequest' }
+      responses:
+        '200':
+          description: 갱신된 출석 명단
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/RosterResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/Validation' }
+        '5XX': { $ref: '#/components/responses/ServerError' }
+
+  /api/admin/seminars/{id}/attendees/{memberId}:
+    delete:
+      tags: [seminar]
+      summary: 출석 취소 (임원)
+      description: 출석 기록이 없어도 200 — 결과가 같으므로 멱등하게 둔다. 응답은 갱신된 명단.
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: '#/components/parameters/SeminarId'
+        - { name: memberId, in: path, required: true, schema: { type: string } }
+      responses:
+        '200':
+          description: 갱신된 출석 명단
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/RosterResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '5XX': { $ref: '#/components/responses/ServerError' }
+
   /api/me:
     get:
       summary: 내 정보 조회
@@ -1357,10 +1463,11 @@ components:
         at: { type: string, description: 출석 시각 표시 (예 '19:02') }
     RosterEntry:
       type: object
-      required: [name, sid, at]
+      required: [memberId, name, sid, at]
       properties:
-        name: { type: string }
-        sid: { type: string, description: 학번 }
+        memberId: { type: string, description: 출석 취소에 쓰는 회원 id }
+        name: { type: [string, 'null'] }
+        sid: { type: [string, 'null'], description: 학번 }
         at: { type: string, description: 출석 시각 표시 (예 '19:02') }
     RosterResponse:
       type: object
@@ -1385,6 +1492,16 @@ components:
         list:
           type: array
           items: { $ref: '#/components/schemas/AttendeePreviewEntry' }
+    AttendanceCodeResponse:
+      type: object
+      required: [attendanceCode]
+      properties:
+        attendanceCode: { type: string, description: 방금 발급된 출석 코드 (임원 전용 응답) }
+    AttendeeRequest:
+      type: object
+      required: [memberId]
+      properties:
+        memberId: { type: string, description: 수기로 출석 처리할 회원 id }
 
     # ── study ──
     Study:

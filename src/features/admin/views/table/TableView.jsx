@@ -13,6 +13,7 @@ import { SaveBar } from './SaveBar';
 import { EmptyState } from './EmptyState';
 import { ConfirmDialog } from '../forms/ConfirmDialog';
 import { MemberDetailModal } from '../forms/MemberDetailModal';
+import { SeminarDetailModal } from '../forms/SeminarDetailModal';
 import { ExecAssignModal } from '../forms/ExecAssignModal';
 import { ContribAddModal } from '../forms/ContribAddModal';
 
@@ -98,14 +99,29 @@ export function TableView({ resource: fixedResource }) {
     }
   };
 
-  // 조회 전용 상세 모달. 표의 편집 상태와 무관하게 열고 닫힌다.
-  const [detailRow, setDetailRow] = React.useState(null);
+  /* 상세 모달은 URL(?detail=)로 연다 — 뒤로가기로 닫히고, 링크로 그 행을 바로 열 수 있다.
+   * 표의 편집 상태와는 무관하다. 행이 목록에서 사라지면(삭제·필터) 모달도 함께 닫힌다. */
+  const detailRow = React.useMemo(() => {
+    const id = sp.get('detail');
+    return id ? rows.find((r) => r.id === id) : null;
+  }, [sp, rows]);
+  const openDetail = (id) => {
+    const next = new URLSearchParams(sp);
+    next.set('detail', id);
+    setSp(next); // push — 뒤로가기 한 번이면 닫힌다
+  };
+  const closeDetail = () => {
+    const next = new URLSearchParams(sp);
+    next.delete('detail');
+    setSp(next, { replace: true });
+  };
+
   const [assigning, setAssigning] = React.useState(false);
   const [addingContrib, setAddingContrib] = React.useState(false);
 
   const onAction = (kind, row) => {
     if (kind === 'detail') {
-      setDetailRow(row);
+      openDetail(row.id);
     } else if (kind === 'unassign') {
       // 임원진 표의 '삭제'는 회원 삭제가 아니라 임기 해제다 — 부서·직책을 비워 저장한다.
       // 이미 비워 둔 행이면 원래 값으로 되돌린다.
@@ -266,7 +282,9 @@ export function TableView({ resource: fixedResource }) {
         />
       )}
 
-      {detailRow && <MemberDetailModal row={detailRow} onClose={() => setDetailRow(null)} />}
+      {detailRow && (resource === 'seminars'
+        ? <SeminarDetailModal row={detailRow} onClose={closeDetail} onDone={showToast} />
+        : <MemberDetailModal row={detailRow} onClose={closeDetail} />)}
 
       {assigning && (
         <ExecAssignModal

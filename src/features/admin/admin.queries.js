@@ -11,6 +11,8 @@ export const adminKeys = {
   all: ['admin'],
   list: (resource, params) => ['admin', 'list', resource, params],
   memberDetail: (id) => ['admin', 'member', id],
+  seminarAttendees: (id) => ['admin', 'seminarAttendees', id],
+  attendanceCandidates: () => ['admin', 'attendanceCandidates'],
   assignable: () => ['admin', 'assignable'],
   contribCandidates: () => ['admin', 'contribCandidates'],
   dashboard: () => ['admin', 'dashboard'],
@@ -131,6 +133,91 @@ export function useForceUnassignSlot(options = {}) {
       qc.invalidateQueries({ queryKey: adminKeys.schedules() });
       options.onSuccess?.(...a);
     },
+  });
+}
+
+/* ── 세미나 상세 · 출석 관리 ────────────────────────────────────────────
+ * 표의 모아 저장과 달리 모두 즉시 커밋된다. 출석 관련 응답은 갱신된 명단이라
+ * 성공 시 명단 캐시를 그대로 갈아 끼우고(setQueryData) 다시 받지 않는다.
+ */
+
+/** 상세 모달의 내용 저장. 성공하면 목록을 다시 불러온다(버전이 올라간다). */
+export function useSaveSeminarDetail(options = {}) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: api.saveSeminarDetail,
+    ...options,
+    onSuccess: (...a) => {
+      qc.invalidateQueries({ queryKey: ['admin', 'list', 'seminars'] });
+      options.onSuccess?.(...a);
+    },
+  });
+}
+
+export function useGenerateAttendanceCode(options = {}) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id) => api.generateAttendanceCode(id),
+    ...options,
+    onSuccess: (...a) => {
+      qc.invalidateQueries({ queryKey: ['admin', 'list', 'seminars'] });
+      options.onSuccess?.(...a);
+    },
+  });
+}
+
+export function useCloseAttendance(options = {}) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id) => api.closeSeminarAttendance(id),
+    ...options,
+    onSuccess: (...a) => {
+      qc.invalidateQueries({ queryKey: ['admin', 'list', 'seminars'] });
+      options.onSuccess?.(...a);
+    },
+  });
+}
+
+/** 출석 명단. 모달이 열려 id 가 있을 때만 조회합니다. */
+export function useSeminarAttendees(id, options = {}) {
+  return useQuery({
+    queryKey: adminKeys.seminarAttendees(id),
+    queryFn: () => api.fetchSeminarAttendees(id),
+    enabled: !!id,
+    ...options,
+  });
+}
+
+export function useAddSeminarAttendee(options = {}) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: api.addSeminarAttendee,
+    ...options,
+    onSuccess: (roster, vars, ctx) => {
+      qc.setQueryData(adminKeys.seminarAttendees(vars.id), roster);
+      options.onSuccess?.(roster, vars, ctx);
+    },
+  });
+}
+
+export function useRemoveSeminarAttendee(options = {}) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: api.removeSeminarAttendee,
+    ...options,
+    onSuccess: (roster, vars, ctx) => {
+      qc.setQueryData(adminKeys.seminarAttendees(vars.id), roster);
+      options.onSuccess?.(roster, vars, ctx);
+    },
+  });
+}
+
+/** 수기 출석 처리 후보 (참석자 추가 목록). */
+export function useAttendanceCandidates(options = {}) {
+  return useQuery({
+    queryKey: adminKeys.attendanceCandidates(),
+    queryFn: api.fetchAttendanceCandidates,
+    ...options,
   });
 }
 

@@ -8,7 +8,7 @@
 import { z } from 'zod';
 import {
   GRADE_LABEL, STATUS_LABEL, DEPARTMENT_LABEL,
-  SEMINAR_STATUS_LABELS, STUDY_STATUS_LABEL,
+  STUDY_STATUS_LABEL,
 } from './admin.data';
 
 const labelEnum = (map) => z.enum(Object.values(map));
@@ -48,16 +48,13 @@ export const gradSchema = z.object({
   job: z.string().optional(),
 });
 
+// 상세 모달이 고치는 것만 담는다. 발표자·일시·장소는 읽기 전용이고, 상태는 서버가
+// 시각으로 파생하며, 출석 코드는 '생성' 버튼이 즉시 발급한다 — 사람이 적는 칸이 아니다.
 export const seminarSchema = z.object({
   title: z.string().min(1, '세미나명을 입력하세요.'),
-  speaker: z.string().optional(),
   topic: z.string().optional(),
-  startsAt: z.string().min(1, '일시를 입력하세요.'),
-  place: z.string().optional(),
-  mode: z.string().optional(),
-  target: z.array(z.string()).optional(),
-  attendanceCode: z.string().optional(),
-  status: labelEnum(SEMINAR_STATUS_LABELS),
+  description: z.string().optional(),
+  materialUrl: z.string().url('링크 형식이 올바르지 않습니다.').or(z.literal('')).optional(),
 });
 
 export const studySchema = z.object({
