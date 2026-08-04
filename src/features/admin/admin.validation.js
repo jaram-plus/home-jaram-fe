@@ -57,6 +57,14 @@ export const seminarSchema = z.object({
   materialUrl: z.string().url('링크 형식이 올바르지 않습니다.').or(z.literal('')).optional(),
 });
 
+// 개설은 일정에 매이지 않아 일시를 여기서 정한다 — 상세 모달과 달리 필수다.
+export const seminarCreateSchema = seminarSchema.extend({
+  startsAt: z.string().min(1, '일시를 선택하세요.'),
+  speaker: z.string().optional(),
+  place: z.string().optional(),
+  mode: z.string().optional(),
+});
+
 export const studySchema = z.object({
   title: z.string().min(1, '스터디명을 입력하세요.'),
   leader: z.string().min(1, '스터디장을 입력하세요.'),
@@ -94,7 +102,16 @@ export const settingsSchema = z.object({
 export function validateRow(resource, row) {
   const schema = SCHEMA_BY_RESOURCE[resource];
   if (!schema) return null;
-  const res = schema.safeParse(row);
+  return errorsOf(schema, row);
+}
+
+/** 세미나 개설 폼 검증 → 필드별 에러맵 또는 null. */
+export function validateSeminarCreate(values) {
+  return errorsOf(seminarCreateSchema, values);
+}
+
+function errorsOf(schema, values) {
+  const res = schema.safeParse(values);
   if (res.success) return null;
   const errors = {};
   for (const issue of res.error.issues) errors[issue.path[0]] = issue.message;

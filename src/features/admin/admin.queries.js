@@ -141,6 +141,21 @@ export function useForceUnassignSlot(options = {}) {
  * 성공 시 명단 캐시를 그대로 갈아 끼우고(setQueryData) 다시 받지 않는다.
  */
 
+/** 세미나 개설. 공개 목록에도 바로 오르므로 세미나 캐시를 함께 비운다. */
+export function useCreateSeminar(options = {}) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: api.createSeminar,
+    ...options,
+    onSuccess: (...a) => {
+      qc.invalidateQueries({ queryKey: ['admin', 'list', 'seminars'] });
+      qc.invalidateQueries({ queryKey: ['seminars'] });
+      qc.invalidateQueries({ queryKey: adminKeys.dashboard() });
+      options.onSuccess?.(...a);
+    },
+  });
+}
+
 /** 상세 모달의 내용 저장. 성공하면 목록을 다시 불러온다(버전이 올라간다). */
 export function useSaveSeminarDetail(options = {}) {
   const qc = useQueryClient();

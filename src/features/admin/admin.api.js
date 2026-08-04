@@ -491,6 +491,32 @@ export async function rejectApplication(id, reason) {
  */
 
 /**
+ * 세미나 개설 — 일정(Schedule)에 매이지 않은 세미나를 임원이 직접 연다.
+ * 배치 생성(POST …:batch)이 아니라 POST /api/seminars 를 쓴다 — 배치로 만든 세미나는
+ * 승인 대기로 남고 설명·자료 링크도 받지 않지만, 이 경로는 서버가 개설과 동시에
+ * 승인해 바로 공개 목록에 올린다. 출석 코드는 보내지 않는다(상세 모달에서 발급).
+ */
+export async function createSeminar(form) {
+  const opt = (v) => (v && v.trim() ? v.trim() : null);
+  const payload = {
+    title: form.title.trim(),
+    startsAt: new Date(form.startsAt).toISOString(),
+    speaker: opt(form.speaker),
+    topic: opt(form.topic),
+    place: opt(form.place),
+    mode: opt(form.mode),
+    description: opt(form.description),
+    materialUrl: opt(form.materialUrl),
+  };
+  try {
+    const { data } = await client.post('/api/seminars', payload);
+    return data;
+  } catch (error) {
+    throwWireError(error, 'VALIDATION');
+  }
+}
+
+/**
  * 상세 모달의 내용 저장 — 행 하나짜리 배치. 배치는 행이 실패해도 200 + errors[] 로
  * 돌아오므로 여기서 열어보고 실패면 던진다(assignExec 과 같은 규약).
  */

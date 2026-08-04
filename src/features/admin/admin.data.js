@@ -120,8 +120,8 @@ export const SCHEMAS = {
   seminars: {
     // 표는 훑어보는 자리다 — 내용 수정·출석 관리는 행마다 여는 상세 모달이 담당한다.
     // 상태는 서버가 시각으로 파생하므로(예정/진행/종료) 사람이 고르는 값이 아니다.
-    eyebrow: 'SEMINAR', title: '세미나 관리', addLabel: '',
-    desc: '세미나 목록입니다. 상세보기에서 내용을 고치고 출석을 관리하세요.',
+    eyebrow: 'SEMINAR', title: '세미나 관리', addLabel: '세미나 개설',
+    desc: '세미나 목록입니다. 상세보기에서 내용을 고치고 출석을 관리하세요. 일정에 없는 세미나는 개설로 직접 열 수 있습니다.',
     filters: [{ key: 'status', label: '상태', options: ['전체', ...labelsOf(SEMINAR_STATUS_LABELS)] }],
     cols: [
       { key: 'title', label: '세미나명', type: 'static', width: '1.6fr' },
@@ -204,6 +204,7 @@ export const TOAST = {
   rejected: '신청을 반려했습니다.',
   seminarApproved: '세미나를 승인했습니다. 저장 시 정식 목록에 노출됩니다.',
   seminarRejected: '세미나를 반려했습니다.',
+  seminarCreated: '세미나를 개설했습니다.',
   seminarSaved: '세미나 내용을 저장했습니다.',
   codeIssued: '출석 코드를 발급했습니다.',
   attendanceClosed: '출석을 마감했습니다.',

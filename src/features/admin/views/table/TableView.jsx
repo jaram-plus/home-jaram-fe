@@ -14,6 +14,7 @@ import { EmptyState } from './EmptyState';
 import { ConfirmDialog } from '../forms/ConfirmDialog';
 import { MemberDetailModal } from '../forms/MemberDetailModal';
 import { SeminarDetailModal } from '../forms/SeminarDetailModal';
+import { SeminarCreateModal } from '../forms/SeminarCreateModal';
 import { ExecAssignModal } from '../forms/ExecAssignModal';
 import { ContribAddModal } from '../forms/ContribAddModal';
 
@@ -118,6 +119,7 @@ export function TableView({ resource: fixedResource }) {
 
   const [assigning, setAssigning] = React.useState(false);
   const [addingContrib, setAddingContrib] = React.useState(false);
+  const [creatingSeminar, setCreatingSeminar] = React.useState(false);
 
   const onAction = (kind, row) => {
     if (kind === 'detail') {
@@ -152,6 +154,8 @@ export function TableView({ resource: fixedResource }) {
     if (resource === 'exec') { setAssigning(true); return; }
     // 기여자도 회원 명부에서 골라 등록한다 — 표에 빈 행을 만드는 게 아니다.
     if (resource === 'contrib') { setAddingContrib(true); return; }
+    // 세미나 표는 읽기 전용이라 빈 행을 채울 수 없다 — 개설 모달에서 받아 바로 만든다.
+    if (resource === 'seminars') { setCreatingSeminar(true); return; }
     const fields = {};
     schema.cols.forEach((c) => {
       if (c.type === 'actions' || c.type === 'match') return;
@@ -298,6 +302,13 @@ export function TableView({ resource: fixedResource }) {
       {addingContrib && (
         <ContribAddModal
           onClose={() => setAddingContrib(false)}
+          onDone={showToast}
+        />
+      )}
+
+      {creatingSeminar && (
+        <SeminarCreateModal
+          onClose={() => setCreatingSeminar(false)}
           onDone={showToast}
         />
       )}
