@@ -60,13 +60,16 @@ export function SeminarCreateModal({ onClose, onDone }) {
           <button type="button" onClick={onClose} aria-label="닫기" style={{ background: 'none', border: 'none', fontSize: 24, cursor: 'pointer', color: 'var(--text-faint)', lineHeight: 1 }}>×</button>
         </div>
 
-        <div style={{ marginTop: 20, display: 'grid', gap: 14 }}>
+        {/* minmax(0, 1fr) — 칸 하나짜리 격자라도 내용이 넓다는 이유로 모달 밖까지
+            늘어나지 않게 한다. 날짜·시간 입력이 브라우저마다 다른 폭을 요구해서다. */}
+        <div style={{ marginTop: 20, display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', gap: 14 }}>
           <Input label="세미나명" placeholder="예: 클린 아키텍처로 배우는 백엔드 설계" value={values.title} onChange={field('title')} error={errors.title} />
           {/* 일시는 한 줄을 통째로 쓴다. 날짜·시간 입력은 브라우저가 그리는 위젯이라
               필요한 폭이 브라우저·확대 배율·기본 글꼴에 따라 달라져, 반 칸에 넣으면
               어딘가에서는 반드시 옆 칸을 민다. 칸을 좁히는 대신 줄을 내주고,
-              발표자는 주제와 짝지어 줄 수는 그대로 둔다. */}
-          <Input label="일시" type="datetime-local" value={values.startsAt} onChange={field('startsAt')} error={errors.startsAt} />
+              발표자는 주제와 짝지어 줄 수는 그대로 둔다. adm-datetime 은 사파리가
+              이 입력을 시스템 위젯으로 그려 칸을 밀어내는 것을 막는다. */}
+          <Input className="adm-datetime" label="일시" type="datetime-local" value={values.startsAt} onChange={field('startsAt')} error={errors.startsAt} />
           <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 14 }}>
             <Input label="발표자" placeholder="홍길동" value={values.speaker} onChange={field('speaker')} />
             <Input label="주제" placeholder="Backend" value={values.topic} onChange={field('topic')} />
