@@ -7,6 +7,7 @@ import StudyPage from '@/features/study/StudyPage';
 import AdminPage from '@/features/admin/AdminPage';
 import { RequireAdmin } from '@/features/admin/RequireAdmin';
 import ProfilePage from '@/features/profile/ProfilePage';
+import ErrorPage from '@/features/error/ErrorPage';
 
 export default function App() {
   return (
@@ -19,6 +20,8 @@ export default function App() {
       <Route path="/study" element={<StudyPage />} />
       <Route path="/admin/*" element={<RequireAdmin><AdminPage /></RequireAdmin>} />
       <Route path="/profile" element={<ProfilePage />} />
+      <Route path="/403" element={<ErrorPage code={403} />} />
+      <Route path="*" element={<ErrorPage code={404} />} />
     </Routes>
   );
 }
