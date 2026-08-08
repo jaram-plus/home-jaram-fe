@@ -2,7 +2,7 @@ import React from 'react';
 import { Button, Input } from '@/design-system';
 import { titleLabel } from '@/shared/member/enums';
 import { MESSAGES, TOAST } from '../../admin.data';
-import { useGradDetail, useSaveGradDetail } from '../../admin.queries';
+import { useMemberDetail, useSaveGradDetail } from '../../admin.queries';
 
 /**
  * 졸업생 상세 모달. 표는 읽기 전용이고 졸업생 정보를 고치는 곳은 여기 하나입니다.
@@ -15,7 +15,8 @@ import { useGradDetail, useSaveGradDetail } from '../../admin.queries';
  * 표의 모아 저장과 달리 저장을 누르면 즉시 커밋합니다.
  */
 export function GradDetailModal({ row, onClose, onDone }) {
-  const { data, isLoading, error } = useGradDetail(row?.id);
+  // 졸업생도 회원이라 상세는 회원 상세와 같은 계약을 씁니다(졸업연도·이력까지 담깁니다).
+  const { data, isLoading, error } = useMemberDetail(row?.id);
 
   React.useEffect(() => {
     const onKey = (e) => { if (e.key === 'Escape') onClose(); };
@@ -59,8 +60,11 @@ export function GradDetailModal({ row, onClose, onDone }) {
 
 function GradEditor({ detail, name, onClose, onDone }) {
   // 줄을 더하고 지워도 흔들리지 않는 React key 가 필요해 순번을 붙인다(저장할 때 뗀다).
-  const [gradYear, setGradYear] = React.useState(detail.gradYear || '');
-  const [careers, setCareers] = React.useState(() => (detail.careers || []).map((c, i) => ({ ...c, key: i })));
+  // 서버가 비워 보낸 칸(null)은 빈 문자열로 받아 둔다 — 입력이 통제 상태를 잃지 않도록.
+  const [gradYear, setGradYear] = React.useState(String(detail.gradYear ?? ''));
+  const [careers, setCareers] = React.useState(() => (detail.careers || []).map((c, i) => ({
+    key: i, at: c.at || '', org: c.org || '', job: c.job || '',
+  })));
   const nextKey = React.useRef((detail.careers || []).length);
 
   const save = useSaveGradDetail({

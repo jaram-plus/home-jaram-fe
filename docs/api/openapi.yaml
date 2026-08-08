@@ -619,6 +619,34 @@ paths:
         '404': { $ref: '#/components/responses/NotFound' }
         '5XX': { $ref: '#/components/responses/ServerError' }
 
+  /api/admin/members/{id}/graduation:
+    put:
+      tags: [admin]
+      summary: 졸업생 상세 저장 (졸업연도·졸업 후 이력)
+      description: >
+        admin 「인원 관리」 졸업생 탭 상세 모달의 저장 경로. careers 는 보낸 목록으로
+        통째로 교체한다(빠진 줄은 지워진다). 줄 단위 목록이라 {resource}:batch 의
+        스칼라 필드 화이트리스트에 얹지 않고 단건 PUT 으로 둔다. 자람에서의 임기
+        이력(terms)은 여기서 바뀌지 않는다 — 임원 지정이 관리한다.
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: '#/components/parameters/MemberId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/GraduationUpdate' }
+      responses:
+        '200':
+          description: 저장된 회원 상세
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MemberDetail' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '5XX': { $ref: '#/components/responses/ServerError' }
+
   # ─────────────────────────── admin (management surface) ───────────────────────────
   /api/admin/{resource}:
     get:
@@ -1184,6 +1212,25 @@ components:
         title: { $ref: '#/components/schemas/MemberTitle' }
         startGen: { type: integer }
         endGen: { type: [integer, 'null'], description: null 이면 현직 }
+    MemberCareer:
+      type: object
+      description: 졸업 후 이력 한 줄. 자람 안에서의 이력은 MemberTerm 이 따로 들고 있다.
+      properties:
+        at:
+          type: [string, 'null']
+          example: '2021.03'
+          description: 표시용 자유 문자열(주로 'YYYY.MM'). 사전순 내림차순이 최신순이다.
+        org: { type: [string, 'null'], example: 네이버 }
+        job: { type: [string, 'null'], example: 백엔드 엔지니어 }
+    GraduationUpdate:
+      type: object
+      description: 졸업생 상세에서 고치는 것 — 졸업연도와 졸업 후 이력뿐이다.
+      properties:
+        gradYear: { type: [integer, 'null'], example: 2021 }
+        careers:
+          type: array
+          description: 보낸 목록으로 통째로 교체한다.
+          items: { $ref: '#/components/schemas/MemberCareer' }
     MeProfile:
       type: object
       required: [id, name, email, authority]
@@ -1632,6 +1679,11 @@ components:
           type: array
           description: 임기 이력(오래된 순 startGen ASC). 임기가 없으면 빈 배열.
           items: { $ref: '#/components/schemas/MemberTerm' }
+        gradYear: { type: [integer, 'null'], description: 졸업연도. 졸업생만 채워진다. }
+        careers:
+          type: array
+          description: 졸업 후 이력(저장한 순서 그대로). 없으면 빈 배열.
+          items: { $ref: '#/components/schemas/MemberCareer' }
         bio: { type: [string, 'null'] }
         githubUrl: { type: [string, 'null'], format: uri }
         blogUrl: { type: [string, 'null'], format: uri }

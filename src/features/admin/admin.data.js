@@ -231,54 +231,7 @@ export const EMPTY = {
 
 /* ── 개발용 시드 (USE_MOCK=true) — 백엔드 연동 시 삭제 ────────────────── */
 export const SEED = {
-  // member·exec·contrib 는 실 서버(GET /api/admin/members)로 전환되어 시드를 두지 않는다.
-  // terms 는 자람에서의 임원 이력(와이어 키), careers 는 졸업 후 이력입니다.
-  // 표의 '현재 소속·직무' 칸은 careers 중 가장 최근 한 건에서 파생합니다(admin.api gradRow).
-  grad: [
-    {
-      id: 'g1', name: '한지호', studentId: '2015004321', gen: '35기', gradYear: '2021',
-      terms: [{ startGen: 36, endGen: 36, department: 'ACADEMIC', title: 'LEAD' }],
-      careers: [
-        { at: '2021.03', org: '네이버', job: '백엔드 엔지니어' },
-      ],
-    },
-    {
-      id: 'g2', name: '오세훈', studentId: '2014003118', gen: '34기', gradYear: '2020',
-      terms: [{ startGen: 35, endGen: 35, department: 'PR', title: 'STAFF' }],
-      careers: [
-        { at: '2020.09', org: '넥슨', job: '클라이언트 개발자' },
-        { at: '2023.01', org: '카카오', job: '안드로이드 개발자' },
-      ],
-    },
-    {
-      id: 'g3', name: '임채원', studentId: '2013002047', gen: '33기', gradYear: '2019',
-      terms: [],
-      careers: [
-        { at: '2019.07', org: '라인', job: '프론트엔드 개발자' },
-      ],
-    },
-    {
-      id: 'g4', name: '서동건', studentId: '2012001503', gen: '32기', gradYear: '2018',
-      terms: [{ startGen: 33, endGen: 34, department: 'LEADERSHIP', title: 'PRESIDENT' }],
-      careers: [
-        { at: '2018.03', org: '쿠팡', job: '데이터 엔지니어' },
-      ],
-    },
-    {
-      id: 'g5', name: '백지안', studentId: '2016005772', gen: '36기', gradYear: '2022',
-      terms: [],
-      careers: [
-        { at: '2022.06', org: '토스', job: 'iOS 개발자' },
-      ],
-    },
-    {
-      id: 'g6', name: '남기훈', studentId: '2011000934', gen: '31기', gradYear: '2017',
-      terms: [{ startGen: 32, endGen: 32, department: 'INFRA', title: 'SERVER_ADMIN' }],
-      careers: [
-        { at: '2017.02', org: '삼성전자', job: 'SW 엔지니어' },
-      ],
-    },
-  ],
+  // member·exec·contrib·grad 는 실 서버(GET /api/admin/members)로 전환되어 시드를 두지 않는다.
   studies: [
     { id: 'st1', title: '알고리즘 코테반', leader: '강준혁', count: '12명', schedule: '월 20:00', period: '2026-03 ~ 06', rate: '92%', status: '진행' },
     { id: 'st2', title: 'CS 전공 스터디', leader: '최유나', count: '8명', schedule: '수 19:00', period: '2026-03 ~ 06', rate: '85%', status: '진행' },
