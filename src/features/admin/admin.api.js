@@ -713,9 +713,48 @@ export async function exportToDrive(resource, { filters, columns } = {}) {
   }
 }
 
+/* ── 졸업생 상세 ────────────────────────────────────────────────────────
+ * 졸업연도와 졸업 후 이력은 아직 백엔드 모델에 없습니다(BE Member 에 gradYear·careers
+ * 없음, /api/admin/members?tab=grad 는 등급이 졸업생인 회원 행만 돌려줍니다). 그래서
+ * 이 두 함수는 시드 위에서만 동작합니다 — 서버가 생기면 여기 두 곳만 바꾸면 됩니다.
+ */
+export async function fetchGradDetail(id) {
+  await delay(200);
+  const row = SEED.grad.find((g) => g.id === id);
+  if (!row) throw Object.assign(new Error('졸업생을 찾을 수 없습니다.'), { code: 'NOT_FOUND' });
+  // 모달이 편집하는 사본 — 저장 전 수정이 시드로 새지 않게 이력까지 복사한다.
+  return { ...row, terms: [...(row.terms || [])], careers: (row.careers || []).map((c) => ({ ...c })) };
+}
+
+export async function saveGradDetail({ id, gradYear, careers }) {
+  await delay(400);
+  const row = SEED.grad.find((g) => g.id === id);
+  if (!row) throw Object.assign(new Error('졸업생을 찾을 수 없습니다.'), { code: 'NOT_FOUND' });
+  // 서버가 없으니 시드를 직접 고쳐 둔다 — 목록을 다시 불러와도 방금 저장한 값이 남는다.
+  row.gradYear = gradYear;
+  row.careers = careers;
+  return { ...row };
+}
+
 /* ── 개발용 mock 구현 (USE_MOCK 전용 — 백엔드 연동 시 통째로 삭제) ───── */
 function mockList(resource, params) {
-  return queryLocally(SEED[resource] || [], params);
+  const rows = resource === 'grad' ? SEED.grad.map(gradRow) : (SEED[resource] || []);
+  return queryLocally(rows, params);
+}
+
+/** 졸업생 표의 한 행 — '현재 소속·직무' 는 이력 중 가장 최근 한 건에서 파생한다. */
+function gradRow(g) {
+  // 일시는 'YYYY.MM' 같은 자유 문자열이라 사전순 내림차순이 곧 최신순이다.
+  const latest = [...(g.careers || [])].sort((a, b) => String(b.at).localeCompare(String(a.at)))[0];
+  return {
+    id: g.id,
+    name: g.name,
+    studentId: g.studentId,
+    gen: g.gen,
+    gradYear: g.gradYear,
+    org: latest?.org || '—',
+    job: latest?.job || '—',
+  };
 }
 
 function mockBatch(resource, body) {

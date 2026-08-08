@@ -13,6 +13,7 @@ export const adminKeys = {
   memberDetail: (id) => ['admin', 'member', id],
   seminarAttendees: (id) => ['admin', 'seminarAttendees', id],
   attendanceCandidates: () => ['admin', 'attendanceCandidates'],
+  gradDetail: (id) => ['admin', 'grad', id],
   assignable: () => ['admin', 'assignable'],
   contribCandidates: () => ['admin', 'contribCandidates'],
   dashboard: () => ['admin', 'dashboard'],
@@ -291,6 +292,33 @@ export function useMemberDetail(id, options = {}) {
     queryFn: () => api.fetchMemberDetail(id),
     enabled: !!id,
     ...options,
+  });
+}
+
+/** 졸업생 상세. 모달이 열려 id 가 있을 때만 조회합니다. */
+export function useGradDetail(id, options = {}) {
+  return useQuery({
+    queryKey: adminKeys.gradDetail(id),
+    queryFn: () => api.fetchGradDetail(id),
+    enabled: !!id,
+    ...options,
+  });
+}
+
+/**
+ * 졸업생 상세 저장(졸업연도·이력). 표의 모아 저장과 달리 즉시 커밋합니다 —
+ * 성공하면 졸업생 목록의 '현재 소속·직무' 가 새 이력에서 다시 파생되어야 합니다.
+ */
+export function useSaveGradDetail(options = {}) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: api.saveGradDetail,
+    ...options,
+    onSuccess: (data, vars, ctx) => {
+      qc.invalidateQueries({ queryKey: ['admin', 'list', 'grad'] });
+      qc.invalidateQueries({ queryKey: adminKeys.gradDetail(vars.id) });
+      options.onSuccess?.(data, vars, ctx);
+    },
   });
 }
 
