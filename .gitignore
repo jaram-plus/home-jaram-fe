@@ -2,6 +2,9 @@
 
 # dependencies
 /node_modules
+# 이 레포의 잠금 파일은 pnpm-lock.yaml 하나다(Dockerfile 이 --frozen-lockfile 로 읽는다).
+# npm 을 잘못 돌려 생긴 package-lock.json 이 섞여 들어오지 않게 막는다.
+/package-lock.json
 /.pnp
 .pnp.*
 .yarn/*
@@ -40,3 +43,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# claude code — 개인 설정만 무시한다. agents·skills 는 팀이 공유하므로 계속 추적한다.
+/.claude/settings.json
+/.claude/settings.local.json
