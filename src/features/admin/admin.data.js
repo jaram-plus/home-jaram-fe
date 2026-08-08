@@ -191,8 +191,12 @@ export const MESSAGES = {
   attendanceFail: '출석 처리 중 오류가 발생했습니다.',
   noAttendee: '아직 출석한 회원이 없습니다.',
   noAttendCandidate: '출석 처리할 수 있는 회원이 없습니다. 이미 출석한 회원은 목록에 나오지 않습니다.',
-  codeNotIssued: '아직 발급하지 않았습니다.',
+  codeNotIssued: '아직 발급하지 않았습니다. 코드를 만들면 회원이 입력해 출석할 수 있습니다.',
+  codeInUse: '회원이 이 코드를 입력하면 출석으로 기록됩니다.',
+  codeAfterClose: '마감되어 이 코드로는 더 이상 출석할 수 없습니다.',
+  attendanceOpen: '출석을 받는 중입니다.',
   closeAttendanceWarn: '마감하면 출석 시간이 남아 있어도 더 받지 않습니다. 되돌릴 수 없습니다.',
+  attendanceClosedNote: '마감했습니다. 새로운 출석은 받지 않습니다.',
 };
 
 export const TOAST = {

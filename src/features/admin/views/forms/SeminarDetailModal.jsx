@@ -144,35 +144,55 @@ function AttendPane({ row, onDone }) {
   return (
     <>
       <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', marginTop: 18 }}>
-        <Row label="출석 코드">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ flex: 1, fontFamily: 'var(--font-mono)', fontSize: 16, letterSpacing: '0.12em', color: attendanceCode ? 'var(--text-strong)' : 'var(--text-faint)' }}>
-              {attendanceCode || MESSAGES.codeNotIssued}
-            </span>
-            <Button variant="ghost" size="sm" onClick={() => code.mutate(row.id)} disabled={code.isPending}>
-              {code.isPending ? '발급하는 중…' : attendanceCode ? '재발급' : '생성'}
+        {/* 코드가 이 탭의 주인공이라 판을 따로 세워 크게 앉힌다. 미발급일 때도 줄표로
+            같은 자리를 잡아 두어, 발급하는 순간 아래 명단이 밀려 내려가지 않는다. */}
+        <section style={{ border: '1px solid var(--border)', borderRadius: 12, background: 'var(--surface-raised)', padding: '14px 16px 16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+            <p style={{ margin: 0, fontSize: 11, fontWeight: 'var(--w-bold)', letterSpacing: 'var(--ls-label)', color: 'var(--text-faint)' }}>ATTENDANCE CODE</p>
+            <Button variant={attendanceCode ? 'secondary' : 'primary'} size="sm" onClick={() => code.mutate(row.id)} disabled={code.isPending}>
+              {code.isPending ? '발급하는 중…' : attendanceCode ? '재발급' : '코드 생성'}
             </Button>
           </div>
-        </Row>
+          {/* 한 번 눌러 코드 전체가 잡히게 한다 — 불러 주거나 옮겨 적는 자리라서.
+              마감한 뒤의 코드는 효력이 없으므로 먹색을 한 단계 물린다. */}
+          <p style={{ margin: '10px 0 0', fontFamily: 'var(--font-mono)', fontSize: 26, lineHeight: 1.25, letterSpacing: '0.2em', color: !attendanceCode ? 'var(--text-faint)' : closed ? 'var(--text-muted)' : 'var(--text-strong)', userSelect: attendanceCode ? 'all' : 'none' }}>
+            {attendanceCode || '— — — —'}
+          </p>
+          <p style={{ margin: '6px 0 0', fontSize: 'var(--fs-sm)', color: 'var(--text-muted)', lineHeight: 1.6 }}>
+            {!attendanceCode ? MESSAGES.codeNotIssued : closed ? MESSAGES.codeAfterClose : MESSAGES.codeInUse}
+          </p>
+        </section>
 
-        <Row label="출석">
+        {/* 마감은 되돌릴 수 없지만 버튼을 빨갛게 세우지는 않는다 — 이 브랜드에서 빨강은
+            권하는 색이라 되돌릴 수 없는 일에는 어울리지 않는다. 무게는 빨간 점과 경고
+            문구가 지고, 버튼은 다른 보조 동작과 같은 얼굴로 헤어라인 아래 둔다. */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 16, paddingTop: 16, borderTop: '1px solid var(--border)' }}>
           {closed ? (
-            <Tag tone="neutral">마감됨</Tag>
+            <>
+              <Tag tone="seal">마감됨</Tag>
+              <span style={{ fontSize: 'var(--fs-sm)', color: 'var(--text-muted)', lineHeight: 1.6 }}>{MESSAGES.attendanceClosedNote}</span>
+            </>
           ) : (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <span style={{ flex: 1, fontSize: 'var(--fs-xs)', color: 'var(--text-faint)', lineHeight: 1.5 }}>{MESSAGES.closeAttendanceWarn}</span>
-              <Button variant="ghost" size="sm" onClick={() => close.mutate(row.id)} disabled={close.isPending}>
+            <>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 7, fontSize: 'var(--fs-sm)', fontWeight: 'var(--w-semibold)', color: 'var(--text-strong)' }}>
+                  <span aria-hidden="true" style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--brand)', flexShrink: 0 }} />
+                  {MESSAGES.attendanceOpen}
+                </p>
+                <p style={{ margin: '5px 0 0', fontSize: 'var(--fs-xs)', color: 'var(--text-muted)', lineHeight: 1.6 }}>{MESSAGES.closeAttendanceWarn}</p>
+              </div>
+              <Button variant="secondary" size="sm" onClick={() => close.mutate(row.id)} disabled={close.isPending}>
                 {close.isPending ? '마감하는 중…' : '출석 마감'}
               </Button>
-            </div>
+            </>
           )}
-        </Row>
+        </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, margin: '18px 0 8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, margin: '20px 0 8px' }}>
           <p style={{ margin: 0, fontSize: 11, fontWeight: 'var(--w-bold)', letterSpacing: '0.14em', color: 'var(--text-faint)' }}>
             참석자 {list.length > 0 ? `${list.length}명` : ''}
           </p>
-          <Button variant="ghost" size="sm" onClick={() => setAdding(true)}>참석자 추가</Button>
+          <Button variant="secondary" size="sm" onClick={() => setAdding(true)}>참석자 추가</Button>
         </div>
 
         <div style={{ border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden' }}>
@@ -223,15 +243,6 @@ function AddAttendee({ attending, busy, onPick, onBack }) {
 }
 
 /* ── 조각 ────────────────────────────────────────────────────────────── */
-
-function Row({ label, children }) {
-  return (
-    <div style={{ display: 'grid', gridTemplateColumns: '72px 1fr', alignItems: 'center', gap: 12, padding: '12px 0', borderBottom: '1px solid var(--border)' }}>
-      <span style={{ fontSize: 'var(--fs-sm)', color: 'var(--text-faint)' }}>{label}</span>
-      {children}
-    </div>
-  );
-}
 
 function ReadOnly({ label, children }) {
   return (
