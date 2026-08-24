@@ -10,10 +10,13 @@ import { useSeminar } from '../seminar.queries';
  *
  * `editing`이면 `seminarId`로 기존 세미나를 조회해 값을 채운다 — 반려 사유도 함께 보여준다.
  *
+ * 발표자는 제출하는 본인(`speaker`)으로 고정해 보여주기만 한다 — 슬롯을 맡은 사람만
+ * 이 폼을 열 수 있어 다른 이름을 적을 이유가 없다.
+ *
  * 출석 코드는 여기서 받지 않는다 — 임원이 "세미나 관리" 표의 출석코드 셀에서 승인 후
  * 직접 설정한다(학회원이 스스로 코드를 정하지 않도록).
  */
-export function SlotSeminarModal({ schedule, slot: _slot, form, editing, seminarId, onClose, onSubmit, pending = false }) {
+export function SlotSeminarModal({ schedule, slot: _slot, form, speaker, editing, seminarId, onClose, onSubmit, pending = false }) {
   const { values, errors, field, setValues } = form;
   const existing = useSeminar(seminarId, { enabled: !!editing && !!seminarId });
 
@@ -22,7 +25,6 @@ export function SlotSeminarModal({ schedule, slot: _slot, form, editing, seminar
     const s = existing.data;
     setValues({
       title: s.title || '',
-      speaker: s.speaker || '',
       topic: s.topic || '',
       description: s.description || '',
       materialUrl: s.materialUrl || '',
@@ -61,7 +63,12 @@ export function SlotSeminarModal({ schedule, slot: _slot, form, editing, seminar
           error={errors.title}
         />
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-          <Input label="발표자" placeholder="홍길동" value={values.speaker} onChange={field('speaker')} />
+          <Input
+            label="발표자"
+            value={speaker || ''}
+            readOnly
+            style={{ background: 'var(--surface-sunken)', color: 'var(--text-muted)' }}
+          />
           <Input label="주제" placeholder="Backend" value={values.topic} onChange={field('topic')} />
         </div>
         <Input

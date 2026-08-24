@@ -2,8 +2,7 @@ import React from 'react';
 import { Button, Tag } from '@/design-system';
 import { ModalShell } from './ModalShell';
 import { TopicChip } from './parts';
-import { STATUS_BADGE, ENDED_CHIP, DETAIL, EMPTY } from '../seminar.data';
-import { useAttendeePreview } from '../seminar.queries';
+import { STATUS_BADGE, ENDED_CHIP, DETAIL } from '../seminar.data';
 
 const NOTE = {
   margin: 0,
@@ -36,41 +35,12 @@ function Section({ title, children }) {
   );
 }
 
-/** 참석자 섹션 — 로그인 회원만 조회한다. */
-function Attendees({ seminarId, isLoggedIn }) {
-  const preview = useAttendeePreview(seminarId, { enabled: isLoggedIn });
-
-  if (!isLoggedIn) return <p style={NOTE}>{DETAIL.attendeesLoginRequired}</p>;
-  if (preview.isLoading) return <p style={NOTE}>{DETAIL.attendeesLoading}</p>;
-  if (preview.isError) return <p style={NOTE}>{DETAIL.attendeesError}</p>;
-
-  const list = preview.data?.list ?? [];
-  if (list.length === 0) return <p style={NOTE}>{EMPTY.attendees}</p>;
-
-  return (
-    <>
-      <p style={{ ...NOTE, marginBottom: 8 }}>{DETAIL.attendeesCount(preview.data.count)}</p>
-      <div>
-        {list.map((a, i) => (
-          <div
-            key={`${a.name ?? ''}-${a.at}-${i}`}
-            style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '9px 0', borderBottom: '1px solid var(--border-soft)', fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-sm)' }}
-          >
-            <span style={{ color: 'var(--text-strong)', fontWeight: 'var(--w-medium)' }}>{a.name ?? DETAIL.unknownMember}</span>
-            <span style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>{a.at}</span>
-          </div>
-        ))}
-      </div>
-    </>
-  );
-}
-
 /**
  * 세미나 상세 모달 — 카드를 누르면 열린다.
  *
- * 목록이 이미 갖고 있는 필드를 넓게 보여주고, 거기에 상세 설명·내 출석 기록·
- * 참석자 미리보기를 더한다. 참석자만 모달이 열릴 때 지연 조회하고 나머지는
- * 목록 응답을 그대로 쓴다.
+ * 목록이 이미 갖고 있는 필드를 넓게 보여주고, 거기에 상세 설명과 내 출석 기록을
+ * 더한다. 별도 조회는 하지 않는다 — 참석자 명단은 임원의 '세미나 관리' 화면이
+ * 다룬다(누가 왔는지는 학회원끼리 볼 일이 아니라 운영이 볼 일이다).
  */
 export function DetailModal({ seminar, isLoggedIn, onClose }) {
   const endedChip = !isLoggedIn
@@ -105,10 +75,6 @@ export function DetailModal({ seminar, isLoggedIn, onClose }) {
           <p style={NOTE}>{DETAIL.myAttendance(seminar.attendedAt)}</p>
         </Section>
       )}
-
-      <Section title={DETAIL.attendeesTitle}>
-        <Attendees seminarId={seminar.id} isLoggedIn={isLoggedIn} />
-      </Section>
 
       <div style={{ marginTop: 26, display: 'flex', gap: 12, justifyContent: 'flex-end', alignItems: 'center' }}>
         {seminar.materialUrl && (

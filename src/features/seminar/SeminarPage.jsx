@@ -48,6 +48,8 @@ function Notice({ children }) {
 export default function SeminarPage() {
   const isLoggedIn = useAuthStore((s) => s.isAuthenticated);
   const currentUserId = useAuthStore((s) => s.user?.id);
+  // 슬롯을 맡은 본인만 세미나를 제출·수정하므로 발표자는 로그인한 회원으로 고정한다.
+  const currentUserName = useAuthStore((s) => s.user?.name);
 
   const [view, setView] = useState('list'); // list | schedule
   const [filter, setFilter] = useState('upcoming'); // upcoming | ended | absent | all
@@ -61,7 +63,7 @@ export default function SeminarPage() {
   const [claimTarget, setClaimTarget] = useState(null); // { schedule, index }
   const [claimErr, setClaimErr] = useState('');
   const [seminarSlot, setSeminarSlot] = useState(null); // { schedule, slot, editing }
-  const seminarSlotForm = useForm({ title: '', speaker: '', topic: '', description: '', materialUrl: '', target: [] });
+  const seminarSlotForm = useForm({ title: '', topic: '', description: '', materialUrl: '', target: [] });
 
   const [toast, setToast] = useState(null);
   const toastTimer = useRef(null);
@@ -155,10 +157,11 @@ export default function SeminarPage() {
       seminarSlotForm.setErrors({ title: SCHEDULE_MESSAGES.seminarTitleRequired });
       return;
     }
+    const form = { ...seminarSlotForm.values, speaker: currentUserName };
     if (seminarSlot.editing) {
-      resubmitSeminarM.mutate({ id: seminarSlot.slot.seminarId, form: seminarSlotForm.values, startsAt: seminarSlot.schedule.startsAt });
+      resubmitSeminarM.mutate({ id: seminarSlot.slot.seminarId, form, startsAt: seminarSlot.schedule.startsAt });
     } else {
-      submitSeminarM.mutate({ scheduleId: seminarSlot.schedule.id, index: seminarSlot.slot.index, form: seminarSlotForm.values, startsAt: seminarSlot.schedule.startsAt });
+      submitSeminarM.mutate({ scheduleId: seminarSlot.schedule.id, index: seminarSlot.slot.index, form, startsAt: seminarSlot.schedule.startsAt });
     }
   }
 
@@ -261,6 +264,7 @@ export default function SeminarPage() {
           schedule={seminarSlot.schedule}
           slot={seminarSlot.slot}
           form={seminarSlotForm}
+          speaker={currentUserName}
           editing={seminarSlot.editing}
           seminarId={seminarSlot.slot.seminarId}
           onClose={() => setSeminarSlot(null)}

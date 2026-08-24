@@ -15,6 +15,19 @@
 /* select 는 폼 폰트를 상속받지 않으므로 명시 */
 .admin-root select { font-family: var(--font-sans); }
 
+/* 날짜·시간 입력 — 사파리(아이패드·아이폰)는 이 입력을 시스템 위젯으로 그리는데,
+   위젯이 원하는 폭이 우리가 준 폭보다 크면 칸을 밀고 오른쪽으로 삐져나온다.
+   위젯 껍데기를 벗겨 지정한 폭을 그대로 따르게 하고, 어떤 경우에도 부모 칸을
+   넓히지 못하게 최소 폭을 0으로 둔다. 크로미움에선 겉모습이 달라지지 않는다.
+   껍데기를 벗기면 값이 비었을 때 높이가 무너지는 사파리 버릇이 있어 최소 높이를 준다. */
+.adm-datetime {
+  -webkit-appearance: none;
+  appearance: none;
+  min-width: 0;
+  max-width: 100%;
+  min-height: calc(1.5em + 25px);
+}
+
 /* 모달·토스트 진입 애니메이션 (prefers-reduced-motion 존중) */
 @keyframes admFade { from { opacity: 0; } to { opacity: 1; } }
 @keyframes admPop { from { opacity: 0; transform: translateY(8px) scale(0.98); } to { opacity: 1; transform: none; } }
