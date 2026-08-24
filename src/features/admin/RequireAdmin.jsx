@@ -1,6 +1,7 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '@/shared/auth/auth.store';
+import { isAdmin } from '@/shared/auth/roles';
 
 /**
  * /admin 역할 가드 (기획.md §9). 임원진/운영진만 진입.
@@ -9,15 +10,9 @@ import { useAuthStore } from '@/shared/auth/auth.store';
  * 서버 middleware/route-guard 와 이중 가드 개념이며, 클라이언트 가드는 UX 용입니다.
  * 실제 권한은 API 가 재확인합니다.
  *
- * 역할 판정은 레포 컨벤션(user.authority)에 맞춥니다. SeminarPage 의 admin
- * 게이트와 동일한 필드를 써서 판정을 한 곳처럼 유지합니다.
+ * 역할 판정은 `shared/auth/roles` 한 곳에서만 합니다. 프로필의 콘솔 진입
+ * 버튼도 같은 함수를 씁니다.
  */
-const ADMIN_ROLES = ['OFFICER', 'ADMIN'];
-
-function isAdmin(user) {
-  if (!user) return false;
-  return ADMIN_ROLES.includes(user.authority);
-}
 
 export function RequireAdmin({ children }) {
   const location = useLocation();

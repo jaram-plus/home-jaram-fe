@@ -3,6 +3,7 @@ import { Navigate, useNavigate } from 'react-router-dom';
 import './profile.css';
 import { Header } from '@/shared/ui/Header';
 import { useAuthStore } from '@/shared/auth/auth.store';
+import { isAdmin } from '@/shared/auth/roles';
 import { useForm } from './useForm';
 import { useMe, useUpdateMe } from './profile.queries';
 import { validateProfile } from './profile.validation';
@@ -23,6 +24,9 @@ export default function ProfilePage() {
 
 function ProfileInner() {
   const navigate = useNavigate();
+  // 콘솔 진입 버튼은 RequireAdmin 과 같은 입력(store 의 user)으로 판정한다.
+  // 버튼은 보이는데 눌렀더니 403 인 어긋남을 막기 위함이다.
+  const canAdmin = useAuthStore((s) => isAdmin(s.user));
   const clearAuth = useAuthStore((s) => s.clear);
   const logout = () => {
     clearAuth();
@@ -94,7 +98,15 @@ function ProfileInner() {
         {isError && (
           <p style={{ fontFamily: 'var(--font-sans)', color: 'var(--brand)' }}>{MESSAGES.loadError}</p>
         )}
-        {me && !editing && <ProfileView me={me} onEdit={startEdit} onLogout={logout} />}
+        {me && !editing && (
+          <ProfileView
+            me={me}
+            canAdmin={canAdmin}
+            onAdmin={() => navigate('/admin')}
+            onEdit={startEdit}
+            onLogout={logout}
+          />
+        )}
         {me && editing && (
           <EditView
             me={me}

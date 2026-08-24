@@ -4,8 +4,8 @@
  */
 export const EYEBROW = 'PROFILE';
 
-// 액션 버튼 라벨
-export const ACTIONS = { edit: '수정', logout: '로그아웃' };
+// 액션 버튼 라벨 — admin 은 임원진·운영진에게만 보이는 관리자 콘솔 진입.
+export const ACTIONS = { admin: '관리자 콘솔', edit: '수정', logout: '로그아웃' };
 
 // authority 코드 → 한글 라벨
 export const AUTHORITY_LABELS = { MEMBER: '회원', OFFICER: '임원', ADMIN: '관리자' };

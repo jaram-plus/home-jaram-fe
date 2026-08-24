@@ -10,8 +10,9 @@ const markSrc = typeof jaramMark === 'string' ? jaramMark : jaramMark.src;
 /**
  * 읽기 모드 카드. 상단 빨강 룰(accent="top") + PROFILE 아이라벨, 이름(디스플레이),
  * 기수/권한 등 읽기 전용 행, 그리고 bio/github/blog 값. 우상단 "수정"·"로그아웃" 버튼.
+ * `canAdmin`(임원진·운영진)이면 그 앞에 "관리자 콘솔" 진입 버튼이 함께 놓인다.
  */
-export function ProfileView({ me, onEdit, onLogout }) {
+export function ProfileView({ me, canAdmin, onAdmin, onEdit, onLogout }) {
   const empty = <span style={{ color: 'var(--text-muted)' }}>{MESSAGES.empty}</span>;
 
   // 읽기 전용 값 표시: authority/department/title은 코드→한글 매핑, 나머지는 원문.
@@ -65,7 +66,10 @@ export function ProfileView({ me, onEdit, onLogout }) {
             )}
           </div>
         </div>
-        <div style={{ display: 'flex', gap: 'var(--space-2)', flexShrink: 0 }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'flex-end', gap: 'var(--space-2)', flexShrink: 0 }}>
+          {canAdmin && (
+            <Button size="sm" variant="secondary" onClick={onAdmin}>{ACTIONS.admin}</Button>
+          )}
           <Button size="sm" variant="outline" onClick={onEdit}>{ACTIONS.edit}</Button>
           <Button size="sm" variant="ghost" onClick={onLogout}>{ACTIONS.logout}</Button>
         </div>
