@@ -25,7 +25,7 @@ const USE_MOCK = import.meta.env.VITE_ADMIN_MOCK !== 'false';
 const delay = (ms) => new Promise((r) => setTimeout(r, ms));
 
 // 백엔드 연동이 끝난 리소스 — USE_MOCK 여부와 무관하게 항상 실 서버를 쓴다.
-const LIVE_RESOURCES = new Set(['member', 'exec', 'contrib', 'seminars', 'seminarApprovals', 'applications']);
+const LIVE_RESOURCES = new Set(['member', 'exec', 'contrib', 'grad', 'seminars', 'seminarApprovals', 'applications']);
 const mocked = (resource) => USE_MOCK && !LIVE_RESOURCES.has(resource);
 
 /**
@@ -116,6 +116,7 @@ export async function fetchList(resource, params = {}) {
   if (resource === 'member') return fetchMembers(params);
   if (resource === 'exec') return fetchExecs(params);
   if (resource === 'contrib') return fetchContribs(params);
+  if (resource === 'grad') return fetchGrads(params);
   if (resource === 'applications') return fetchPendingApplications(params);
   if (resource === 'seminarApprovals') return fetchPendingSeminarApprovals(params);
   if (resource === 'seminars') return fetchSeminars(params);
@@ -201,6 +202,25 @@ async function fetchContribs(params = {}) {
   const rows = (data.items || []).map((m) => ({
     ...fromWire('contrib', m),
     role: roleLabel(m),
+  }));
+  return queryLocally(rows, params);
+}
+
+/**
+ * 졸업생 명단(grad 탭) — 등급이 졸업생인 회원. member·exec·contrib 탭과 같은 이유로
+ * 서버가 기수 필터를 보지 않으므로 전체를 받아 이 계층에서 검색·필터·정렬·페이지를
+ * 처리한다. '현재 소속·직무' 는 서버가 가장 최근 이력에서 파생해 내려준다 — 이력이
+ * 아직 없으면 빈 칸 대신 줄표를 세워 표가 무너지지 않게 한다.
+ */
+async function fetchGrads(params = {}) {
+  const { data } = await client.get('/api/admin/members', {
+    params: { tab: 'grad', page: 1, size: ALL_ROWS_SIZE },
+  });
+  const rows = (data.items || []).map((m) => ({
+    ...fromWire('grad', m),
+    gradYear: m.gradYear ?? '—',
+    org: m.org || '—',
+    job: m.job || '—',
   }));
   return queryLocally(rows, params);
 }
@@ -710,6 +730,25 @@ export async function exportToDrive(resource, { filters, columns } = {}) {
     return data;
   } catch (error) {
     throwWireError(error, 'FORBIDDEN');
+  }
+}
+
+/**
+ * 졸업생 상세의 저장. 조회는 회원 상세(fetchMemberDetail)를 그대로 씁니다 — 졸업생도
+ * 회원이라 MemberDetail 한 계약이 학번·기수·임기 이력에 졸업연도·졸업 후 이력까지 담습니다.
+ * 저장만 전용 경로입니다: 이력이 스칼라 칸이 아니라 줄 목록이라 표의 일괄 저장(:batch)에
+ * 얹을 수 없어, 보낸 목록으로 통째로 교체하는 단건 PUT 으로 커밋합니다.
+ */
+export async function saveGradDetail({ id, gradYear, careers }) {
+  try {
+    // 빈 칸은 '지웠다'는 뜻이라 null 로 보낸다 — 0 이나 빈 문자열로 남기지 않는다.
+    const { data } = await client.put(`/api/admin/members/${id}/graduation`, {
+      gradYear: gradYear === '' || gradYear == null ? null : Number(gradYear),
+      careers,
+    });
+    return fromWire('member', data);
+  } catch (error) {
+    throwWireError(error, 'VALIDATION');
   }
 }
 

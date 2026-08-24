@@ -23,6 +23,7 @@ export { ConfirmDialog } from './forms/ConfirmDialog';
 export { MemberDetailModal } from './forms/MemberDetailModal';
 export { SeminarDetailModal } from './forms/SeminarDetailModal';
 export { SeminarCreateModal } from './forms/SeminarCreateModal';
+export { GradDetailModal } from './forms/GradDetailModal';
 export { PickerModal, PickerHeader, MemberPicker, PickerNote, PickerFooter } from './forms/PickerModal';
 export { ExecAssignModal } from './forms/ExecAssignModal';
 export { ContribAddModal } from './forms/ContribAddModal';

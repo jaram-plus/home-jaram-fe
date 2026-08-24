@@ -105,16 +105,19 @@ export const SCHEMAS = {
     ],
   },
   grad: {
-    eyebrow: 'PEOPLE', title: '인원 관리', addLabel: '졸업생 추가',
-    desc: '졸업생 명단과 현재 소속·직무입니다.',
+    // 졸업생은 회원 등급을 졸업생으로 바꿔 만들어진다(회원 탭). 여기서 빈 행을 만들 일이
+    // 없어 추가 버튼을 두지 않고, 표는 읽기 전용으로 두어 편집은 상세 모달 한 곳에서만 한다.
+    eyebrow: 'PEOPLE', title: '인원 관리', addLabel: '',
+    desc: '졸업생 명단입니다. 표에는 가장 최근 이력만 보이고, 졸업연도와 이력은 상세에서 고칩니다.',
     filters: [{ key: 'gen', label: '기수', options: ['전체', '36기', '35기', '34기', '33기', '32기', '31기'] }],
     cols: [
-      { key: 'name', label: '이름', type: 'text', width: '1fr' },
-      { key: 'gen', label: '기수', type: 'text', width: '0.6fr', align: 'center' },
-      { key: 'gradYear', label: '졸업연도', type: 'text', width: '0.7fr', align: 'center' },
-      { key: 'org', label: '현재 소속', type: 'text', width: '1fr' },
-      { key: 'job', label: '직무', type: 'text', width: '1fr' },
-      { key: '__act', label: '', type: 'actions', width: '0.6fr', align: 'center', actions: ['delete'] },
+      { key: 'name', label: '이름', type: 'static', width: '1fr' },
+      { key: 'studentId', label: '학번', type: 'static', width: '1fr' },
+      { key: 'gen', label: '기수', type: 'static', width: '0.6fr', align: 'center' },
+      { key: 'gradYear', label: '졸업연도', type: 'static', width: '0.7fr', align: 'center' },
+      { key: 'org', label: '현재 소속', type: 'static', width: '1fr' },
+      { key: 'job', label: '직무', type: 'static', width: '1fr' },
+      { key: '__act', label: '', type: 'actions', width: '1fr', align: 'center', actions: ['detail', 'delete'] },
     ],
   },
   seminars: {
@@ -197,6 +200,8 @@ export const MESSAGES = {
   attendanceOpen: '출석을 받는 중입니다.',
   closeAttendanceWarn: '마감하면 출석 시간이 남아 있어도 더 받지 않습니다. 되돌릴 수 없습니다.',
   attendanceClosedNote: '마감했습니다. 새로운 출석은 받지 않습니다.',
+  gradTermsReadonly: '자람에서의 임원 이력은 임원진 탭에서 관리되어 여기서는 고칠 수 없습니다.',
+  noCareer: '아직 등록된 이력이 없습니다. 아래에서 한 줄씩 더해 주세요.',
 };
 
 export const TOAST = {
@@ -204,6 +209,7 @@ export const TOAST = {
   // 직책마다 조사가 갈려(회장'으로' / 서버 관리자'로') '직책으로' 로 묶는다.
   assigned: (name, title) => `${name} 님을 ${title} 직책으로 지정했습니다.`,
   contribAdded: (name) => `${name} 님을 기여자로 등록했습니다.`,
+  gradSaved: (name) => `${name} 님의 졸업생 정보를 저장했습니다.`,
   approved: '신청을 승인했습니다. 저장 시 회원으로 편입됩니다.',
   rejected: '신청을 반려했습니다.',
   seminarApproved: '세미나를 승인했습니다. 저장 시 정식 목록에 노출됩니다.',
@@ -225,15 +231,7 @@ export const EMPTY = {
 
 /* ── 개발용 시드 (USE_MOCK=true) — 백엔드 연동 시 삭제 ────────────────── */
 export const SEED = {
-  // member·exec·contrib 는 실 서버(GET /api/admin/members)로 전환되어 시드를 두지 않는다.
-  grad: [
-    { id: 'g1', name: '한지호', gen: '35기', gradYear: '2021', org: '네이버', job: '백엔드 엔지니어' },
-    { id: 'g2', name: '오세훈', gen: '34기', gradYear: '2020', org: '카카오', job: '안드로이드 개발자' },
-    { id: 'g3', name: '임채원', gen: '33기', gradYear: '2019', org: '라인', job: '프론트엔드 개발자' },
-    { id: 'g4', name: '서동건', gen: '32기', gradYear: '2018', org: '쿠팡', job: '데이터 엔지니어' },
-    { id: 'g5', name: '백지안', gen: '36기', gradYear: '2022', org: '토스', job: 'iOS 개발자' },
-    { id: 'g6', name: '남기훈', gen: '31기', gradYear: '2017', org: '삼성전자', job: 'SW 엔지니어' },
-  ],
+  // member·exec·contrib·grad 는 실 서버(GET /api/admin/members)로 전환되어 시드를 두지 않는다.
   studies: [
     { id: 'st1', title: '알고리즘 코테반', leader: '강준혁', count: '12명', schedule: '월 20:00', period: '2026-03 ~ 06', rate: '92%', status: '진행' },
     { id: 'st2', title: 'CS 전공 스터디', leader: '최유나', count: '8명', schedule: '수 19:00', period: '2026-03 ~ 06', rate: '85%', status: '진행' },

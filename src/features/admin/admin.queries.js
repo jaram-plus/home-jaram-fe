@@ -294,6 +294,24 @@ export function useMemberDetail(id, options = {}) {
   });
 }
 
+/**
+ * 졸업생 상세 저장(졸업연도·이력). 조회는 useMemberDetail 이 맡습니다 — 졸업생도 회원이라
+ * 상세 계약이 하나입니다. 표의 모아 저장과 달리 즉시 커밋하며, 성공하면 졸업생 목록의
+ * '현재 소속·직무' 가 새 이력에서 다시 파생되어야 합니다.
+ */
+export function useSaveGradDetail(options = {}) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: api.saveGradDetail,
+    ...options,
+    onSuccess: (data, vars, ctx) => {
+      qc.invalidateQueries({ queryKey: ['admin', 'list', 'grad'] });
+      qc.invalidateQueries({ queryKey: adminKeys.memberDetail(vars.id) });
+      options.onSuccess?.(data, vars, ctx);
+    },
+  });
+}
+
 export function useDashboardStats(options = {}) {
   return useQuery({ queryKey: adminKeys.dashboard(), queryFn: api.fetchDashboardStats, ...options });
 }
