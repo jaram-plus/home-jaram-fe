@@ -26,6 +26,7 @@ export function SeminarCard({ seminar, attended, isLoggedIn, onAttend, onOpenDet
 
   return (
     <div
+      className="jr-card-hover"
       onClick={() => onOpenDetail(seminar)}
       style={{
         display: 'flex',
@@ -33,7 +34,6 @@ export function SeminarCard({ seminar, attended, isLoggedIn, onAttend, onOpenDet
         alignItems: 'stretch',
         background: 'var(--surface-card)',
         border: '1px solid var(--border)',
-        borderLeft: '3px solid var(--brand)',
         borderRadius: 'var(--radius-lg)',
         boxShadow: 'var(--shadow-sm)',
         padding: '24px 26px',
@@ -41,26 +41,25 @@ export function SeminarCard({ seminar, attended, isLoggedIn, onAttend, onOpenDet
         cursor: 'pointer',
       }}
     >
-      {/* date block */}
+      {/* date block — 일정 카드와 같은 "6월 27일 (금) 19:00" 표기. 폭을 고정해 목록을
+          세로로 훑을 때 날짜 줄이 카드끼리 나란히 선다. */}
       <div
         style={{
           flex: 'none',
-          width: 96,
+          width: 120,
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'center',
-          paddingRight: 24,
+          paddingRight: 22,
           borderRight: '1px solid var(--border-soft)',
         }}
       >
-        <div style={{ fontFamily: 'var(--font-serif)', fontSize: 34, fontWeight: 700, color: 'var(--brand-deep)', lineHeight: 1 }}>
-          {seminar.day}
+        <div style={{ fontFamily: 'var(--font-serif)', fontSize: 'var(--fs-lead)', fontWeight: 'var(--w-bold)', color: 'var(--brand-deep)', lineHeight: 'var(--lh-snug)', letterSpacing: 'var(--ls-tight)', whiteSpace: 'nowrap' }}>
+          {seminar.month} {seminar.day}일
         </div>
-        <div style={{ fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-sm)', color: 'var(--text-muted)', marginTop: 2 }}>
-          {seminar.month} · {seminar.weekday}
-        </div>
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-sm)', color: 'var(--text-faint)', marginTop: 6 }}>
-          {seminar.time}
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginTop: 4, fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-sm)', color: 'var(--text-muted)' }}>
+          <span>({seminar.weekday})</span>
+          <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 'var(--w-medium)', color: 'var(--text-body)' }}>{seminar.time}</span>
         </div>
       </div>
 
