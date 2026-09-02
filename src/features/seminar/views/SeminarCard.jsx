@@ -1,7 +1,7 @@
 import React from 'react';
 import { Button, Tag } from '@/design-system';
 import { TopicChip } from './parts';
-import { STATUS_BADGE, ATTEND_LABEL, ENDED_CHIP, COUNTDOWN_LABEL } from '../seminar.data';
+import { STATUS_BADGE, ATTEND_LABEL, ENDED_CHIP, COUNTDOWN_LABEL, DETAIL } from '../seminar.data';
 import { useAttendanceCountdown } from '../useAttendanceCountdown';
 
 /**
@@ -76,9 +76,17 @@ export function SeminarCard({ seminar, attended, isLoggedIn, onAttend, onOpenDet
           <span>발표 <strong style={{ color: 'var(--text-body)', fontWeight: 'var(--w-medium)' }}>{seminar.speaker}</strong></span>
           <span>장소 <strong style={{ color: 'var(--text-body)', fontWeight: 'var(--w-medium)' }}>{seminar.place}</strong></span>
         </div>
-        {seminar.material && (
-          <a href="#" className="jr-mat" style={{ marginTop: 14, fontSize: 'var(--fs-sm)' }}>
-            발표 자료 보기 <span aria-hidden="true">→</span>
+        {/* 카드 전체가 상세 모달을 여는 클릭 영역이라, 링크는 전파를 끊어야 새 탭만 뜬다. */}
+        {seminar.materialUrl && (
+          <a
+            href={seminar.materialUrl}
+            target="_blank"
+            rel="noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            className="jr-mat"
+            style={{ marginTop: 14, fontSize: 'var(--fs-sm)' }}
+          >
+            {DETAIL.material} <span aria-hidden="true">→</span>
           </a>
         )}
       </div>
