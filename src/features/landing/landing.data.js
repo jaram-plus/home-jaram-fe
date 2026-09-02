@@ -70,7 +70,7 @@ export const HISTORY = [
 
 export const FOOT_MENU = [
   { h: 'JARAM', items: [
-    { label: '소개', href: '#' },
+    { label: '소개', href: '#about' },
     { label: '사람들', href: '/people' },
     { label: '졸업생', href: '/people?tab=grad' },
   ] },
