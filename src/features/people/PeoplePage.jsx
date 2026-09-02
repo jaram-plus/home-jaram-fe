@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { useSearchParams } from 'react-router-dom';
 import './people.css';
 import { TABS, orderExecGroups } from './people.data';
 import { usePeople } from './people.queries';
@@ -14,7 +15,12 @@ import { AppHeader, Eyebrow, TabButton, GroupSection, EmptyState } from './views
  * `PEOPLE[tab].groups` from the server response.
  */
 export default function PeoplePage() {
-  const [tab, setTab] = useState('exec'); // exec | contrib | grad
+  // 탭을 URL(`?tab=`)에 둔다 — 푸터의 '졸업생'처럼 특정 탭을 바로 여는 링크를 걸 수
+  // 있어야 하고, 주소를 그대로 공유해도 같은 화면이 열린다. 모르는 값은 기본 탭으로.
+  const [params, setParams] = useSearchParams();
+  const requested = params.get('tab');
+  const tab = TABS.some((t) => t.key === requested) ? requested : 'exec'; // exec | contrib | grad
+  const setTab = (key) => setParams({ tab: key }, { replace: true });
 
   const { data: people, isLoading, isError } = usePeople();
   const data = people?.[tab] ?? { desc: '', empty: '', groups: [] };
