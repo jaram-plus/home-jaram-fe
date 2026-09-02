@@ -70,3 +70,11 @@
     animation: none !important;
   }
 }
+
+/* 일정 카드 그리드 — 넓은 화면에서 한 줄에 4장, 좁아지면 열 수가 알아서 줄어든다.
+   container-max(1200px) 안쪽 폭에서 minmax(240px, 1fr)은 최대 4열까지만 들어간다. */
+.jr-schedule-grid {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+}
