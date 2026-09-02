@@ -63,7 +63,9 @@ export function Hero() {
             color: 'var(--text-muted)',
           }}
         >
-          한양대학교 ERICA 컴퓨터학회 JARAM — 나눔이 실력이 되는 {clubYears()}년.
+          한양대학교 ERICA 컴퓨터학회 JARAM
+          <br />
+          나눔이 실력이 되는 {clubYears()}년.
         </p>
         <div style={{ display: 'flex', gap: 14, marginTop: 40, flexWrap: 'wrap' }}>
           {!isAuthenticated && (
