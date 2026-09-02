@@ -94,7 +94,10 @@ export function ScheduleAdminView() {
       ) : schedules.length === 0 ? (
         <p style={{ marginTop: 40, color: 'var(--text-muted)' }}>등록된 일정이 없습니다.</p>
       ) : (
-        <div style={{ marginTop: 28, display: 'grid', gap: 16 }}>
+        // 회원용 .jr-schedule-grid와 같은 규칙. AdminShell 콘텐츠 폭(사이드바 248px를 뺀
+        // 나머지, 최대 1180px)에서 minmax(240px, 1fr)은 최대 4열까지 들어가고, 창이 좁아지면
+        // 열 수가 3·2·1로 알아서 준다.
+        <div style={{ marginTop: 28, display: 'grid', gap: 16, gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))' }}>
           {schedules.map((s) => (
             <ScheduleAdminCard
               key={s.id}
