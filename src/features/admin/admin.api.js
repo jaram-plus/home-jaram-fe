@@ -711,11 +711,11 @@ export async function fetchSettings() {
 }
 export async function saveSettings(payload) {
   if (USE_MOCK) { await delay(400); return { ...SETTINGS_SEED, ...payload }; }
-  // AdminSettingsUpdate 계약은 semester·currentGen·autoPromote 만 받는다
+  // AdminSettingsUpdate 계약은 semester·currentGen·autoPromote·links 만 받는다
   // (driveConnected 는 서버가 Drive 연동 여부로 관리 — 이 엔드포인트로 보내지 않는다).
-  const { semester, currentGen, autoPromote } = payload;
+  const { semester, currentGen, autoPromote, links } = payload;
   try {
-    const { data } = await client.patch('/api/admin/settings', { semester, currentGen, autoPromote });
+    const { data } = await client.patch('/api/admin/settings', { semester, currentGen, autoPromote, links });
     return data;
   } catch (error) {
     throwWireError(error, 'VALIDATION');

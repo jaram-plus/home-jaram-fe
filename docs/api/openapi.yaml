@@ -17,6 +17,8 @@ tags:
     description: 인증 · 회원가입 · 비밀번호 재설정
   - name: people
     description: 회원 목록
+  - name: site
+    description: 사이트 공개 설정 (푸터 외부 링크)
   - name: seminar
     description: 세미나 · 출석
   - name: study
@@ -128,6 +130,22 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/PeopleResponse' }
+        '5XX': { $ref: '#/components/responses/ServerError' }
+
+  # ─────────────────────────── site ───────────────────────────
+  /api/site/links:
+    get:
+      tags: [site]
+      summary: 학회 외부 링크 조회
+      description: >
+        랜딩 푸터의 Connect 칸이 쓰는 공개 링크. 값은 임원이 /api/admin/settings 로 관리한다.
+        비로그인 방문자도 푸터를 보므로 읽기는 인증 없이 열려 있다. public.
+      responses:
+        '200':
+          description: 링크 모음
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SiteLinks' }
         '5XX': { $ref: '#/components/responses/ServerError' }
 
   # ─────────────────────────── seminar ───────────────────────────
@@ -1816,21 +1834,34 @@ components:
           properties:
             freshman: { type: integer }
             enrolled: { type: integer }
+    SiteLinks:
+      type: object
+      description: >
+        학회 외부 채널 주소. 설정하지 않은 채널은 null.
+        값이 있으면 새 탭으로 그대로 여는 주소라 http(s) 스킴까지 포함한 전체 주소여야 한다.
+      required: [github, instagram, blog, discord]
+      properties:
+        github: { type: [string, 'null'], format: uri, example: 'https://github.com/jaram-plus' }
+        instagram: { type: [string, 'null'], format: uri }
+        blog: { type: [string, 'null'], format: uri }
+        discord: { type: [string, 'null'], format: uri }
     AdminSettings:
       type: object
-      required: [semester, currentGen, autoPromote, driveConnected]
+      required: [semester, currentGen, autoPromote, driveConnected, links]
       properties:
         semester: { type: string, example: '2026-2학기' }
         currentGen: { type: integer, example: 41 }
         autoPromote: { type: boolean }
         driveConnected: { type: boolean }
         driveFolder: { type: [string, 'null'] }
+        links: { $ref: '#/components/schemas/SiteLinks' }
     AdminSettingsUpdate:
       type: object
       properties:
         semester: { type: string }
         currentGen: { type: integer }
         autoPromote: { type: boolean }
+        links: { $ref: '#/components/schemas/SiteLinks' }
     DriveExportRequest:
       type: object
       required: [resource]
