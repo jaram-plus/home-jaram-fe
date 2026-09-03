@@ -14,7 +14,7 @@
 import { client } from '@/shared/api/client';
 import { titleKey, titleLabel } from '@/shared/member/enums';
 import {
-  SEED, SETTINGS_SEED, RESOURCES,
+  SEED, RESOURCES,
   GRADE_LABEL, STATUS_LABEL, DEPARTMENT_LABEL,
   APPLICATION_STATUS_LABEL,
   SEMINAR_STATUS_LABELS, TARGET_GRADE_LABELS, STUDY_STATUS_LABEL,
@@ -704,13 +704,14 @@ export async function fetchDashboardStats() {
   return data; // DashboardStats
 }
 
+// 백엔드 연동 완료(AdminSettingsController) — USE_MOCK 여부와 무관하게 항상 실 서버.
+// 설정값은 푸터가 공개 경로로 읽어 가므로, 목에 저장하면 저장은 됐는데 화면은
+// 안 바뀌는 상태가 된다.
 export async function fetchSettings() {
-  if (USE_MOCK) { await delay(200); return SETTINGS_SEED; }
   const { data } = await client.get('/api/admin/settings');
   return data;
 }
 export async function saveSettings(payload) {
-  if (USE_MOCK) { await delay(400); return { ...SETTINGS_SEED, ...payload }; }
   // AdminSettingsUpdate 계약은 semester·currentGen·autoPromote·links 만 받는다
   // (driveConnected 는 서버가 Drive 연동 여부로 관리 — 이 엔드포인트로 보내지 않는다).
   const { semester, currentGen, autoPromote, links } = payload;

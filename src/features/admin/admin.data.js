@@ -241,14 +241,3 @@ export const SEED = {
     { id: 'st6', title: '자바 백엔드', leader: '정시우', count: '9명', schedule: '토 14:00', period: '2025-09 ~ 12', rate: '88%', status: '종료' },
   ],
 };
-
-export const SETTINGS_SEED = {
-  semester: '2026-2학기',
-  currentGen: 41,
-  autoPromote: true,
-  driveConnected: true,
-  driveFolder: '/자람/명단백업',
-  // 실제 주소는 관리자 '설정' 탭에서 채운다. 비워 둔 채널은 푸터에서 어떻게 보이는지
-  // (필수는 흐린 글자로 남고, 나머지는 빠진다) 목 상태에서도 확인할 수 있다.
-  links: { github: 'https://github.com/jaram-plus', instagram: null, blog: null, discord: null },
-};
