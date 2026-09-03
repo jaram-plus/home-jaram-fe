@@ -712,14 +712,15 @@ export async function fetchSettings() {
   return data;
 }
 export async function saveSettings(payload) {
-  // AdminSettingsUpdate 계약은 semester·currentGen·autoPromote·links 만 받는다
-  // (driveConnected 는 서버가 Drive 연동 여부로 관리 — 이 엔드포인트로 보내지 않는다).
-  const { semester, currentGen, autoPromote, links } = payload;
+  // AdminSettingsUpdate 계약은 semesterTerm·currentGen·autoPromote·links 만 받는다
+  // (driveConnected 는 서버가 Drive 연동 여부로 관리, semesterYear 는 서버가 계산 —
+  // 둘 다 이 엔드포인트로 보내지 않는다).
+  const { semesterTerm, currentGen, autoPromote, links } = payload;
   // 계약(SiteLinks)에서 '등록 안 함'은 null 이다. 폼은 빈 칸을 ''로 들고 있으므로 여기서 바꾼다
   // — 빈 문자열을 보내면 서버가 주소 형식 위반(422)으로 돌려보낸다.
   const wireLinks = Object.fromEntries(Object.entries(links).map(([k, v]) => [k, v || null]));
   try {
-    const { data } = await client.patch('/api/admin/settings', { semester, currentGen, autoPromote, links: wireLinks });
+    const { data } = await client.patch('/api/admin/settings', { semesterTerm, currentGen, autoPromote, links: wireLinks });
     return data;
   } catch (error) {
     throwWireError(error, 'VALIDATION');

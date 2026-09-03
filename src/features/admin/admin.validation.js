@@ -103,8 +103,9 @@ const siteLinkSchema = (label) =>
 
 /** 설정 폼 스키마. */
 export const settingsSchema = z.object({
-  semester: z.string().min(1, '학기를 입력하세요.'),
-  currentGen: z.coerce.number().int().positive('기수는 양의 정수여야 합니다.'),
+  semesterTerm: z.coerce.number().int().min(1, '학기는 1 또는 2입니다.').max(2, '학기는 1 또는 2입니다.'),
+  // 빈 칸은 0(자동 계산)으로 읽힌다 — z.coerce.number() 가 '' 를 0 으로 바꾼다.
+  currentGen: z.coerce.number().int().min(0, '기수는 0 이상이어야 합니다. 비워 두면 자동으로 계산합니다.'),
   autoPromote: z.boolean(),
   links: z.object(Object.fromEntries(SITE_LINKS.map((l) => [l.key, siteLinkSchema(l.label)]))),
 });
