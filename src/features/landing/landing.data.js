@@ -70,19 +70,13 @@ export const HISTORY = [
 
 export const FOOT_MENU = [
   { h: 'JARAM', items: [
-    { label: '소개', href: '#' },
+    { label: '소개', href: '#about' },
     { label: '사람들', href: '/people' },
-    { label: '졸업생', href: '/people' },
+    { label: '졸업생', href: '/people?tab=grad' },
   ] },
   { h: 'Activity', items: [
     { label: '스터디', href: '/study' },
     { label: '세미나', href: '/seminar' },
-    { label: '해커톤·워크샵', href: '#' },
-    { label: '프로젝트', href: '#' },
-  ] },
-  { h: 'Connect', items: [
-    { label: 'GitHub', href: '#' },
-    { label: 'Instagram', href: '#' },
-    { label: '블로그', href: '#' },
   ] },
 ];
+

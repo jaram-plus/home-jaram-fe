@@ -4,9 +4,10 @@ import { useSettings, useSaveSettings } from '../../admin.queries';
 import { useAdminStore } from '../../admin.store';
 import { settingsSchema } from '../../admin.validation';
 import { TOAST } from '../../admin.data';
+import { SITE_LINKS, EMPTY_SITE_LINKS } from '@/shared/club/links';
 
 /**
- * 설정 — 학기·현재 기수, 신학기 자동 승급, Google Drive 연동. (기획.md §3.7)
+ * 설정 — 학기·현재 기수, 외부 링크, 신학기 자동 승급, Google Drive 연동. (기획.md §3.7)
  * 저장 시 settingsSchema(Zod)로 검증합니다. 전체 RHF 폼이 필요하면 useZodForm 로 교체하세요.
  */
 export function SettingsView() {
@@ -14,7 +15,7 @@ export function SettingsView() {
   const showToast = useAdminStore((s) => s.showToast);
   const save = useSaveSettings({ onSuccess: () => showToast(TOAST.settingsSaved) });
 
-  const [form, setForm] = useState({ semester: '', currentGen: '', autoPromote: true });
+  const [form, setForm] = useState({ semester: '', currentGen: '', autoPromote: true, links: EMPTY_SITE_LINKS });
   const [drive, setDrive] = useState(true);
   const [err, setErr] = useState('');
   const [seeded, setSeeded] = useState(false);
@@ -22,13 +23,20 @@ export function SettingsView() {
   // 서버 설정을 편집 폼에 1회만 심는다 (effect 없이 렌더 중 조정 — React 권장 패턴).
   if (data && !seeded) {
     setSeeded(true);
-    setForm({ semester: data.semester, currentGen: String(data.currentGen), autoPromote: data.autoPromote });
+    setForm({
+      semester: data.semester,
+      currentGen: String(data.currentGen),
+      autoPromote: data.autoPromote,
+      // 서버는 설정 안 한 채널을 null 로 준다 — 입력칸은 빈 문자열이어야 제어 컴포넌트로 남는다.
+      links: Object.fromEntries(SITE_LINKS.map((l) => [l.key, data.links?.[l.key] ?? ''])),
+    });
     setDrive(data.driveConnected);
   }
 
   const set = (k, v) => setForm((s) => ({ ...s, [k]: v }));
+  const setLink = (k, v) => setForm((s) => ({ ...s, links: { ...s.links, [k]: v } }));
   const onSave = () => {
-    const parsed = settingsSchema.safeParse({ semester: form.semester, currentGen: form.currentGen, autoPromote: form.autoPromote });
+    const parsed = settingsSchema.safeParse({ semester: form.semester, currentGen: form.currentGen, autoPromote: form.autoPromote, links: form.links });
     if (!parsed.success) { setErr(parsed.error.issues[0].message); return; }
     setErr('');
     save.mutate({ ...parsed.data, driveConnected: drive });
@@ -50,6 +58,25 @@ export function SettingsView() {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18 }}>
             <Input label="현재 학기" value={form.semester} onChange={(e) => set('semester', e.target.value)} />
             <Input label="현재 기수" value={form.currentGen} onChange={(e) => set('currentGen', e.target.value)} />
+          </div>
+        </div>
+
+        <div style={card}>
+          <p style={{ ...cardTitle, marginBottom: 6 }}>외부 링크</p>
+          <p style={{ margin: '0 0 18px', fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.5 }}>
+            랜딩 페이지 푸터의 Connect 칸에 그대로 쓰입니다. Instagram·Discord는 학회의 공식 창구라 주소가 없어도 이름이 남고,
+            나머지는 비워 두면 푸터에서 빠집니다.
+          </p>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18 }}>
+            {SITE_LINKS.map((l) => (
+              <Input
+                key={l.key}
+                label={l.always ? `${l.label} (항상 표시)` : l.label}
+                placeholder="https://"
+                value={form.links[l.key]}
+                onChange={(e) => setLink(l.key, e.target.value)}
+              />
+            ))}
           </div>
         </div>
 

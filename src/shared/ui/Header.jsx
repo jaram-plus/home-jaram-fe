@@ -12,7 +12,8 @@ import jaramMark from '@/design-system/assets/logos/jaram-mark.png';
  * active nav item by key; an unknown/omitted key highlights nothing.
  */
 const NAV = [
-  { key: 'about', label: '소개', href: '#' },
+  // 학회 소개는 별도 페이지가 아니라 랜딩의 Manifesto 단락이다 (sections/Manifesto.jsx).
+  { key: 'about', label: '소개', href: '/#about' },
   { key: 'study', label: '스터디', href: '/study' },
   { key: 'seminar', label: '세미나', href: '/seminar' },
   { key: 'people', label: '사람들', href: '/people' },
@@ -62,7 +63,10 @@ export function Header({ current }) {
               color: on ? 'var(--brand)' : 'var(--text-body)',
               textDecoration: 'none',
             };
-            return item.href.startsWith('/') ? (
+            // 해시가 붙은 주소는 Link 대신 <a>로 둔다 — 라우터는 해시까지 스크롤해 주지
+            // 않지만 브라우저는 해 준다. 랜딩에서는 그 자리로 바로 내려가고, 다른
+            // 페이지에서는 랜딩을 열어 그 자리에서 멈춘다.
+            return item.href.startsWith('/') && !item.href.includes('#') ? (
               <Link key={item.key} to={item.href} style={style}>
                 {item.label}
               </Link>
