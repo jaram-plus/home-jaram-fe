@@ -15,7 +15,7 @@ export function SettingsView() {
   const showToast = useAdminStore((s) => s.showToast);
   const save = useSaveSettings({ onSuccess: () => showToast(TOAST.settingsSaved) });
 
-  const [form, setForm] = useState({ semester: '', currentGen: '', autoPromote: true, links: EMPTY_SITE_LINKS });
+  const [form, setForm] = useState({ semesterTerm: '1', currentGen: '', autoPromote: true, links: EMPTY_SITE_LINKS });
   const [drive, setDrive] = useState(true);
   const [err, setErr] = useState('');
   const [seeded, setSeeded] = useState(false);
@@ -24,7 +24,7 @@ export function SettingsView() {
   if (data && !seeded) {
     setSeeded(true);
     setForm({
-      semester: data.semester,
+      semesterTerm: String(data.semesterTerm),
       currentGen: String(data.currentGen),
       autoPromote: data.autoPromote,
       // 서버는 설정 안 한 채널을 null 로 준다 — 입력칸은 빈 문자열이어야 제어 컴포넌트로 남는다.
@@ -36,7 +36,7 @@ export function SettingsView() {
   const set = (k, v) => setForm((s) => ({ ...s, [k]: v }));
   const setLink = (k, v) => setForm((s) => ({ ...s, links: { ...s.links, [k]: v } }));
   const onSave = () => {
-    const parsed = settingsSchema.safeParse({ semester: form.semester, currentGen: form.currentGen, autoPromote: form.autoPromote, links: form.links });
+    const parsed = settingsSchema.safeParse({ semesterTerm: form.semesterTerm, currentGen: form.currentGen, autoPromote: form.autoPromote, links: form.links });
     if (!parsed.success) { setErr(parsed.error.issues[0].message); return; }
     setErr('');
     save.mutate({ ...parsed.data, driveConnected: drive });
@@ -44,6 +44,10 @@ export function SettingsView() {
 
   if (isLoading) return <p style={{ color: 'var(--text-muted)' }}>설정을 불러오는 중…</p>;
 
+  // Input 이 라벨·힌트에 쓰는 것과 같은 토큰. 학기 칸은 입력이 아니라 직접 짜야 해서 여기 둔다.
+  const fieldLabel = { fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-sm)', fontWeight: 'var(--w-semibold)', color: 'var(--text-body)' };
+  const fieldHint = { fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-xs)', color: 'var(--text-faint)' };
+  const yearBox = { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-body)', color: 'var(--text-muted)', background: 'var(--surface-sunken)', border: '1.5px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '11px 14px', lineHeight: 1.5 };
   const card = { background: 'var(--surface-card)', border: '1px solid var(--border)', borderRadius: 14, padding: 26, boxShadow: 'var(--shadow-sm)' };
   const cardTitle = { margin: '0 0 18px', fontSize: 16, fontWeight: 700, color: 'var(--text-strong)' };
 
@@ -56,8 +60,21 @@ export function SettingsView() {
         <div style={card}>
           <p style={cardTitle}>학회 기본 설정</p>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18 }}>
-            <Input label="현재 학기" value={form.semester} onChange={(e) => set('semester', e.target.value)} />
-            <Input label="현재 기수" value={form.currentGen} onChange={(e) => set('currentGen', e.target.value)} />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+              <span style={fieldLabel}>현재 학기</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                {/* 연도는 서버가 오늘에서 계산해 내려준다 — 고를 것이 없어 글자로만 둔다. */}
+                <span style={yearBox}>{data?.semesterYear}</span>
+                <TermSelect value={form.semesterTerm} onChange={(v) => set('semesterTerm', v)} />
+              </div>
+              <span style={fieldHint}>3월에 1학기, 9월에 2학기로 자동으로 바뀝니다. 직접 고른 값은 이번 학기에만 적용됩니다.</span>
+            </div>
+            <Input
+              label="현재 기수"
+              value={form.currentGen}
+              onChange={(e) => set('currentGen', e.target.value)}
+              hint="비워 두면 창립 연도를 기준으로 자동 계산합니다. 값을 정해 두면 해마다 1씩 오릅니다."
+            />
           </div>
         </div>
 
@@ -112,6 +129,20 @@ export function SettingsView() {
         <div><Button variant="primary" onClick={onSave} disabled={save.isPending}>{save.isPending ? '저장 중…' : '설정 저장'}</Button></div>
       </div>
     </div>
+  );
+}
+
+/** 학기 선택. 1·2 말고는 값이 없어 select 로 둔다 (ExecAssignModal 의 Select 와 같은 모양). */
+function TermSelect({ value, onChange }) {
+  return (
+    <select
+      aria-label="학기"
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      style={{ flex: 1, boxSizing: 'border-box', padding: '11px 14px', fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-body)', color: 'var(--text-strong)', background: 'var(--surface-raised)', border: '1.5px solid var(--border-strong)', borderRadius: 'var(--radius-md)', cursor: 'pointer', outline: 'none', lineHeight: 1.5 }}
+    >
+      {['1', '2'].map((t) => <option key={t} value={t}>{t}</option>)}
+    </select>
   );
 }
 

@@ -1847,10 +1847,20 @@ components:
         discord: { type: [string, 'null'], format: uri }
     AdminSettings:
       type: object
-      required: [semester, currentGen, autoPromote, driveConnected, links]
+      required: [semesterYear, semesterTerm, currentGen, autoPromote, driveConnected, links]
       properties:
-        semester: { type: string, example: '2026-2학기' }
-        currentGen: { type: integer, example: 41 }
+        semesterYear:
+          type: integer
+          example: 2026
+          description: 서버가 오늘 날짜에서 계산한 연도. 수정할 수 없다.
+        semesterTerm:
+          type: integer
+          enum: [1, 2]
+          description: 3월에 1, 9월에 2로 자동 전환. 수정하면 그 학기 동안만 적용된다.
+        currentGen:
+          type: integer
+          example: 41
+          description: 설정값이 없으면 창립 연도 기준 계산값. 설정해 두면 해마다 1씩 오른다.
         autoPromote: { type: boolean }
         driveConnected: { type: boolean }
         driveFolder: { type: [string, 'null'] }
@@ -1858,8 +1868,14 @@ components:
     AdminSettingsUpdate:
       type: object
       properties:
-        semester: { type: string }
-        currentGen: { type: integer }
+        semesterTerm:
+          type: [integer, 'null']
+          enum: [1, 2, null]
+          description: 이 학기에만 적용된다. 다음 학기가 오면 자동값으로 돌아간다.
+        currentGen:
+          type: [integer, 'null']
+          minimum: 0
+          description: 0 은 자동 계산으로 되돌린다는 뜻.
         autoPromote: { type: boolean }
         links: { $ref: '#/components/schemas/SiteLinks' }
     DriveExportRequest:
