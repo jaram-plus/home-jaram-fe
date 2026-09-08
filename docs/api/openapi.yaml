@@ -251,6 +251,7 @@ paths:
               schema: { $ref: '#/components/schemas/ErrorResponse' }
               example: { code: INVALID_CODE, message: 출석 코드가 올바르지 않습니다. }
         '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/ReregistrationRequired' }
         '404': { $ref: '#/components/responses/NotFound' }
         '5XX': { $ref: '#/components/responses/ServerError' }
 
@@ -322,6 +323,7 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/Schedule' }
         '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/ReregistrationRequired' }
         '404': { $ref: '#/components/responses/NotFound' }
         '409': { $ref: '#/components/responses/Conflict' }
         '5XX': { $ref: '#/components/responses/ServerError' }
@@ -371,7 +373,13 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/Seminar' }
         '401': { $ref: '#/components/responses/Unauthorized' }
-        '403': { $ref: '#/components/responses/Forbidden' }
+        '403':
+          description: >
+            내 슬롯이 아니거나(code=FORBIDDEN), 활동 자격이 없는 회원의 신청
+            (code=REREGISTRATION_REQUIRED 또는 WITHDRAWN).
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
         '404': { $ref: '#/components/responses/NotFound' }
         '409': { $ref: '#/components/responses/Conflict' }
         '422': { $ref: '#/components/responses/Validation' }
@@ -412,6 +420,7 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/Study' }
         '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/ReregistrationRequired' }
         '422': { $ref: '#/components/responses/Validation' }
         '5XX': { $ref: '#/components/responses/ServerError' }
 
@@ -430,6 +439,7 @@ paths:
       responses:
         '201': { description: 신청 접수됨 (승인 대기) }
         '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/ReregistrationRequired' }
         '404': { $ref: '#/components/responses/NotFound' }
         '409':
           description: 이미 신청함 또는 모집 마감/leader 본인
@@ -1184,6 +1194,16 @@ components:
       content:
         application/json:
           schema: { $ref: '#/components/schemas/ErrorResponse' }
+    ReregistrationRequired:
+      description: >
+        활동 자격이 없는 회원의 신청류 차단. 조회와 프로필 수정은 막지 않는다.
+        code=REREGISTRATION_REQUIRED 는 재등록 필요(status=REREGISTER) — 임원이 승인하면 풀린다.
+        code=WITHDRAWN 은 탈퇴(status=WITHDRAWN) — 로그인은 막히지만 이미 발급된 토큰이
+        ttl 동안 살아 있어 이 경로로도 막는다.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+          example: { code: REREGISTRATION_REQUIRED, message: 재등록이 승인되어야 이용할 수 있습니다. }
     Forbidden:
       description: 권한 부족 (officer 전용)
       content:
@@ -1720,7 +1740,14 @@ components:
         createdAt: { type: string, format: date-time }
         kind:
           type: string
-          description: SIGNUP = 가입 승인 대기, REREGISTER = 재등록 필요
+          description: >
+            SIGNUP = 가입 승인 대기, REREGISTER = 재등록 필요.
+            두 구분은 승인·반려가 서로 다른 경로로 간다.
+            SIGNUP 은 승인 POST /api/admin/members/{id}/approve, 반려 POST /api/admin/members/{id}/reject
+            (둘 다 승인축만 바꾸므로 되돌릴 수 있다).
+            REREGISTER 는 승인 POST /api/admin/members/{id}/reregister 로 활동축을 되돌리고,
+            반려에 해당하는 경로는 따로 없다 — 회원 삭제(PATCH /api/admin/members:batch 의 deletes)로
+            처리하며 되돌릴 수 없다.
           enum: [SIGNUP, REREGISTER]
         requestedAt:
           type: [string, 'null']
@@ -1898,15 +1925,18 @@ components:
       description: >
         학회 외부 채널 주소. 설정하지 않은 채널은 null.
         값이 있으면 새 탭으로 그대로 여는 주소라 http(s) 스킴까지 포함한 전체 주소여야 한다.
+        pattern·maxLength 는 서버(SiteLinks)와 관리자 폼(admin.validation.js)이 쓰는 규칙과
+        같다 — 계약에 적어 두어야 한쪽만 고쳤을 때 계약 테스트가 잡는다.
+        maxLength 는 저장 컬럼(varchar(255))의 한계다.
       required: [github, instagram, blog, discord]
       properties:
-        github: { type: [string, 'null'], format: uri, example: 'https://github.com/jaram-plus' }
-        instagram: { type: [string, 'null'], format: uri }
-        blog: { type: [string, 'null'], format: uri }
-        discord: { type: [string, 'null'], format: uri }
+        github: { type: [string, 'null'], format: uri, pattern: '^https?://\S+$', maxLength: 255, example: 'https://github.com/jaram-plus' }
+        instagram: { type: [string, 'null'], format: uri, pattern: '^https?://\S+$', maxLength: 255 }
+        blog: { type: [string, 'null'], format: uri, pattern: '^https?://\S+$', maxLength: 255 }
+        discord: { type: [string, 'null'], format: uri, pattern: '^https?://\S+$', maxLength: 255 }
     AdminSettings:
       type: object
-      required: [semesterYear, semesterTerm, currentGen, autoPromote, driveConnected, links]
+      required: [semesterYear, semesterTerm, semesterTermAuto, currentGen, autoPromote, driveConnected, links]
       properties:
         semesterYear:
           type: integer
@@ -1915,7 +1945,13 @@ components:
         semesterTerm:
           type: integer
           enum: [1, 2]
-          description: 3월에 1, 9월에 2로 자동 전환. 수정하면 그 학기 동안만 적용된다.
+          description: 지금 적용 중인 학기. 3월에 1, 9월에 2로 자동 전환하며 수정하면 그 학기 동안만 적용된다.
+        semesterTermAuto:
+          type: boolean
+          description: >
+            위 값이 자동값이면 true, 운영이 눌러 둔 값이면 false.
+            눌러 둔 값도 다음 학기가 오면 만료되어 다시 true 가 된다.
+            이 칸이 없으면 화면은 지금 학기가 눌려 있는지 알 수 없다.
         currentGen:
           type: integer
           example: 41
@@ -1929,8 +1965,10 @@ components:
       properties:
         semesterTerm:
           type: [integer, 'null']
-          enum: [1, 2, null]
-          description: 이 학기에만 적용된다. 다음 학기가 오면 자동값으로 돌아간다.
+          enum: [0, 1, 2, null]
+          description: >
+            이 학기에만 적용된다. 다음 학기가 오면 자동값으로 돌아간다.
+            0 은 지금 바로 자동으로 되돌린다는 뜻 (currentGen 과 같은 규약).
         currentGen:
           type: [integer, 'null']
           minimum: 0
