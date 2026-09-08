@@ -9,6 +9,11 @@ export async function getMe() {
   return data; // MeProfile
 }
 
+/** 재등록 신청. 임원이 승인해야 활동이 풀린다. 두 번 눌러도 처음 시각이 남는다. */
+export async function requestReregistration() {
+  await client.post('/api/me/reregister');
+}
+
 /** 본인 탈퇴. 개인정보는 6개월 뒤 서버가 파기한다. */
 export async function withdrawMe() {
   await client.post('/api/me/withdraw');
