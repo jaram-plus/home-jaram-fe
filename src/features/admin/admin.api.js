@@ -707,6 +707,9 @@ export async function fetchDashboardStats() {
 // 백엔드 연동 완료(AdminSettingsController) — USE_MOCK 여부와 무관하게 항상 실 서버.
 // 설정값은 푸터가 공개 경로로 읽어 가므로, 목에 저장하면 저장은 됐는데 화면은
 // 안 바뀌는 상태가 된다.
+//
+// 그래서 VITE_ADMIN_MOCK=true 로 띄워도 '설정' 탭만은 백엔드가 떠 있어야 한다.
+// 다른 탭은 목으로 도는데 이 탭만 로딩에서 멈춘다면 그게 원인이다.
 export async function fetchSettings() {
   const { data } = await client.get('/api/admin/settings');
   return data;

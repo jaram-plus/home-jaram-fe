@@ -63,10 +63,10 @@ export function Header({ current }) {
               color: on ? 'var(--brand)' : 'var(--text-body)',
               textDecoration: 'none',
             };
-            // 해시가 붙은 주소는 Link 대신 <a>로 둔다 — 라우터는 해시까지 스크롤해 주지
-            // 않지만 브라우저는 해 준다. 랜딩에서는 그 자리로 바로 내려가고, 다른
-            // 페이지에서는 랜딩을 열어 그 자리에서 멈춘다.
-            return item.href.startsWith('/') && !item.href.includes('#') ? (
+            // 해시가 붙은 주소도 Link 로 둔다. <a>로 두면 다른 페이지에서 '소개'를 누를
+            // 때 전체 새로고침이 되어 SPA 상태와 캐시가 날아간다. 라우터가 해시까지
+            // 스크롤해 주지는 않으므로 그 몫은 LandingPage 가 맡는다.
+            return item.href.startsWith('/') ? (
               <Link key={item.key} to={item.href} style={style}>
                 {item.label}
               </Link>
