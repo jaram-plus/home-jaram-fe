@@ -375,7 +375,8 @@ paths:
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403':
           description: >
-            내 슬롯이 아니거나(code=FORBIDDEN), 재등록 필요 회원의 신청(code=REREGISTRATION_REQUIRED).
+            내 슬롯이 아니거나(code=FORBIDDEN), 활동 자격이 없는 회원의 신청
+            (code=REREGISTRATION_REQUIRED 또는 WITHDRAWN).
           content:
             application/json:
               schema: { $ref: '#/components/schemas/ErrorResponse' }
@@ -1195,8 +1196,10 @@ components:
           schema: { $ref: '#/components/schemas/ErrorResponse' }
     ReregistrationRequired:
       description: >
-        재등록 필요(status=REREGISTER) 회원의 신청류 차단. 조회와 프로필 수정은 막지 않는다.
-        임원이 재등록을 승인하면 풀린다.
+        활동 자격이 없는 회원의 신청류 차단. 조회와 프로필 수정은 막지 않는다.
+        code=REREGISTRATION_REQUIRED 는 재등록 필요(status=REREGISTER) — 임원이 승인하면 풀린다.
+        code=WITHDRAWN 은 탈퇴(status=WITHDRAWN) — 로그인은 막히지만 이미 발급된 토큰이
+        ttl 동안 살아 있어 이 경로로도 막는다.
       content:
         application/json:
           schema: { $ref: '#/components/schemas/ErrorResponse' }
