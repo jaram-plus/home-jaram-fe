@@ -311,7 +311,9 @@ async function fetchPendingApplications(params = {}) {
     kind: PENDING_KIND_LABEL[m.kind] ?? m.kind,
     name: m.name,
     studentId: m.studentId,
-    appliedAt: (m.requestedAt ?? m.createdAt ?? '').slice(0, 10),
+    // 재등록 줄의 '신청일'은 재등록을 신청한 날이다. 아직 안 눌렀으면 비운다 —
+    // 가입일로 메우면 상태 칸은 '미신청'인데 신청일은 몇 년 전인 줄이 된다.
+    appliedAt: ((m.kind === 'REREGISTER' ? m.requestedAt : m.createdAt) ?? '').slice(0, 10),
     status: m.kind === 'REREGISTER'
       ? (m.requestedAt ? '재등록 신청' : '미신청')
       : APPLICATION_STATUS_LABEL.PENDING,
@@ -420,7 +422,9 @@ async function saveApplicationsQueue(updates, deletes) {
   const updated = [];
   const errors = [];
   // 행이 가입인지 재등록인지는 스테이지된 fields 에 없다(승인/반려는 status 만 채운다).
-  // 둘이 서로 다른 경로로 가야 하므로 저장 직전에 목록을 한 번 더 읽어 구분을 확인한다.
+  // 둘이 서로 다른 경로로 가야 하므로 저장 직전에 목록을 한 번 더 읽어 구분을 맞춘다.
+  // 경쟁을 없애 주지는 않는다 — 이 읽기와 아래 호출 사이에도 틈이 남는다. 최종 판정은
+  // 서버가 한다(대상이 아니면 409).
   const kinds = await pendingKinds();
   for (const u of updates) {
     const status = u.fields?.status;
