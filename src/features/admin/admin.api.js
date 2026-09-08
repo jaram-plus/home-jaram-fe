@@ -16,7 +16,7 @@ import { titleKey, titleLabel } from '@/shared/member/enums';
 import {
   SEED, RESOURCES,
   GRADE_LABEL, STATUS_LABEL, DEPARTMENT_LABEL,
-  APPLICATION_STATUS_LABEL,
+  APPLICATION_STATUS_LABEL, PENDING_KIND_LABEL,
   SEMINAR_STATUS_LABELS, TARGET_GRADE_LABELS, STUDY_STATUS_LABEL,
 } from './admin.data';
 
@@ -299,17 +299,30 @@ export async function fetchMemberDetail(id) {
  * 전용 엔드포인트를 쓴다: GET /api/admin/members/pending → PendingMember[]
  * (페이지네이션 없음). 화면 스키마(admin.data SCHEMAS.applications)에 맞춰 정제하고,
  * 검색·정렬·페이지는 이 계층에서 처리한다.
+ *
+ * 가입 대기(SIGNUP)와 재등록 필요(REREGISTER)가 한 목록에 kind 로 구분되어 온다.
+ * 재등록은 본인이 신청했는지가 requestedAt 으로 드러나, 임원이 누가 눌렀는지 보고
+ * 재등록과 삭제를 판단한다.
  */
 async function fetchPendingApplications(params = {}) {
   const { data } = await client.get('/api/admin/members/pending');
   const rows = (data || []).map((m) => ({
     id: m.id,
+    kind: PENDING_KIND_LABEL[m.kind] ?? m.kind,
     name: m.name,
     studentId: m.studentId,
-    appliedAt: (m.createdAt || '').slice(0, 10),
-    status: APPLICATION_STATUS_LABEL.PENDING,
+    appliedAt: (m.requestedAt ?? m.createdAt ?? '').slice(0, 10),
+    status: m.kind === 'REREGISTER'
+      ? (m.requestedAt ? '재등록 신청' : '미신청')
+      : APPLICATION_STATUS_LABEL.PENDING,
   }));
   return queryLocally(rows, params);
+}
+
+/** 저장 시점의 id → kind 지도. 승인/반려가 구분마다 다른 경로로 가야 한다. */
+async function pendingKinds() {
+  const { data } = await client.get('/api/admin/members/pending');
+  return new Map((data || []).map((m) => [m.id, m.kind]));
 }
 
 /**
@@ -406,12 +419,22 @@ export async function saveBatch(resource, { updates = [], creates = [], deletes 
 async function saveApplicationsQueue(updates, deletes) {
   const updated = [];
   const errors = [];
+  // 행이 가입인지 재등록인지는 스테이지된 fields 에 없다(승인/반려는 status 만 채운다).
+  // 둘이 서로 다른 경로로 가야 하므로 저장 직전에 목록을 한 번 더 읽어 구분을 확인한다.
+  const kinds = await pendingKinds();
   for (const u of updates) {
     const status = u.fields?.status;
+    const reregister = kinds.get(u.id) === 'REREGISTER';
     try {
-      if (status === APPLICATION_STATUS_LABEL.APPROVED) await approveApplication(u.id);
-      else if (status === APPLICATION_STATUS_LABEL.REJECTED) await rejectApplication(u.id, u.fields?.reason || '관리자 반려');
-      else continue;
+      if (status === APPLICATION_STATUS_LABEL.APPROVED) {
+        // 재등록은 가입 승인과 다른 경로다 — 승인축이 아니라 활동축을 되돌린다.
+        if (reregister) await approveReregistration(u.id);
+        else await approveApplication(u.id);
+      } else if (status === APPLICATION_STATUS_LABEL.REJECTED) {
+        // 재등록의 '반려'는 가입 거절이 아니라 삭제다 — 되돌아갈 자리가 없다.
+        if (reregister) await deleteMember(u.id);
+        else await rejectApplication(u.id, u.fields?.reason || '관리자 반려');
+      } else continue;
       updated.push({ id: u.id });
     } catch (error) {
       errors.push({ id: u.id, fieldErrors: { status: error.message } });
@@ -502,6 +525,25 @@ export async function approveApplication(id) {
     throwWireError(error, 'NOT_FOUND');
   }
 }
+/** 재등록 승인. status=REREGISTER 회원을 활동으로 되돌린다. */
+export async function approveReregistration(id) {
+  try {
+    await client.post(`/api/admin/members/${id}/reregister`);
+  } catch (error) {
+    throwWireError(error, 'NOT_FOUND');
+  }
+}
+
+/**
+ * 재등록 반려 = 회원 삭제. :batch 는 실패를 던지지 않고 errors 로 돌려주므로
+ * (스터디 리더는 삭제가 막힌다) 여기서 예외로 바꿔 호출부가 알아채게 한다.
+ */
+async function deleteMember(id) {
+  const res = await saveBatch('member', { deletes: [id] });
+  const failed = (res?.errors || [])[0];
+  if (failed) throw new Error(Object.values(failed.fieldErrors || {})[0] || '삭제하지 못했습니다.');
+}
+
 export async function rejectApplication(id, reason) {
   try {
     // RejectRequest.reason 필수 (openapi).

@@ -19,6 +19,8 @@ export const STATUS_LABEL = { ACTIVE: '활동', ON_LEAVE: '휴학', REREGISTER: 
 // 부서는 @/shared/member/enums 가 단일 소스 (BE MemberDepartment 미러). 여기서 다시 정의하지 않는다.
 export const DEPARTMENT_LABEL = DEPARTMENT_LABELS;
 export const APPLICATION_STATUS_LABEL = { PENDING: '대기', APPROVED: '승인', REJECTED: '반려' };
+/** 승인 탭 한 줄의 구분. 재등록은 신청 여부까지 상태 칸에 드러난다. */
+export const PENDING_KIND_LABEL = { SIGNUP: '가입', REREGISTER: '재등록' };
 export const STUDY_STATUS_LABEL = { RECRUITING: '모집', ONGOING: '진행', CLOSED: '종료' };
 // admin.api.js / admin.validation.js 는 여기서 재수출된 걸 import한다(수입 경로 최소 변경).
 export { SEMINAR_STATUS_LABELS, TARGET_GRADE_LABELS };
@@ -167,14 +169,15 @@ export const SCHEMAS = {
   applications: {
     // 수기 등록(creates)은 대응 엔드포인트가 없어 추가 버튼을 두지 않는다 — 가입은 신청 절차로만.
     eyebrow: 'JOIN', title: '가입 신청 · 승인', addLabel: '',
-    desc: '대기 중인 가입 신청을 검토하고 승인/반려하세요. 승인 시 기수 기준으로 등급이 자동 부여됩니다.',
-    filters: [],
+    desc: '대기 중인 가입 신청과 재등록 대상을 검토하세요. 가입 승인 시 기수 기준으로 등급이 자동 부여됩니다.',
+    filters: [{ key: 'kind', label: '구분', options: ['전체', '가입', '재등록'] }],
     cols: [
+      { key: 'kind', label: '구분', type: 'tag', width: '0.7fr', align: 'center' },
       { key: 'name', label: '신청자', type: 'static', width: '1fr' },
       { key: 'studentId', label: '학번', type: 'static', width: '1fr' },
       { key: 'appliedAt', label: '신청일', type: 'static', width: '1fr', align: 'center' },
       { key: 'status', label: '상태', type: 'tag', width: '0.8fr', align: 'center' },
-      { key: '__act', label: '', type: 'actions', width: '1fr', align: 'center', actions: ['approve', 'reject'] },
+      { key: '__act', label: '', type: 'actions', width: '1.2fr', align: 'center', actions: ['approve', 'reject'] },
     ],
   },
 };

@@ -6,6 +6,7 @@ import { useAuthStore } from '@/shared/auth/auth.store';
 import { isAdmin } from '@/shared/auth/roles';
 import { useForm } from './useForm';
 import { useMe, useUpdateMe } from './profile.queries';
+import { withdrawMe } from './profile.api';
 import { validateProfile } from './profile.validation';
 import { MESSAGES, TOAST } from './profile.data';
 import { ProfileView, EditView, Toast } from './views';
@@ -60,6 +61,18 @@ function ProfileInner() {
     },
   });
 
+  // 되돌릴 수 없는 동작이라 확인을 한 번 받는다. 프로필에는 다이얼로그 컴포넌트가
+  // 없고, 이 한 곳을 위해 들여올 이유가 없다.
+  const handleWithdraw = async () => {
+    if (!window.confirm(MESSAGES.withdrawConfirm)) return;
+    try {
+      await withdrawMe();
+      logout();
+    } catch (err) {
+      showToast(err?.response?.status === 409 ? MESSAGES.withdrawBlocked : MESSAGES.withdrawError);
+    }
+  };
+
   const startEdit = () => {
     form.setValues({
       phone: me.phone ?? '',
@@ -105,6 +118,7 @@ function ProfileInner() {
             onAdmin={() => navigate('/admin')}
             onEdit={startEdit}
             onLogout={logout}
+            onWithdraw={handleWithdraw}
           />
         )}
         {me && editing && (
