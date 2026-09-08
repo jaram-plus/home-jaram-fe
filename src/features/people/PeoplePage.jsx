@@ -20,7 +20,9 @@ export default function PeoplePage() {
   const [params, setParams] = useSearchParams();
   const requested = params.get('tab');
   const tab = TABS.some((t) => t.key === requested) ? requested : 'exec'; // exec | contrib | grad
-  const setTab = (key) => setParams({ tab: key }, { replace: true });
+  // 객체를 넘기면 쿼리스트링을 통째로 갈아치운다 — 나중에 검색어 같은 파라미터가
+  // 붙었을 때 탭을 누르면 조용히 사라지므로, 있는 것 위에 tab 만 얹는다.
+  const setTab = (key) => setParams((p) => { p.set('tab', key); return p; }, { replace: true });
 
   const { data: people, isLoading, isError } = usePeople();
   const data = people?.[tab] ?? { desc: '', empty: '', groups: [] };
