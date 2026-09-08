@@ -104,7 +104,10 @@ const siteLinkSchema = (label) =>
 /** 설정 폼 스키마. */
 export const settingsSchema = z.object({
   semester: z.string().min(1, '학기를 입력하세요.'),
-  currentGen: z.coerce.number().int().positive('기수는 양의 정수여야 합니다.'),
+  // 서버는 기수 미설정을 0 으로 내려준다(AdminSettingsService.toResponse). positive()
+  // 로 두면 한 번도 설정하지 않은 학회에서 폼이 0 으로 시드되어 저장이 통째로 막힌다
+  // — 같은 폼에 있는 외부 링크까지 저장할 수 없게 된다.
+  currentGen: z.coerce.number().int().min(0, '기수는 0 이상이어야 합니다. 비워 두면 자동으로 계산합니다.'),
   autoPromote: z.boolean(),
   links: z.object(Object.fromEntries(SITE_LINKS.map((l) => [l.key, siteLinkSchema(l.label)]))),
 });
