@@ -72,7 +72,14 @@ export function ProfileView({ me, canAdmin, onAdmin, onEdit, onLogout, onWithdra
           )}
           <Button size="sm" variant="outline" onClick={onEdit}>{ACTIONS.edit}</Button>
           <Button size="sm" variant="ghost" onClick={onLogout}>{ACTIONS.logout}</Button>
-          <Button size="sm" variant="ghost" onClick={onWithdraw}>{ACTIONS.withdraw}</Button>
+          {/*
+            되돌릴 수 없는 동작이라 로그아웃과 같은 모양으로 나란히 두지 않는다.
+            danger variant 를 새로 만들지 않고, 디자인 시스템이 오류에 쓰는 것과 같은
+            토큰(--brand)으로 글자만 구분한다.
+          */}
+          <Button size="sm" variant="ghost" onClick={onWithdraw} style={{ color: 'var(--brand)' }}>
+            {ACTIONS.withdraw}
+          </Button>
         </div>
       </div>
 

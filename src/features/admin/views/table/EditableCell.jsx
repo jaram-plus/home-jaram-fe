@@ -2,6 +2,7 @@ import React from 'react';
 import { Tag } from '@/design-system';
 import { departmentKey, departmentLabel, titleLabel } from '@/shared/member/enums';
 import { canEditRow, departmentOptions, titleOptions } from '../../exec.roles';
+import { PENDING_KIND_LABEL } from '../../admin.data';
 
 /**
  * 인라인 편집 셀 — 컬럼 타입별(text/select/tag/static/assign/actions) 렌더.
@@ -27,6 +28,12 @@ export function EditableCell({ col, row, dirty, onChange, onAction, grants }) {
   }
 
   if (col.type === 'select') {
+    // 지금 값이 옵션에 없으면 사람이 고를 수 있는 값이 아니다 — 예컨대 '재등록'은 학기
+    // 전환 스윕만 설정하므로 옵션에 두지 않는다. 그대로 select 에 넣으면 선택된 항목이
+    // 없어 빈 칸으로 보이므로, 값을 그대로 읽기 전용으로 그린다.
+    if (value != null && value !== '' && !col.options.includes(value)) {
+      return <span style={{ fontSize: 'var(--fs-sm)', color: 'var(--text-muted)', display: 'block', textAlign: align }}>{value}</span>;
+    }
     return (
       <select value={value ?? ''} onChange={(e) => onChange(e.target.value)} style={{ ...baseInput, cursor: 'pointer', ...dirtyStyle }}>
         {col.options.map((o) => <option key={o} value={o}>{o}</option>)}
@@ -117,7 +124,9 @@ function actionLabel(kind, row) {
   if (kind === 'uncontrib') return row.contributor === false ? '해제 취소' : '기여자 해제';
   if (kind === 'detail') return '상세';
   if (kind === 'approve') return '승인';
-  if (kind === 'reject') return '반려';
+  // 재등록의 '반려'는 가입 거절과 달리 회원 삭제다. 되돌아갈 자리가 없으므로
+  // 버튼이 실제로 무엇을 하는지 라벨에 드러나야 한다.
+  if (kind === 'reject') return row.kind === PENDING_KIND_LABEL.REREGISTER ? '삭제' : '반려';
   return kind;
 }
 function actionStyle(kind, pendingDelete) {

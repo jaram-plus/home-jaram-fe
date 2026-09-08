@@ -79,4 +79,3 @@ export const FOOT_MENU = [
     { label: '세미나', href: '/seminar' },
   ] },
 ];
-
