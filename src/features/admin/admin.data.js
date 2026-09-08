@@ -15,7 +15,7 @@ import { DEPARTMENT_LABELS } from '@/shared/member/enums';
 
 /* ── enum 키 ↔ 한글 라벨 ─────────────────────────────────────────────── */
 export const GRADE_LABEL = { NEWCOMER: '수습회원', ASSOCIATE: '준회원', REGULAR: '정회원', OB: '졸업생' };
-export const STATUS_LABEL = { ACTIVE: '활동', ON_LEAVE: '휴학', WITHDRAWN: '탈퇴' };
+export const STATUS_LABEL = { ACTIVE: '활동', ON_LEAVE: '휴학', REREGISTER: '재등록', WITHDRAWN: '탈퇴' };
 // 부서는 @/shared/member/enums 가 단일 소스 (BE MemberDepartment 미러). 여기서 다시 정의하지 않는다.
 export const DEPARTMENT_LABEL = DEPARTMENT_LABELS;
 export const APPLICATION_STATUS_LABEL = { PENDING: '대기', APPROVED: '승인', REJECTED: '반려' };
@@ -60,13 +60,14 @@ export const SCHEMAS = {
     filters: [
       { key: 'grade', label: '등급', options: ['전체', '수습회원', '준회원', '정회원', '졸업생'] },
       { key: 'gen', label: '기수', options: ['전체', '41기', '40기', '39기', '38기'] },
-      { key: 'status', label: '상태', options: ['전체', '활동', '휴학', '탈퇴'] },
+      { key: 'status', label: '상태', options: ['전체', '활동', '휴학', '재등록', '탈퇴'] },
     ],
     cols: [
       { key: 'name', label: '이름', type: 'text', width: '1.1fr' },
       { key: 'studentId', label: '학번', type: 'text', width: '1fr' },
       { key: 'gen', label: '기수', type: 'text', width: '0.6fr', align: 'center' },
       { key: 'grade', label: '등급', type: 'select', width: '1fr', options: ['수습회원', '준회원', '정회원', '졸업생'] },
+      // '재등록'은 학기 전환 스윕만 설정한다. 서버가 직접 지정을 거부하므로 옵션에 두지 않는다.
       { key: 'status', label: '상태', type: 'select', width: '0.8fr', options: ['활동', '휴학', '탈퇴'] },
       // 이메일은 서버가 내려주지만 일괄 수정 화이트리스트에 없어 읽기 전용이다.
       { key: 'email', label: '이메일', type: 'static', width: '1.4fr' },

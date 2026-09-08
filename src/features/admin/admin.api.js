@@ -162,14 +162,21 @@ const ALL_ROWS_SIZE = 1000;
  * 필터는 무시하므로(BE AdminResourceService.list), 필터가 조용히 먹통이 되지 않도록
  * 전체를 받아 검색·필터·정렬·페이지를 이 계층에서 처리한다. 회원 규모(수백)에서 안전하다.
  * 승인 대기·반려 회원은 '가입 신청·승인' 화면이 다루므로 명단에서 뺀다.
+ *
+ * 재등록·탈퇴는 상태 필터로 명시해야 보인다 — '전체'에서도 나오지 않는다.
+ * 평소 명단을 훑을 때 떠난 사람이 섞이지 않게 하는 것이 이 화면의 목적이다.
  */
 async function fetchMembers(params = {}) {
   const { data } = await client.get('/api/admin/members', {
     params: { tab: 'member', page: 1, size: ALL_ROWS_SIZE },
   });
+  const picked = params.filters?.status;
   const rows = (data.items || [])
     .filter((m) => m.approval === 'APPROVED')
-    .map((m) => fromWire('member', m));
+    .map((m) => fromWire('member', m))
+    .filter((r) => (picked && picked !== '전체'
+      ? r.status === picked
+      : r.status === STATUS_LABEL.ACTIVE || r.status === STATUS_LABEL.ON_LEAVE));
   return queryLocally(rows, params);
 }
 
