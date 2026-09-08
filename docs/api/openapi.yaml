@@ -1839,12 +1839,15 @@ components:
       description: >
         학회 외부 채널 주소. 설정하지 않은 채널은 null.
         값이 있으면 새 탭으로 그대로 여는 주소라 http(s) 스킴까지 포함한 전체 주소여야 한다.
+        pattern·maxLength 는 서버(SiteLinks)와 관리자 폼(admin.validation.js)이 쓰는 규칙과
+        같다 — 계약에 적어 두어야 한쪽만 고쳤을 때 계약 테스트가 잡는다.
+        maxLength 는 저장 컬럼(varchar(255))의 한계다.
       required: [github, instagram, blog, discord]
       properties:
-        github: { type: [string, 'null'], format: uri, example: 'https://github.com/jaram-plus' }
-        instagram: { type: [string, 'null'], format: uri }
-        blog: { type: [string, 'null'], format: uri }
-        discord: { type: [string, 'null'], format: uri }
+        github: { type: [string, 'null'], format: uri, pattern: '^https?://\S+$', maxLength: 255, example: 'https://github.com/jaram-plus' }
+        instagram: { type: [string, 'null'], format: uri, pattern: '^https?://\S+$', maxLength: 255 }
+        blog: { type: [string, 'null'], format: uri, pattern: '^https?://\S+$', maxLength: 255 }
+        discord: { type: [string, 'null'], format: uri, pattern: '^https?://\S+$', maxLength: 255 }
     AdminSettings:
       type: object
       required: [semester, currentGen, autoPromote, driveConnected, links]
