@@ -15,7 +15,8 @@ export function SettingsView() {
   const showToast = useAdminStore((s) => s.showToast);
   const save = useSaveSettings({ onSuccess: () => showToast(TOAST.settingsSaved) });
 
-  const [form, setForm] = useState({ semesterTerm: '1', currentGen: '', autoPromote: true, links: EMPTY_SITE_LINKS });
+  // semesterTerm 의 '' 는 자동(서버로는 0)이다 — 기수의 빈 칸과 같은 뜻이다.
+  const [form, setForm] = useState({ semesterTerm: '', currentGen: '', autoPromote: true, links: EMPTY_SITE_LINKS });
   const [drive, setDrive] = useState(true);
   const [err, setErr] = useState('');
   const [seeded, setSeeded] = useState(false);
@@ -24,7 +25,8 @@ export function SettingsView() {
   if (data && !seeded) {
     setSeeded(true);
     setForm({
-      semesterTerm: String(data.semesterTerm),
+      // 자동이면 빈 값으로 둬야 셀렉트가 '자동'을 가리킨다. 눌러 둔 값일 때만 숫자를 심는다.
+      semesterTerm: data.semesterTermAuto ? '' : String(data.semesterTerm),
       currentGen: String(data.currentGen),
       autoPromote: data.autoPromote,
       // 서버는 설정 안 한 채널을 null 로 준다 — 입력칸은 빈 문자열이어야 제어 컴포넌트로 남는다.
@@ -67,7 +69,9 @@ export function SettingsView() {
                 <span style={yearBox}>{data?.semesterYear}</span>
                 <TermSelect value={form.semesterTerm} onChange={(v) => set('semesterTerm', v)} />
               </div>
-              <span style={fieldHint}>3월에 1학기, 9월에 2학기로 자동으로 바뀝니다. 직접 고른 값은 이번 학기에만 적용됩니다.</span>
+              <span style={fieldHint}>
+                '자동'이면 3월에 1학기, 9월에 2학기로 바뀝니다. 직접 고른 값은 이번 학기에만 적용되고 다음 학기에는 자동으로 돌아갑니다.
+              </span>
             </div>
             <Input
               label="현재 기수"
@@ -132,7 +136,12 @@ export function SettingsView() {
   );
 }
 
-/** 학기 선택. 1·2 말고는 값이 없어 select 로 둔다 (ExecAssignModal 의 Select 와 같은 모양). */
+/**
+ * 학기 선택. 1·2 말고는 값이 없어 select 로 둔다 (ExecAssignModal 의 Select 와 같은 모양).
+ *
+ * '자동'('')이 없으면 한 번 저장한 뒤로는 학기가 눌린 채로만 남는다 — 다른 설정 하나를
+ * 고쳐 저장해도 그때의 학기가 override 로 박힌다.
+ */
 function TermSelect({ value, onChange }) {
   return (
     <select
@@ -141,7 +150,8 @@ function TermSelect({ value, onChange }) {
       onChange={(e) => onChange(e.target.value)}
       style={{ flex: 1, boxSizing: 'border-box', padding: '11px 14px', fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-body)', color: 'var(--text-strong)', background: 'var(--surface-raised)', border: '1.5px solid var(--border-strong)', borderRadius: 'var(--radius-md)', cursor: 'pointer', outline: 'none', lineHeight: 1.5 }}
     >
-      {['1', '2'].map((t) => <option key={t} value={t}>{t}</option>)}
+      <option value="">자동</option>
+      {['1', '2'].map((t) => <option key={t} value={t}>{`${t}학기`}</option>)}
     </select>
   );
 }

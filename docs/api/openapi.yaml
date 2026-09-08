@@ -1850,7 +1850,7 @@ components:
         discord: { type: [string, 'null'], format: uri, pattern: '^https?://\S+$', maxLength: 255 }
     AdminSettings:
       type: object
-      required: [semesterYear, semesterTerm, currentGen, autoPromote, driveConnected, links]
+      required: [semesterYear, semesterTerm, semesterTermAuto, currentGen, autoPromote, driveConnected, links]
       properties:
         semesterYear:
           type: integer
@@ -1859,7 +1859,13 @@ components:
         semesterTerm:
           type: integer
           enum: [1, 2]
-          description: 3월에 1, 9월에 2로 자동 전환. 수정하면 그 학기 동안만 적용된다.
+          description: 지금 적용 중인 학기. 3월에 1, 9월에 2로 자동 전환하며 수정하면 그 학기 동안만 적용된다.
+        semesterTermAuto:
+          type: boolean
+          description: >
+            위 값이 자동값이면 true, 운영이 눌러 둔 값이면 false.
+            눌러 둔 값도 다음 학기가 오면 만료되어 다시 true 가 된다.
+            이 칸이 없으면 화면은 지금 학기가 눌려 있는지 알 수 없다.
         currentGen:
           type: integer
           example: 41
@@ -1873,8 +1879,10 @@ components:
       properties:
         semesterTerm:
           type: [integer, 'null']
-          enum: [1, 2, null]
-          description: 이 학기에만 적용된다. 다음 학기가 오면 자동값으로 돌아간다.
+          enum: [0, 1, 2, null]
+          description: >
+            이 학기에만 적용된다. 다음 학기가 오면 자동값으로 돌아간다.
+            0 은 지금 바로 자동으로 되돌린다는 뜻 (currentGen 과 같은 규약).
         currentGen:
           type: [integer, 'null']
           minimum: 0
