@@ -251,6 +251,7 @@ paths:
               schema: { $ref: '#/components/schemas/ErrorResponse' }
               example: { code: INVALID_CODE, message: 출석 코드가 올바르지 않습니다. }
         '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/ReregistrationRequired' }
         '404': { $ref: '#/components/responses/NotFound' }
         '5XX': { $ref: '#/components/responses/ServerError' }
 
@@ -322,6 +323,7 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/Schedule' }
         '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/ReregistrationRequired' }
         '404': { $ref: '#/components/responses/NotFound' }
         '409': { $ref: '#/components/responses/Conflict' }
         '5XX': { $ref: '#/components/responses/ServerError' }
@@ -371,7 +373,12 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/Seminar' }
         '401': { $ref: '#/components/responses/Unauthorized' }
-        '403': { $ref: '#/components/responses/Forbidden' }
+        '403':
+          description: >
+            내 슬롯이 아니거나(code=FORBIDDEN), 재등록 필요 회원의 신청(code=REREGISTRATION_REQUIRED).
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
         '404': { $ref: '#/components/responses/NotFound' }
         '409': { $ref: '#/components/responses/Conflict' }
         '422': { $ref: '#/components/responses/Validation' }
@@ -412,6 +419,7 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/Study' }
         '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/ReregistrationRequired' }
         '422': { $ref: '#/components/responses/Validation' }
         '5XX': { $ref: '#/components/responses/ServerError' }
 
@@ -430,6 +438,7 @@ paths:
       responses:
         '201': { description: 신청 접수됨 (승인 대기) }
         '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/ReregistrationRequired' }
         '404': { $ref: '#/components/responses/NotFound' }
         '409':
           description: 이미 신청함 또는 모집 마감/leader 본인
@@ -1184,6 +1193,14 @@ components:
       content:
         application/json:
           schema: { $ref: '#/components/schemas/ErrorResponse' }
+    ReregistrationRequired:
+      description: >
+        재등록 필요(status=REREGISTER) 회원의 신청류 차단. 조회와 프로필 수정은 막지 않는다.
+        임원이 재등록을 승인하면 풀린다.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+          example: { code: REREGISTRATION_REQUIRED, message: 재등록이 승인되어야 이용할 수 있습니다. }
     Forbidden:
       description: 권한 부족 (officer 전용)
       content:
@@ -1720,7 +1737,14 @@ components:
         createdAt: { type: string, format: date-time }
         kind:
           type: string
-          description: SIGNUP = 가입 승인 대기, REREGISTER = 재등록 필요
+          description: >
+            SIGNUP = 가입 승인 대기, REREGISTER = 재등록 필요.
+            두 구분은 승인·반려가 서로 다른 경로로 간다.
+            SIGNUP 은 승인 POST /api/admin/members/{id}/approve, 반려 POST /api/admin/members/{id}/reject
+            (둘 다 승인축만 바꾸므로 되돌릴 수 있다).
+            REREGISTER 는 승인 POST /api/admin/members/{id}/reregister 로 활동축을 되돌리고,
+            반려에 해당하는 경로는 따로 없다 — 회원 삭제(PATCH /api/admin/members:batch 의 deletes)로
+            처리하며 되돌릴 수 없다.
           enum: [SIGNUP, REREGISTER]
         requestedAt:
           type: [string, 'null']
