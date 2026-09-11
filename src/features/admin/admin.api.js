@@ -16,7 +16,7 @@ import { titleKey, titleLabel } from '@/shared/member/enums';
 import {
   SEED, RESOURCES,
   GRADE_LABEL, STATUS_LABEL, DEPARTMENT_LABEL,
-  APPLICATION_STATUS_LABEL,
+  APPLICATION_STATUS_LABEL, PENDING_KIND_LABEL,
   SEMINAR_STATUS_LABELS, TARGET_GRADE_LABELS, STUDY_STATUS_LABEL,
 } from './admin.data';
 
@@ -162,14 +162,21 @@ const ALL_ROWS_SIZE = 1000;
  * 필터는 무시하므로(BE AdminResourceService.list), 필터가 조용히 먹통이 되지 않도록
  * 전체를 받아 검색·필터·정렬·페이지를 이 계층에서 처리한다. 회원 규모(수백)에서 안전하다.
  * 승인 대기·반려 회원은 '가입 신청·승인' 화면이 다루므로 명단에서 뺀다.
+ *
+ * 재등록·탈퇴는 상태 필터로 명시해야 보인다 — '전체'에서도 나오지 않는다.
+ * 평소 명단을 훑을 때 떠난 사람이 섞이지 않게 하는 것이 이 화면의 목적이다.
  */
 async function fetchMembers(params = {}) {
   const { data } = await client.get('/api/admin/members', {
     params: { tab: 'member', page: 1, size: ALL_ROWS_SIZE },
   });
+  const picked = params.filters?.status;
   const rows = (data.items || [])
     .filter((m) => m.approval === 'APPROVED')
-    .map((m) => fromWire('member', m));
+    .map((m) => fromWire('member', m))
+    .filter((r) => (picked && picked !== '전체'
+      ? r.status === picked
+      : r.status === STATUS_LABEL.ACTIVE || r.status === STATUS_LABEL.ON_LEAVE));
   return queryLocally(rows, params);
 }
 
@@ -292,17 +299,32 @@ export async function fetchMemberDetail(id) {
  * 전용 엔드포인트를 쓴다: GET /api/admin/members/pending → PendingMember[]
  * (페이지네이션 없음). 화면 스키마(admin.data SCHEMAS.applications)에 맞춰 정제하고,
  * 검색·정렬·페이지는 이 계층에서 처리한다.
+ *
+ * 가입 대기(SIGNUP)와 재등록 필요(REREGISTER)가 한 목록에 kind 로 구분되어 온다.
+ * 재등록은 본인이 신청했는지가 requestedAt 으로 드러나, 임원이 누가 눌렀는지 보고
+ * 재등록과 삭제를 판단한다.
  */
 async function fetchPendingApplications(params = {}) {
   const { data } = await client.get('/api/admin/members/pending');
   const rows = (data || []).map((m) => ({
     id: m.id,
+    kind: PENDING_KIND_LABEL[m.kind] ?? m.kind,
     name: m.name,
     studentId: m.studentId,
-    appliedAt: (m.createdAt || '').slice(0, 10),
-    status: APPLICATION_STATUS_LABEL.PENDING,
+    // 재등록 줄의 '신청일'은 재등록을 신청한 날이다. 아직 안 눌렀으면 비운다 —
+    // 가입일로 메우면 상태 칸은 '미신청'인데 신청일은 몇 년 전인 줄이 된다.
+    appliedAt: ((m.kind === 'REREGISTER' ? m.requestedAt : m.createdAt) ?? '').slice(0, 10),
+    status: m.kind === 'REREGISTER'
+      ? (m.requestedAt ? '재등록 신청' : '미신청')
+      : APPLICATION_STATUS_LABEL.PENDING,
   }));
   return queryLocally(rows, params);
+}
+
+/** 저장 시점의 id → kind 지도. 승인/반려가 구분마다 다른 경로로 가야 한다. */
+async function pendingKinds() {
+  const { data } = await client.get('/api/admin/members/pending');
+  return new Map((data || []).map((m) => [m.id, m.kind]));
 }
 
 /**
@@ -399,12 +421,24 @@ export async function saveBatch(resource, { updates = [], creates = [], deletes 
 async function saveApplicationsQueue(updates, deletes) {
   const updated = [];
   const errors = [];
+  // 행이 가입인지 재등록인지는 스테이지된 fields 에 없다(승인/반려는 status 만 채운다).
+  // 둘이 서로 다른 경로로 가야 하므로 저장 직전에 목록을 한 번 더 읽어 구분을 맞춘다.
+  // 경쟁을 없애 주지는 않는다 — 이 읽기와 아래 호출 사이에도 틈이 남는다. 최종 판정은
+  // 서버가 한다(대상이 아니면 409).
+  const kinds = await pendingKinds();
   for (const u of updates) {
     const status = u.fields?.status;
+    const reregister = kinds.get(u.id) === 'REREGISTER';
     try {
-      if (status === APPLICATION_STATUS_LABEL.APPROVED) await approveApplication(u.id);
-      else if (status === APPLICATION_STATUS_LABEL.REJECTED) await rejectApplication(u.id, u.fields?.reason || '관리자 반려');
-      else continue;
+      if (status === APPLICATION_STATUS_LABEL.APPROVED) {
+        // 재등록은 가입 승인과 다른 경로다 — 승인축이 아니라 활동축을 되돌린다.
+        if (reregister) await approveReregistration(u.id);
+        else await approveApplication(u.id);
+      } else if (status === APPLICATION_STATUS_LABEL.REJECTED) {
+        // 재등록의 '반려'는 가입 거절이 아니라 삭제다 — 되돌아갈 자리가 없다.
+        if (reregister) await deleteMember(u.id);
+        else await rejectApplication(u.id, u.fields?.reason || '관리자 반려');
+      } else continue;
       updated.push({ id: u.id });
     } catch (error) {
       errors.push({ id: u.id, fieldErrors: { status: error.message } });
@@ -495,6 +529,25 @@ export async function approveApplication(id) {
     throwWireError(error, 'NOT_FOUND');
   }
 }
+/** 재등록 승인. status=REREGISTER 회원을 활동으로 되돌린다. */
+export async function approveReregistration(id) {
+  try {
+    await client.post(`/api/admin/members/${id}/reregister`);
+  } catch (error) {
+    throwWireError(error, 'NOT_FOUND');
+  }
+}
+
+/**
+ * 재등록 반려 = 회원 삭제. :batch 는 실패를 던지지 않고 errors 로 돌려주므로
+ * (스터디 리더는 삭제가 막힌다) 여기서 예외로 바꿔 호출부가 알아채게 한다.
+ */
+async function deleteMember(id) {
+  const res = await saveBatch('member', { deletes: [id] });
+  const failed = (res?.errors || [])[0];
+  if (failed) throw new Error(Object.values(failed.fieldErrors || {})[0] || '삭제하지 못했습니다.');
+}
+
 export async function rejectApplication(id, reason) {
   try {
     // RejectRequest.reason 필수 (openapi).
@@ -715,14 +768,15 @@ export async function fetchSettings() {
   return data;
 }
 export async function saveSettings(payload) {
-  // AdminSettingsUpdate 계약은 semester·currentGen·autoPromote·links 만 받는다
-  // (driveConnected 는 서버가 Drive 연동 여부로 관리 — 이 엔드포인트로 보내지 않는다).
-  const { semester, currentGen, autoPromote, links } = payload;
+  // AdminSettingsUpdate 계약은 semesterTerm·currentGen·autoPromote·links 만 받는다
+  // (driveConnected 는 서버가 Drive 연동 여부로 관리, semesterYear 는 서버가 계산 —
+  // 둘 다 이 엔드포인트로 보내지 않는다).
+  const { semesterTerm, currentGen, autoPromote, links } = payload;
   // 계약(SiteLinks)에서 '등록 안 함'은 null 이다. 폼은 빈 칸을 ''로 들고 있으므로 여기서 바꾼다
   // — 빈 문자열을 보내면 서버가 주소 형식 위반(422)으로 돌려보낸다.
   const wireLinks = Object.fromEntries(Object.entries(links).map(([k, v]) => [k, v || null]));
   try {
-    const { data } = await client.patch('/api/admin/settings', { semester, currentGen, autoPromote, links: wireLinks });
+    const { data } = await client.patch('/api/admin/settings', { semesterTerm, currentGen, autoPromote, links: wireLinks });
     return data;
   } catch (error) {
     throwWireError(error, 'VALIDATION');

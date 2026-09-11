@@ -12,7 +12,7 @@ const markSrc = typeof jaramMark === 'string' ? jaramMark : jaramMark.src;
  * 기수/권한 등 읽기 전용 행, 그리고 bio/github/blog 값. 우상단 "수정"·"로그아웃" 버튼.
  * `canAdmin`(임원진·운영진)이면 그 앞에 "관리자 콘솔" 진입 버튼이 함께 놓인다.
  */
-export function ProfileView({ me, canAdmin, onAdmin, onEdit, onLogout }) {
+export function ProfileView({ me, canAdmin, onAdmin, onEdit, onLogout, onWithdraw }) {
   const empty = <span style={{ color: 'var(--text-muted)' }}>{MESSAGES.empty}</span>;
 
   // 읽기 전용 값 표시: authority/department/title은 코드→한글 매핑, 나머지는 원문.
@@ -72,6 +72,14 @@ export function ProfileView({ me, canAdmin, onAdmin, onEdit, onLogout }) {
           )}
           <Button size="sm" variant="outline" onClick={onEdit}>{ACTIONS.edit}</Button>
           <Button size="sm" variant="ghost" onClick={onLogout}>{ACTIONS.logout}</Button>
+          {/*
+            되돌릴 수 없는 동작이라 로그아웃과 같은 모양으로 나란히 두지 않는다.
+            danger variant 를 새로 만들지 않고, 디자인 시스템이 오류에 쓰는 것과 같은
+            토큰(--brand)으로 글자만 구분한다.
+          */}
+          <Button size="sm" variant="ghost" onClick={onWithdraw} style={{ color: 'var(--brand)' }}>
+            {ACTIONS.withdraw}
+          </Button>
         </div>
       </div>
 

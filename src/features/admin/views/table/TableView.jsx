@@ -2,7 +2,8 @@ import React from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { departmentKey, titleLabel } from '@/shared/member/enums';
 import { useAuthStore } from '@/shared/auth/auth.store';
-import { SCHEMAS, PEOPLE_TABS, RESOURCES, TOAST, MESSAGES } from '../../admin.data';
+import { SCHEMAS, PEOPLE_TABS, RESOURCES, TOAST, MESSAGES,
+  APPLICATION_STATUS_LABEL, PENDING_KIND_LABEL } from '../../admin.data';
 import { useAdminStore, dirtyCount, mergeRows } from '../../admin.store';
 import { canAssign, grantsOf, titleOptions } from '../../exec.roles';
 import { useResourceList, useBatchSave, useDriveExport, useMemberDetail } from '../../admin.queries';
@@ -179,6 +180,8 @@ export function TableView({ resource: fixedResource }) {
 
   // 졸업생 전환은 진행 중인 임원 임기를 종료시킨다. 되돌릴 수 없으므로 저장 전에 확인을 받는다.
   const [graduating, setGraduating] = React.useState(null);
+  // 재등록의 '반려'도 되돌릴 수 없다 — 승인축을 되돌리는 가입 반려와 달리 회원을 지운다.
+  const [removing, setRemoving] = React.useState(null);
 
   const onSave = () => {
     if (!slice || dcount === 0) return;
@@ -191,6 +194,12 @@ export function TableView({ resource: fixedResource }) {
     const ending = updates.filter((u) => u.fields.grade === '졸업생' && origById[u.id]?.title);
     if (ending.length) {
       setGraduating({ count: ending.length, payload: { updates, creates, deletes } });
+      return;
+    }
+    const deleting = updates.filter((u) => u.fields.status === APPLICATION_STATUS_LABEL.REJECTED
+        && origById[u.id]?.kind === PENDING_KIND_LABEL.REREGISTER);
+    if (deleting.length) {
+      setRemoving({ count: deleting.length, payload: { updates, creates, deletes } });
       return;
     }
     save.mutate({ updates, creates, deletes });
@@ -284,6 +293,16 @@ export function TableView({ resource: fixedResource }) {
           confirmLabel="변경하고 저장"
           onConfirm={() => { save.mutate(graduating.payload); setGraduating(null); }}
           onCancel={() => setGraduating(null)}
+        />
+      )}
+
+      {removing && (
+        <ConfirmDialog
+          title="회원을 삭제할까요?"
+          message={MESSAGES.confirmRemoveReregistration(removing.count)}
+          confirmLabel="삭제하고 저장"
+          onConfirm={() => { save.mutate(removing.payload); setRemoving(null); }}
+          onCancel={() => setRemoving(null)}
         />
       )}
 
