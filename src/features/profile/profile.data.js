@@ -59,3 +59,16 @@ export const MESSAGES = {
 };
 
 export const TOAST = { saved: '프로필을 저장했습니다.' };
+
+// 재등록 공지 팝업(ReregisterNotice) 문구. 신청 전과 신청 후로 갈린다.
+export const NOTICE = {
+  title: '재등록이 필요합니다',
+  body: '새 학기가 시작되어 활동 회원 등록이 초기화되었습니다. 계속 활동하시려면 재등록을 신청해 주세요. 승인 전까지 세미나 출석과 스터디 개설·신청이 제한됩니다.',
+  pendingTitle: '재등록을 신청했습니다',
+  pendingBody: '임원진이 승인하면 세미나 출석과 스터디 개설·신청을 다시 이용하실 수 있습니다.',
+  submit: '재등록 신청',
+  sending: '신청하는 중',
+  later: '나중에',
+  confirm: '확인',
+  error: '신청하지 못했습니다. 잠시 후 다시 시도해 주세요.',
+};
