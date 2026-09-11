@@ -1,10 +1,15 @@
 import React from 'react';
 import { clubYearsKorean } from '@/shared/club/founding';
 
-/** Manifesto — editorial asymmetric layout (meta column + large statement). */
+/**
+ * Manifesto — editorial asymmetric layout (meta column + large statement).
+ *
+ * 히어로의 '학회 소개' 버튼과 푸터의 '소개'가 가리키는 자리다. 학회 소개는 따로 페이지가 있지 않고
+ * 히어로 아래 이 단락에서 시작하므로, 별도 라우트 대신 `#about` 앵커로 받는다.
+ */
 export function Manifesto() {
   return (
-    <section style={{ position: 'relative', overflow: 'hidden', borderTop: '1px solid var(--border)' }}>
+    <section id="about" style={{ position: 'relative', overflow: 'hidden', borderTop: '1px solid var(--border)' }}>
       <div
         aria-hidden="true"
         style={{

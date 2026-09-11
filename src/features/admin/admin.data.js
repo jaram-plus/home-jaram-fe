@@ -241,11 +241,3 @@ export const SEED = {
     { id: 'st6', title: '자바 백엔드', leader: '정시우', count: '9명', schedule: '토 14:00', period: '2025-09 ~ 12', rate: '88%', status: '종료' },
   ],
 };
-
-export const SETTINGS_SEED = {
-  semester: '2026-2학기',
-  currentGen: 41,
-  autoPromote: true,
-  driveConnected: true,
-  driveFolder: '/자람/명단백업',
-};

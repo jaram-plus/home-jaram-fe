@@ -69,7 +69,7 @@ export function Hero() {
           {!isAuthenticated && (
             <Button size="lg" href="/apply">{currentGen()}기 지원하기</Button>
           )}
-          <Button size="lg" variant="outline" href="/about">학회 소개</Button>
+          <Button size="lg" variant="outline" href="#about">학회 소개</Button>
         </div>
         <div
           style={{
