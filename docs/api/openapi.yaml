@@ -1328,6 +1328,10 @@ components:
         authority: { $ref: '#/components/schemas/Authority' }
         grade: { $ref: '#/components/schemas/MemberGrade' }
         status: { $ref: '#/components/schemas/MemberStatus' }
+        reregisterRequestedAt:
+          type: [string, 'null']
+          format: date-time
+          description: 재등록을 신청한 시각. null 이면 아직 신청하지 않았다. status=REREGISTER 일 때만 의미가 있다.
         department: { $ref: '#/components/schemas/MemberDepartment' }
         title: { $ref: '#/components/schemas/MemberTitle' }
         terms:
