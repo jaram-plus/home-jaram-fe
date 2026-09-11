@@ -5,7 +5,7 @@
 export const EYEBROW = 'PROFILE';
 
 // 액션 버튼 라벨 — admin 은 임원진·운영진에게만 보이는 관리자 콘솔 진입.
-export const ACTIONS = { admin: '관리자 콘솔', edit: '수정', logout: '로그아웃' };
+export const ACTIONS = { admin: '관리자 콘솔', edit: '수정', logout: '로그아웃', withdraw: '탈퇴' };
 
 // authority 코드 → 한글 라벨
 export const AUTHORITY_LABELS = { MEMBER: '회원', OFFICER: '임원', ADMIN: '관리자' };
@@ -53,6 +53,9 @@ export const MESSAGES = {
   saveError: '저장에 실패했습니다. 잠시 후 다시 시도해 주세요.',
   empty: '아직 입력하지 않았습니다.',
   phoneRequired: '연락처를 입력해 주세요.',
+  withdrawConfirm: '정말 탈퇴하시겠습니까? 탈퇴하면 다시 로그인할 수 없고, 등록하신 개인정보는 6개월 뒤 삭제됩니다.',
+  withdrawBlocked: '현직 임기가 있어 탈퇴할 수 없습니다. 임원진에게 임기 정리를 요청해 주세요.',
+  withdrawError: '탈퇴에 실패했습니다. 잠시 후 다시 시도해 주세요.',
 };
 
 export const TOAST = { saved: '프로필을 저장했습니다.' };

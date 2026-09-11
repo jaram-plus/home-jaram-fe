@@ -9,6 +9,11 @@ export async function getMe() {
   return data; // MeProfile
 }
 
+/** 본인 탈퇴. 개인정보는 6개월 뒤 서버가 파기한다. */
+export async function withdrawMe() {
+  await client.post('/api/me/withdraw');
+}
+
 export async function updateMe(payload) {
   // payload: { phone, bio, githubUrl, blogUrl } — faculty는 읽기 전용이라 보내지 않는다.
   const { data } = await client.patch('/api/me', payload);
