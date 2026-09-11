@@ -32,7 +32,7 @@ paths:
     post:
       tags: [auth]
       summary: 로그인 (UC-A2)
-      description: 성공 시 JWT 발급. status≠ACTIVE 회원은 차단.
+      description: 성공 시 JWT 발급. 승인 대기·반려(approval≠APPROVED)와 탈퇴(WITHDRAWN) 회원은 차단.
       requestBody:
         required: true
         content:
@@ -251,6 +251,7 @@ paths:
               schema: { $ref: '#/components/schemas/ErrorResponse' }
               example: { code: INVALID_CODE, message: 출석 코드가 올바르지 않습니다. }
         '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/ReregistrationRequired' }
         '404': { $ref: '#/components/responses/NotFound' }
         '5XX': { $ref: '#/components/responses/ServerError' }
 
@@ -322,6 +323,7 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/Schedule' }
         '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/ReregistrationRequired' }
         '404': { $ref: '#/components/responses/NotFound' }
         '409': { $ref: '#/components/responses/Conflict' }
         '5XX': { $ref: '#/components/responses/ServerError' }
@@ -371,7 +373,13 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/Seminar' }
         '401': { $ref: '#/components/responses/Unauthorized' }
-        '403': { $ref: '#/components/responses/Forbidden' }
+        '403':
+          description: >
+            내 슬롯이 아니거나(code=FORBIDDEN), 활동 자격이 없는 회원의 신청
+            (code=REREGISTRATION_REQUIRED 또는 WITHDRAWN).
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
         '404': { $ref: '#/components/responses/NotFound' }
         '409': { $ref: '#/components/responses/Conflict' }
         '422': { $ref: '#/components/responses/Validation' }
@@ -412,6 +420,7 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/Study' }
         '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/ReregistrationRequired' }
         '422': { $ref: '#/components/responses/Validation' }
         '5XX': { $ref: '#/components/responses/ServerError' }
 
@@ -430,6 +439,7 @@ paths:
       responses:
         '201': { description: 신청 접수됨 (승인 대기) }
         '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/ReregistrationRequired' }
         '404': { $ref: '#/components/responses/NotFound' }
         '409':
           description: 이미 신청함 또는 모집 마감/leader 본인
@@ -593,6 +603,22 @@ paths:
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
+        '5XX': { $ref: '#/components/responses/ServerError' }
+
+  /api/admin/members/{id}/reregister:
+    post:
+      tags: [admin]
+      summary: 재등록 승인
+      description: status=REREGISTER 회원을 ACTIVE로 되돌린다. 재등록 신청 시각은 비워진다.
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: '#/components/parameters/MemberId'
+      responses:
+        '204': { description: "승인됨 (status=ACTIVE)" }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
         '5XX': { $ref: '#/components/responses/ServerError' }
 
   /api/admin/members/{id}/reject:
@@ -1088,6 +1114,34 @@ paths:
         '422': { $ref: '#/components/responses/Validation' }
         '5XX': { $ref: '#/components/responses/ServerError' }
 
+  /api/me/reregister:
+    post:
+      tags: [me]
+      summary: 재등록 신청
+      description: >
+        status=REREGISTER인 본인이 재등록을 신청한다. 임원이 승인해야 완료된다.
+        멱등하다 — 이미 신청했으면 시각을 덮지 않는다.
+      security: [{ bearerAuth: [] }]
+      responses:
+        '204': { description: 신청됨 }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '5XX': { $ref: '#/components/responses/ServerError' }
+
+  /api/me/withdraw:
+    post:
+      tags: [me]
+      summary: 탈퇴
+      description: >
+        본인 탈퇴. status=WITHDRAWN이 되고 로그인이 막힌다. 개인정보는 6개월 뒤
+        파기된다. 현직 임기가 있으면 409 — 임기를 먼저 정리해야 한다.
+      security: [{ bearerAuth: [] }]
+      responses:
+        '204': { description: 탈퇴됨 }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '5XX': { $ref: '#/components/responses/ServerError' }
+
 components:
   securitySchemes:
     bearerAuth:
@@ -1140,6 +1194,16 @@ components:
       content:
         application/json:
           schema: { $ref: '#/components/schemas/ErrorResponse' }
+    ReregistrationRequired:
+      description: >
+        활동 자격이 없는 회원의 신청류 차단. 조회와 프로필 수정은 막지 않는다.
+        code=REREGISTRATION_REQUIRED 는 재등록 필요(status=REREGISTER) — 임원이 승인하면 풀린다.
+        code=WITHDRAWN 은 탈퇴(status=WITHDRAWN) — 로그인은 막히지만 이미 발급된 토큰이
+        ttl 동안 살아 있어 이 경로로도 막는다.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+          example: { code: REREGISTRATION_REQUIRED, message: 재등록이 승인되어야 이용할 수 있습니다. }
     Forbidden:
       description: 권한 부족 (officer 전용)
       content:
@@ -1215,8 +1279,12 @@ components:
       enum: [NEWCOMER, ASSOCIATE, REGULAR, OB]
     MemberStatus:
       type: string
-      description: 활동 상태(승인축과 별개). 가입 시 SignupRequest.enrolled로 파생(true→ACTIVE, false→ON_LEAVE), 이후 admin이 변경.
-      enum: [ACTIVE, ON_LEAVE, WITHDRAWN]
+      description: >
+        활동 상태(승인축과 별개). 가입 시 SignupRequest.enrolled로 파생
+        (true→ACTIVE, false→ON_LEAVE), 이후 admin이 변경.
+        REREGISTER는 학기 전환 스윕만 설정한다 — admin이 표에서 직접 고를 수 없다.
+        REREGISTER 회원은 로그인·조회는 되지만 신청류가 막힌다.
+      enum: [ACTIVE, ON_LEAVE, REREGISTER, WITHDRAWN]
     MemberApproval:
       type: string
       description: 가입 승인 상태(활동축 MemberStatus와 별개). 가입 시 PENDING, admin이 승인/반려한다.
@@ -1660,13 +1728,31 @@ components:
         createdAt: { type: string, format: date-time }
     PendingMember:
       type: object
-      required: [id, name, studentId, email, createdAt]
+      description: >
+        '가입 신청·승인' 화면의 한 줄. 가입 승인 대기(SIGNUP)와 재등록 필요
+        (REREGISTER)가 같은 목록에 섞인다.
+      required: [id, name, studentId, email, createdAt, kind]
       properties:
         id: { type: string }
         name: { type: string }
         studentId: { type: string }
         email: { type: string, format: email }
         createdAt: { type: string, format: date-time }
+        kind:
+          type: string
+          description: >
+            SIGNUP = 가입 승인 대기, REREGISTER = 재등록 필요.
+            두 구분은 승인·반려가 서로 다른 경로로 간다.
+            SIGNUP 은 승인 POST /api/admin/members/{id}/approve, 반려 POST /api/admin/members/{id}/reject
+            (둘 다 승인축만 바꾸므로 되돌릴 수 있다).
+            REREGISTER 는 승인 POST /api/admin/members/{id}/reregister 로 활동축을 되돌리고,
+            반려에 해당하는 경로는 따로 없다 — 회원 삭제(PATCH /api/admin/members:batch 의 deletes)로
+            처리하며 되돌릴 수 없다.
+          enum: [SIGNUP, REREGISTER]
+        requestedAt:
+          type: [string, 'null']
+          format: date-time
+          description: 재등록 신청 시각. 아직 신청하지 않았으면 null. kind=SIGNUP이면 항상 null
     MemberDetail:
       type: object
       description: >
