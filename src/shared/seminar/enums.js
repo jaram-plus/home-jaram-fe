@@ -29,3 +29,16 @@ export const SCHEDULE_STATUSES = Object.keys(SCHEDULE_STATUS_LABELS);
 export function scheduleStatusLabel(key) {
   return key ? SCHEDULE_STATUS_LABELS[key] ?? null : null;
 }
+
+/**
+ * 슬롯 줄에 적히는 사람 — '41기/김승범'. 이름만으로는 동명이인을 가릴 수 없고,
+ * 일정은 학회원 전체가 보는 화면이라 누가 맡았는지 분간이 되어야 한다.
+ * 기수가 없는 회원(승인 전이면 파생되지 않는다)이면 이름만 쓴다.
+ *
+ * 빈 슬롯 문구는 화면마다 달라(회원 '미정' · 관리 '비어있음') 부르는 쪽이 준다.
+ * 서버가 회원을 못 찾으면 name 이 null 로 오는데, 그때도 빈 자리로 읽힌다.
+ */
+export function slotMemberLabel(member, empty) {
+  if (!member?.name) return empty;
+  return member.gen == null ? member.name : `${member.gen}기/${member.name}`;
+}

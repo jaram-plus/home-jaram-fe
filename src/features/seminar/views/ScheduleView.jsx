@@ -9,7 +9,7 @@ export function ScheduleView({ schedules, currentUserId, isLoggedIn, onClaim, on
   return (
     <div className="jr-anim">
       {sorted.length > 0 ? (
-        <div style={{ display: 'grid', gap: 18 }}>
+        <div className="jr-schedule-grid">
           {sorted.map((s) => (
             <ScheduleCard
               key={s.id}
