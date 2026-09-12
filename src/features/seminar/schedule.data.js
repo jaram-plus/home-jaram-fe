@@ -23,7 +23,7 @@ export const SCHEDULE_TOAST = {
 export const SLOT_ACTION_LABEL = {
   claim: '등록하기',
   cancel: '포기하기',
-  createSeminar: '세미나 만들기',
+  createSeminar: '만들기',
   editSeminar: '수정하기',
   locked: '잠김',
 };

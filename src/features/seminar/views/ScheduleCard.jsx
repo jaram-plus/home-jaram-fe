@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button, Tag } from '@/design-system';
-import { SCHEDULE_STATUS_LABELS } from '@/shared/seminar/enums';
+import { SCHEDULE_STATUS_LABELS, slotMemberLabel } from '@/shared/seminar/enums';
 import { SLOT_EMPTY, SLOT_ACTION_LABEL } from '../schedule.data';
 import { SEMINAR_APPROVAL_CHIP } from '../seminar.data';
 
@@ -11,10 +11,10 @@ import { SEMINAR_APPROVAL_CHIP } from '../seminar.data';
  * 슬롯 액션은 소유권·잠금 상태로 갈린다:
  *   - 빈 슬롯 + OPEN + 로그인   → "등록하기"
  *   - 내 슬롯 + OPEN            → "포기하기"
- *   - 내 슬롯 + LOCKED + 세미나 없음 → "세미나 만들기"
+ *   - 내 슬롯 + LOCKED + 세미나 없음 → "만들기"
  *   - 내 슬롯 + LOCKED + REJECTED    → 칩 + "수정하기"
  *   - 내 슬롯 + LOCKED + PENDING     → 칩만
- *   - 남의 슬롯                 → 이름만
+ *   - 남의 슬롯                 → '41기/김승범'만
  *   - 빈 슬롯 + LOCKED           → "잠김"
  */
 export function ScheduleCard({ schedule, currentUserId, isLoggedIn, onClaim, onCancel, onCreateSeminar, onEditSeminar }) {
@@ -56,7 +56,7 @@ export function ScheduleCard({ schedule, currentUserId, isLoggedIn, onClaim, onC
       <div style={{ marginTop: 14, display: 'grid', gap: 8 }}>
         {schedule.slots.map((slot) => {
           const isMine = isLoggedIn && slot.member?.id === currentUserId;
-          const name = slot.member?.name ?? SLOT_EMPTY;
+          const name = slotMemberLabel(slot.member, SLOT_EMPTY);
           const chip = isMine && slot.seminarApprovalStatus ? SEMINAR_APPROVAL_CHIP[slot.seminarApprovalStatus] : null;
 
           return (

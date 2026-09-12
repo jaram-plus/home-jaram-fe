@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button, Tag } from '@/design-system';
-import { SCHEDULE_STATUS_LABELS } from '@/shared/seminar/enums';
+import { SCHEDULE_STATUS_LABELS, slotMemberLabel } from '@/shared/seminar/enums';
 
 /**
  * 일정 관리 카드 — 회원용 ScheduleCard와 같은 세로 카드다. 같은 일정을 보는 화면이라
@@ -60,7 +60,7 @@ export function ScheduleAdminCard({ schedule, onLock, onUnlock, onForceUnassign,
             }}
           >
             <span style={{ fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-sm)', fontWeight: slot.member ? 'var(--w-medium)' : 'var(--w-regular)', color: slot.member ? 'var(--text-body)' : 'var(--text-faint)' }}>
-              {slot.member?.name ?? '비어있음'}
+              {slotMemberLabel(slot.member, '비어있음')}
             </span>
             {slot.member && (
               <Button
