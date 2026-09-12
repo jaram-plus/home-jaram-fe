@@ -12,7 +12,8 @@ import jaramMark from '@/design-system/assets/logos/jaram-mark.png';
  * active nav item by key; an unknown/omitted key highlights nothing.
  */
 const NAV = [
-  { key: 'about', label: '소개', href: '#' },
+  // 학회 소개는 별도 페이지가 아니라 랜딩의 Manifesto 단락이다 (sections/Manifesto.jsx).
+  { key: 'about', label: '소개', href: '/#about' },
   { key: 'study', label: '스터디', href: '/study' },
   { key: 'seminar', label: '세미나', href: '/seminar' },
   { key: 'people', label: '사람들', href: '/people' },
@@ -62,6 +63,9 @@ export function Header({ current }) {
               color: on ? 'var(--brand)' : 'var(--text-body)',
               textDecoration: 'none',
             };
+            // 해시가 붙은 주소도 Link 로 둔다. <a>로 두면 다른 페이지에서 '소개'를 누를
+            // 때 전체 새로고침이 되어 SPA 상태와 캐시가 날아간다. 라우터가 해시까지
+            // 스크롤해 주지는 않으므로 그 몫은 LandingPage 가 맡는다.
             return item.href.startsWith('/') ? (
               <Link key={item.key} to={item.href} style={style}>
                 {item.label}

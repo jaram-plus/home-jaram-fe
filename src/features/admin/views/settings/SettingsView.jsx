@@ -4,9 +4,10 @@ import { useSettings, useSaveSettings } from '../../admin.queries';
 import { useAdminStore } from '../../admin.store';
 import { settingsSchema } from '../../admin.validation';
 import { TOAST } from '../../admin.data';
+import { SITE_LINKS, EMPTY_SITE_LINKS } from '@/shared/club/links';
 
 /**
- * 설정 — 학기·현재 기수, 신학기 자동 승급, Google Drive 연동. (기획.md §3.7)
+ * 설정 — 학기·현재 기수, 외부 링크, 신학기 자동 승급, Google Drive 연동. (기획.md §3.7)
  * 저장 시 settingsSchema(Zod)로 검증합니다. 전체 RHF 폼이 필요하면 useZodForm 로 교체하세요.
  */
 export function SettingsView() {
@@ -14,7 +15,8 @@ export function SettingsView() {
   const showToast = useAdminStore((s) => s.showToast);
   const save = useSaveSettings({ onSuccess: () => showToast(TOAST.settingsSaved) });
 
-  const [form, setForm] = useState({ semester: '', currentGen: '', autoPromote: true });
+  // semesterTerm 의 '' 는 자동(서버로는 0)이다 — 기수의 빈 칸과 같은 뜻이다.
+  const [form, setForm] = useState({ semesterTerm: '', currentGen: '', autoPromote: true, links: EMPTY_SITE_LINKS });
   const [drive, setDrive] = useState(true);
   const [err, setErr] = useState('');
   const [seeded, setSeeded] = useState(false);
@@ -22,13 +24,21 @@ export function SettingsView() {
   // 서버 설정을 편집 폼에 1회만 심는다 (effect 없이 렌더 중 조정 — React 권장 패턴).
   if (data && !seeded) {
     setSeeded(true);
-    setForm({ semester: data.semester, currentGen: String(data.currentGen), autoPromote: data.autoPromote });
+    setForm({
+      // 자동이면 빈 값으로 둬야 셀렉트가 '자동'을 가리킨다. 눌러 둔 값일 때만 숫자를 심는다.
+      semesterTerm: data.semesterTermAuto ? '' : String(data.semesterTerm),
+      currentGen: String(data.currentGen),
+      autoPromote: data.autoPromote,
+      // 서버는 설정 안 한 채널을 null 로 준다 — 입력칸은 빈 문자열이어야 제어 컴포넌트로 남는다.
+      links: Object.fromEntries(SITE_LINKS.map((l) => [l.key, data.links?.[l.key] ?? ''])),
+    });
     setDrive(data.driveConnected);
   }
 
   const set = (k, v) => setForm((s) => ({ ...s, [k]: v }));
+  const setLink = (k, v) => setForm((s) => ({ ...s, links: { ...s.links, [k]: v } }));
   const onSave = () => {
-    const parsed = settingsSchema.safeParse({ semester: form.semester, currentGen: form.currentGen, autoPromote: form.autoPromote });
+    const parsed = settingsSchema.safeParse({ semesterTerm: form.semesterTerm, currentGen: form.currentGen, autoPromote: form.autoPromote, links: form.links });
     if (!parsed.success) { setErr(parsed.error.issues[0].message); return; }
     setErr('');
     save.mutate({ ...parsed.data, driveConnected: drive });
@@ -36,6 +46,10 @@ export function SettingsView() {
 
   if (isLoading) return <p style={{ color: 'var(--text-muted)' }}>설정을 불러오는 중…</p>;
 
+  // Input 이 라벨·힌트에 쓰는 것과 같은 토큰. 학기 칸은 입력이 아니라 직접 짜야 해서 여기 둔다.
+  const fieldLabel = { fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-sm)', fontWeight: 'var(--w-semibold)', color: 'var(--text-body)' };
+  const fieldHint = { fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-xs)', color: 'var(--text-faint)' };
+  const yearBox = { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-body)', color: 'var(--text-muted)', background: 'var(--surface-sunken)', border: '1.5px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '11px 14px', lineHeight: 1.5 };
   const card = { background: 'var(--surface-card)', border: '1px solid var(--border)', borderRadius: 14, padding: 26, boxShadow: 'var(--shadow-sm)' };
   const cardTitle = { margin: '0 0 18px', fontSize: 16, fontWeight: 700, color: 'var(--text-strong)' };
 
@@ -48,8 +62,42 @@ export function SettingsView() {
         <div style={card}>
           <p style={cardTitle}>학회 기본 설정</p>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18 }}>
-            <Input label="현재 학기" value={form.semester} onChange={(e) => set('semester', e.target.value)} />
-            <Input label="현재 기수" value={form.currentGen} onChange={(e) => set('currentGen', e.target.value)} />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+              <span style={fieldLabel}>현재 학기</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                {/* 연도는 서버가 오늘에서 계산해 내려준다 — 고를 것이 없어 글자로만 둔다. */}
+                <span style={yearBox}>{data?.semesterYear}</span>
+                <TermSelect value={form.semesterTerm} onChange={(v) => set('semesterTerm', v)} />
+              </div>
+              <span style={fieldHint}>
+                '자동'이면 3월에 1학기, 9월에 2학기로 바뀝니다. 직접 고른 값은 이번 학기에만 적용되고 다음 학기에는 자동으로 돌아갑니다.
+              </span>
+            </div>
+            <Input
+              label="현재 기수"
+              value={form.currentGen}
+              onChange={(e) => set('currentGen', e.target.value)}
+              hint="비워 두면 창립 연도를 기준으로 자동 계산합니다. 값을 정해 두면 해마다 1씩 오릅니다."
+            />
+          </div>
+        </div>
+
+        <div style={card}>
+          <p style={{ ...cardTitle, marginBottom: 6 }}>외부 링크</p>
+          <p style={{ margin: '0 0 18px', fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.5 }}>
+            랜딩 페이지 푸터의 Connect 칸에 그대로 쓰입니다. Instagram·Discord는 학회의 공식 창구라 주소가 없어도 이름이 남고,
+            나머지는 비워 두면 푸터에서 빠집니다.
+          </p>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18 }}>
+            {SITE_LINKS.map((l) => (
+              <Input
+                key={l.key}
+                label={l.always ? `${l.label} (항상 표시)` : l.label}
+                placeholder="https://"
+                value={form.links[l.key]}
+                onChange={(e) => setLink(l.key, e.target.value)}
+              />
+            ))}
           </div>
         </div>
 
@@ -85,6 +133,26 @@ export function SettingsView() {
         <div><Button variant="primary" onClick={onSave} disabled={save.isPending}>{save.isPending ? '저장 중…' : '설정 저장'}</Button></div>
       </div>
     </div>
+  );
+}
+
+/**
+ * 학기 선택. 1·2 말고는 값이 없어 select 로 둔다 (ExecAssignModal 의 Select 와 같은 모양).
+ *
+ * '자동'('')이 없으면 한 번 저장한 뒤로는 학기가 눌린 채로만 남는다 — 다른 설정 하나를
+ * 고쳐 저장해도 그때의 학기가 override 로 박힌다.
+ */
+function TermSelect({ value, onChange }) {
+  return (
+    <select
+      aria-label="학기"
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      style={{ flex: 1, boxSizing: 'border-box', padding: '11px 14px', fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-body)', color: 'var(--text-strong)', background: 'var(--surface-raised)', border: '1.5px solid var(--border-strong)', borderRadius: 'var(--radius-md)', cursor: 'pointer', outline: 'none', lineHeight: 1.5 }}
+    >
+      <option value="">자동</option>
+      {['1', '2'].map((t) => <option key={t} value={t}>{`${t}학기`}</option>)}
+    </select>
   );
 }
 

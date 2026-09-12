@@ -10,6 +10,7 @@ import {
   GRADE_LABEL, STATUS_LABEL, DEPARTMENT_LABEL,
   STUDY_STATUS_LABEL,
 } from './admin.data';
+import { SITE_LINKS } from '@/shared/club/links';
 
 const labelEnum = (map) => z.enum(Object.values(map));
 
@@ -91,11 +92,25 @@ export const SCHEMA_BY_RESOURCE = {
   applications: applicationSchema,
 };
 
+/**
+ * 외부 채널 주소 한 칸. 비워 두면 '설정 안 함'이고, 값이 있으면 새 탭으로 그대로 여는
+ * 주소라 스킴까지 갖춘 전체 주소여야 한다 (푸터가 http(s)만 외부 링크로 취급한다).
+ */
+const siteLinkSchema = (label) =>
+  z.string().trim().refine((v) => v === '' || /^https?:\/\/\S+$/.test(v), {
+    message: `${label} 주소는 http로 시작하는 전체 주소여야 합니다.`,
+  });
+
 /** 설정 폼 스키마. */
 export const settingsSchema = z.object({
-  semester: z.string().min(1, '학기를 입력하세요.'),
-  currentGen: z.coerce.number().int().positive('기수는 양의 정수여야 합니다.'),
+  // 빈 칸은 0(자동)으로 읽힌다 — 기수와 같은 규약이고 z.coerce 가 '' 를 0 으로 바꾼다.
+  semesterTerm: z.coerce.number().int().min(0, '학기는 1 또는 2입니다.').max(2, '학기는 1 또는 2입니다.'),
+  // 빈 칸은 0(자동 계산)으로 읽힌다 — z.coerce.number() 가 '' 를 0 으로 바꾼다.
+  // positive() 로 두면 서버가 내려주는 미설정값 0 이 그대로 걸려, 기수를 한 번도
+  // 정하지 않은 학회에서는 같은 폼의 외부 링크까지 저장할 수 없게 된다.
+  currentGen: z.coerce.number().int().min(0, '기수는 0 이상이어야 합니다. 비워 두면 자동으로 계산합니다.'),
   autoPromote: z.boolean(),
+  links: z.object(Object.fromEntries(SITE_LINKS.map((l) => [l.key, siteLinkSchema(l.label)]))),
 });
 
 /** 행 하나를 리소스 스키마로 검증 → 필드별 에러맵({field:message}) 또는 null. */

@@ -7,21 +7,25 @@ import StudyPage from '@/features/study/StudyPage';
 import AdminPage from '@/features/admin/AdminPage';
 import { RequireAdmin } from '@/features/admin/RequireAdmin';
 import ProfilePage from '@/features/profile/ProfilePage';
+import { ReregisterNotice } from '@/features/profile/ReregisterNotice';
 import ErrorPage from '@/features/error/ErrorPage';
 
 export default function App() {
   return (
-    <Routes>
-      <Route path="/" element={<LandingPage />} />
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/apply" element={<LoginPage initialView="signup" />} />
-      <Route path="/people" element={<PeoplePage />} />
-      <Route path="/seminar" element={<SeminarPage />} />
-      <Route path="/study" element={<StudyPage />} />
-      <Route path="/admin/*" element={<RequireAdmin><AdminPage /></RequireAdmin>} />
-      <Route path="/profile" element={<ProfilePage />} />
-      <Route path="/403" element={<ErrorPage code={403} />} />
-      <Route path="*" element={<ErrorPage code={404} />} />
-    </Routes>
+    <>
+      <Routes>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/apply" element={<LoginPage initialView="signup" />} />
+        <Route path="/people" element={<PeoplePage />} />
+        <Route path="/seminar" element={<SeminarPage />} />
+        <Route path="/study" element={<StudyPage />} />
+        <Route path="/admin/*" element={<RequireAdmin><AdminPage /></RequireAdmin>} />
+        <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/403" element={<ErrorPage code={403} />} />
+        <Route path="*" element={<ErrorPage code={404} />} />
+      </Routes>
+      <ReregisterNotice />
+    </>
   );
 }

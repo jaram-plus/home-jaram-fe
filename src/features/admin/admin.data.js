@@ -15,10 +15,12 @@ import { DEPARTMENT_LABELS } from '@/shared/member/enums';
 
 /* ── enum 키 ↔ 한글 라벨 ─────────────────────────────────────────────── */
 export const GRADE_LABEL = { NEWCOMER: '수습회원', ASSOCIATE: '준회원', REGULAR: '정회원', OB: '졸업생' };
-export const STATUS_LABEL = { ACTIVE: '활동', ON_LEAVE: '휴학', WITHDRAWN: '탈퇴' };
+export const STATUS_LABEL = { ACTIVE: '활동', ON_LEAVE: '휴학', REREGISTER: '재등록', WITHDRAWN: '탈퇴' };
 // 부서는 @/shared/member/enums 가 단일 소스 (BE MemberDepartment 미러). 여기서 다시 정의하지 않는다.
 export const DEPARTMENT_LABEL = DEPARTMENT_LABELS;
 export const APPLICATION_STATUS_LABEL = { PENDING: '대기', APPROVED: '승인', REJECTED: '반려' };
+/** 승인 탭 한 줄의 구분. 재등록은 신청 여부까지 상태 칸에 드러난다. */
+export const PENDING_KIND_LABEL = { SIGNUP: '가입', REREGISTER: '재등록' };
 export const STUDY_STATUS_LABEL = { RECRUITING: '모집', ONGOING: '진행', CLOSED: '종료' };
 // admin.api.js / admin.validation.js 는 여기서 재수출된 걸 import한다(수입 경로 최소 변경).
 export { SEMINAR_STATUS_LABELS, TARGET_GRADE_LABELS };
@@ -60,13 +62,14 @@ export const SCHEMAS = {
     filters: [
       { key: 'grade', label: '등급', options: ['전체', '수습회원', '준회원', '정회원', '졸업생'] },
       { key: 'gen', label: '기수', options: ['전체', '41기', '40기', '39기', '38기'] },
-      { key: 'status', label: '상태', options: ['전체', '활동', '휴학', '탈퇴'] },
+      { key: 'status', label: '상태', options: ['전체', '활동', '휴학', '재등록', '탈퇴'] },
     ],
     cols: [
       { key: 'name', label: '이름', type: 'text', width: '1.1fr' },
       { key: 'studentId', label: '학번', type: 'text', width: '1fr' },
       { key: 'gen', label: '기수', type: 'text', width: '0.6fr', align: 'center' },
       { key: 'grade', label: '등급', type: 'select', width: '1fr', options: ['수습회원', '준회원', '정회원', '졸업생'] },
+      // '재등록'은 학기 전환 스윕만 설정한다. 서버가 직접 지정을 거부하므로 옵션에 두지 않는다.
       { key: 'status', label: '상태', type: 'select', width: '0.8fr', options: ['활동', '휴학', '탈퇴'] },
       // 이메일은 서버가 내려주지만 일괄 수정 화이트리스트에 없어 읽기 전용이다.
       { key: 'email', label: '이메일', type: 'static', width: '1.4fr' },
@@ -166,14 +169,15 @@ export const SCHEMAS = {
   applications: {
     // 수기 등록(creates)은 대응 엔드포인트가 없어 추가 버튼을 두지 않는다 — 가입은 신청 절차로만.
     eyebrow: 'JOIN', title: '가입 신청 · 승인', addLabel: '',
-    desc: '대기 중인 가입 신청을 검토하고 승인/반려하세요. 승인 시 기수 기준으로 등급이 자동 부여됩니다.',
-    filters: [],
+    desc: '대기 중인 가입 신청과 재등록 대상을 검토하세요. 가입 승인 시 기수 기준으로 등급이 자동 부여됩니다.',
+    filters: [{ key: 'kind', label: '구분', options: ['전체', '가입', '재등록'] }],
     cols: [
+      { key: 'kind', label: '구분', type: 'tag', width: '0.7fr', align: 'center' },
       { key: 'name', label: '신청자', type: 'static', width: '1fr' },
       { key: 'studentId', label: '학번', type: 'static', width: '1fr' },
       { key: 'appliedAt', label: '신청일', type: 'static', width: '1fr', align: 'center' },
       { key: 'status', label: '상태', type: 'tag', width: '0.8fr', align: 'center' },
-      { key: '__act', label: '', type: 'actions', width: '1fr', align: 'center', actions: ['approve', 'reject'] },
+      { key: '__act', label: '', type: 'actions', width: '1.2fr', align: 'center', actions: ['approve', 'reject'] },
     ],
   },
 };
@@ -186,6 +190,7 @@ export const MESSAGES = {
   deleteRefWarn: '임원·스터디장으로 배정된 회원입니다. 삭제하면 배정도 함께 해제됩니다.',
   driveNotConnected: '표를 스프레드시트로 내보내려면 설정에서 Google Drive를 먼저 연결하세요.',
   confirmGraduate: (n) => `졸업생으로 변경하는 회원 ${n}명의 진행 중인 임원 임기가 종료됩니다. 임기 이력은 남으며 임원진 명단에서는 빠집니다. 계속할까요?`,
+  confirmRemoveReregistration: (n) => `재등록 대상 ${n}명을 삭제합니다. 가입 반려와 달리 되돌릴 수 없습니다 — 임기·기여 이력이 있으면 이름과 이력만 남고 개인정보가 지워지며, 없으면 계정이 사라집니다. 계속할까요?`,
   noAssignPermission: '임원을 지정할 권한이 없습니다. 회장·부회장 또는 각 부처의 부장에게 요청해 주세요.',
   handoverPresident: '회장 자리를 넘기면 본인의 회장 임기가 함께 종료되어 임원 권한을 잃습니다. 계속할까요?',
   noAssignable: '지정할 수 있는 회원이 없습니다. 이미 임기가 있거나 졸업생인 회원은 목록에 나오지 않습니다.',
@@ -240,12 +245,4 @@ export const SEED = {
     { id: 'st5', title: 'AI 논문 리딩', leader: '윤서아', count: '7명', schedule: '목 19:00', period: '2026-03 ~ 06', rate: '81%', status: '진행' },
     { id: 'st6', title: '자바 백엔드', leader: '정시우', count: '9명', schedule: '토 14:00', period: '2025-09 ~ 12', rate: '88%', status: '종료' },
   ],
-};
-
-export const SETTINGS_SEED = {
-  semester: '2026-2학기',
-  currentGen: 41,
-  autoPromote: true,
-  driveConnected: true,
-  driveFolder: '/자람/명단백업',
 };
