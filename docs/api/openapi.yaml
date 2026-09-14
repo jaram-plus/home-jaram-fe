@@ -277,7 +277,7 @@ paths:
     get:
       tags: [seminar]
       summary: 참석자 미리보기 (신규)
-      description: 로그인한 회원 누구나 조회. sid(학번) 미노출 — officer 전용 roster와 구분.
+      description: 로그인한 회원 누구나 조회. sid(학번) 미노출 — SEMINAR_ROSTER_READ 가 필요한 roster 와 구분.
       security: [{ bearerAuth: [] }]
       parameters:
         - $ref: '#/components/parameters/SeminarId'
@@ -1205,7 +1205,7 @@ components:
           schema: { $ref: '#/components/schemas/ErrorResponse' }
           example: { code: REREGISTRATION_REQUIRED, message: 재등록이 승인되어야 이용할 수 있습니다. }
     Forbidden:
-      description: 권한 부족 (officer 전용)
+      description: 그 동작에 필요한 권한(permissions)이 없다. 현직 임기가 있어도 직책에 따라 받을 수 있다.
       content:
         application/json:
           schema: { $ref: '#/components/schemas/ErrorResponse' }
