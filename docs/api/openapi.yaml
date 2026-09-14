@@ -1258,10 +1258,6 @@ components:
         reason: { type: string, description: 거절/반려 사유 (필수) }
 
     # ── enum ──
-    Authority:
-      type: string
-      description: 권한. 서버가 title에서 파생한다 (title이 있으면 OFFICER, 없으면 MEMBER).
-      enum: [MEMBER, OFFICER]
     MemberDepartment:
       type: [string, 'null']
       description: 부서. enum name으로 전송 (라벨은 FE 매핑).
@@ -1319,13 +1315,12 @@ components:
           items: { $ref: '#/components/schemas/MemberCareer' }
     MeProfile:
       type: object
-      required: [id, name, email, authority]
+      required: [id, name, email]
       properties:
         id: { type: string }
         name: { type: string }
         studentId: { type: string }
         email: { type: string, format: email }
-        authority: { $ref: '#/components/schemas/Authority' }
         grade: { $ref: '#/components/schemas/MemberGrade' }
         status: { $ref: '#/components/schemas/MemberStatus' }
         reregisterRequestedAt:
@@ -1396,12 +1391,11 @@ components:
         password: { type: string, format: password }
     UserSummary:
       type: object
-      required: [id, name, email, authority]
+      required: [id, name, email]
       properties:
         id: { type: string }
         name: { type: string }
         email: { type: string, format: email }
-        authority: { $ref: '#/components/schemas/Authority' }
         roles:
           type: array
           description: 현직 임기에서 파생한 역할. 임기가 없으면 [MEMBER].
