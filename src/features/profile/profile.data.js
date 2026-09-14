@@ -4,11 +4,8 @@
  */
 export const EYEBROW = 'PROFILE';
 
-// 액션 버튼 라벨 — admin 은 임원진·운영진에게만 보이는 관리자 콘솔 진입.
+// 액션 버튼 라벨 — admin 은 권한이 있는 회원에게만 보이는 관리자 콘솔 진입.
 export const ACTIONS = { admin: '관리자 콘솔', edit: '수정', logout: '로그아웃', withdraw: '탈퇴' };
-
-// authority 코드 → 한글 라벨
-export const AUTHORITY_LABELS = { MEMBER: '회원', OFFICER: '임원', ADMIN: '관리자' };
 
 // 카드 본문 그룹 아이라벨(ALL-CAPS) — 시스템/운영진이 부여하는 '계정' 정보,
 // 임기 이력, 본인이 직접 쓰는 '소개'를 구분한다.
@@ -17,10 +14,11 @@ export const GROUPS = { account: 'ACCOUNT', terms: 'TERMS', profile: 'ABOUT' };
 // 읽기 전용 필드 라벨(표시 순서대로) — gen은 헤더 부제목으로만 표시.
 // department·title은 운영진이 부여하는 값으로 본인 수정 불가, 읽기로만 노출.
 // faculty는 가입 때 받아 고정하는 값이라 여기서 읽기로만 보여 준다(MeUpdateRequest에 없음).
+// '권한' 행은 뺐다 — authority 는 '임기가 있는가'였고, 그 사실은 바로 아래 부서·직책과
+// TERMS 그룹이 이미 더 정확하게 말해 준다.
 export const READONLY_LABELS = [
   ['email', '이메일'],
   ['studentId', '학번'],
-  ['authority', '권한'],
   ['faculty', '학부'],
   ['department', '부서'],
   ['title', '직책'],

@@ -8,6 +8,7 @@ import AdminPage from '@/features/admin/AdminPage';
 import { RequireAdmin } from '@/features/admin/RequireAdmin';
 import ProfilePage from '@/features/profile/ProfilePage';
 import { ReregisterNotice } from '@/features/profile/ReregisterNotice';
+import { SessionSync } from '@/features/profile/SessionSync';
 import ErrorPage from '@/features/error/ErrorPage';
 
 export default function App() {
@@ -25,6 +26,7 @@ export default function App() {
         <Route path="/403" element={<ErrorPage code={403} />} />
         <Route path="*" element={<ErrorPage code={404} />} />
       </Routes>
+      <SessionSync />
       <ReregisterNotice />
     </>
   );

@@ -3,22 +3,21 @@ import { Card, Button } from '@/design-system';
 import { departmentLabel, titleLabel } from '@/shared/member/enums';
 import jaramMark from '@/design-system/assets/logos/jaram-mark.png';
 import { Eyebrow, GroupLabel, FieldRow } from './parts';
-import { EYEBROW, GROUPS, READONLY_LABELS, LABELS, MESSAGES, AUTHORITY_LABELS, ACTIONS, TERMS_EMPTY, termPeriod } from '../profile.data';
+import { EYEBROW, GROUPS, READONLY_LABELS, LABELS, MESSAGES, ACTIONS, TERMS_EMPTY, termPeriod } from '../profile.data';
 
 const markSrc = typeof jaramMark === 'string' ? jaramMark : jaramMark.src;
 
 /**
  * 읽기 모드 카드. 상단 빨강 룰(accent="top") + PROFILE 아이라벨, 이름(디스플레이),
- * 기수/권한 등 읽기 전용 행, 그리고 bio/github/blog 값. 우상단 "수정"·"로그아웃" 버튼.
- * `canAdmin`(임원진·운영진)이면 그 앞에 "관리자 콘솔" 진입 버튼이 함께 놓인다.
+ * 학번/부서 등 읽기 전용 행, 그리고 bio/github/blog 값. 우상단 "수정"·"로그아웃" 버튼.
+ * `canAdmin`(권한을 가진 회원)이면 그 앞에 "관리자 콘솔" 진입 버튼이 함께 놓인다.
  */
 export function ProfileView({ me, canAdmin, onAdmin, onEdit, onLogout, onWithdraw }) {
   const empty = <span style={{ color: 'var(--text-muted)' }}>{MESSAGES.empty}</span>;
 
-  // 읽기 전용 값 표시: authority/department/title은 코드→한글 매핑, 나머지는 원문.
+  // 읽기 전용 값 표시: department/title은 코드→한글 매핑, 나머지는 원문.
   // 학번은 숫자 → 헤리티지 세리프(고운바탕)로 조판.
   const readonlyValue = (key) => {
-    if (key === 'authority') return AUTHORITY_LABELS[me[key]] ?? me[key];
     if (key === 'department') return departmentLabel(me[key]) ?? empty;
     if (key === 'title') return titleLabel(me.title, me.department) ?? empty;
     if (key === 'studentId') {

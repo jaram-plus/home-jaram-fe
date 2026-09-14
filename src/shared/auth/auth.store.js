@@ -20,6 +20,9 @@ export const useAuthStore = create(
       isAuthenticated: false,
       setAuth: (accessToken, user = null) =>
         set({ accessToken, user, isAuthenticated: Boolean(accessToken) }),
+      // 토큰은 그대로 두고 user 만 갈아 끼운다 (features/profile/SessionSync).
+      // 저장된 user 는 로그인 시점의 사진이라, 권한이 바뀌면 낡는다.
+      setUser: (user) => set({ user }),
       clear: () => set({ accessToken: null, user: null, isAuthenticated: false }),
     }),
     {
