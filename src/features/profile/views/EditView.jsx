@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, Input, Button } from '@/design-system';
 import { Eyebrow, FieldRow } from './parts';
-import { EYEBROW, READONLY_LABELS, LABELS, PLACEHOLDERS, MESSAGES, AUTHORITY_LABELS } from '../profile.data';
+import { EYEBROW, READONLY_LABELS, LABELS, PLACEHOLDERS, MESSAGES } from '../profile.data';
 
 /**
  * 수정 모드. 읽기 전용 필드(학부 포함)는 그대로 보여 주고 phone/bio/githubUrl/blogUrl만
@@ -23,9 +23,7 @@ export function EditView({ me, values, errors, field, onSave, onCancel, saving, 
       <div style={{ marginTop: 'var(--space-5)' }}>
         {READONLY_LABELS.map(([key, label]) => (
           <FieldRow key={key} label={label}>
-            {key === 'authority'
-              ? (AUTHORITY_LABELS[me[key]] ?? me[key])
-              : (me[key] ?? <span style={{ color: 'var(--text-muted)' }}>{MESSAGES.empty}</span>)}
+            {me[key] ?? <span style={{ color: 'var(--text-muted)' }}>{MESSAGES.empty}</span>}
           </FieldRow>
         ))}
       </div>
