@@ -398,18 +398,37 @@ export async function saveBatch(resource, { updates = [], creates = [], deletes 
   };
   if (mocked(resource)) {
     await delay(600);
-    return mockBatch(resource, body);
+    return mockBatch(resource, body);   // mock 은 전부 성공이라 열어볼 실패가 없다
   }
-  if (resource === 'applications') return saveApplicationsQueue(updates, deletes);
-  if (resource === 'seminarApprovals') return saveSeminarApprovalsQueue(updates, deletes);
-  // PATCH /api/admin/{resource}:batch (AdminBatchRequest → AdminBatchResponse, 부분 성공)
-  const { path } = RESOURCES[resource];
-  try {
-    const { data } = await client.patch(`/api/admin/${path}:batch`, body);
-    return data;
-  } catch (error) {
-    throwWireError(error, 'VALIDATION');
+  let data;
+  if (resource === 'applications') data = await saveApplicationsQueue(updates, deletes);
+  else if (resource === 'seminarApprovals') data = await saveSeminarApprovalsQueue(updates, deletes);
+  else {
+    // PATCH /api/admin/{resource}:batch (AdminBatchRequest → AdminBatchResponse, 부분 성공)
+    const { path } = RESOURCES[resource];
+    try {
+      ({ data } = await client.patch(`/api/admin/${path}:batch`, body));
+    } catch (error) {
+      throwWireError(error, 'VALIDATION');
+    }
   }
+  // 행이 거절되어도 200 으로 돌아온다. 열어보지 않으면 호출부가 성공으로 알고
+  // 편집분을 지워, 사유 없이 값만 원래대로 돌아간다 — 화면엔 "안 바뀐다"로만 보인다.
+  throwIfRowsFailed(data, '저장하지 못했습니다.');
+  return data;
+}
+
+/**
+ * 배치 응답의 행 단위 실패(conflicts·errors)를 예외로 바꾼다. 배치는 행이 실패해도
+ * 200 + errors[] 로 돌아오므로(openapi :batch — "conflicts·errors 로 부분 성공 표기")
+ * 본문을 열어봐야 호출부가 실패를 알아챈다. 첫 실패의 사유를 메시지로 올린다.
+ */
+function throwIfRowsFailed(data, fallback) {
+  const failed = [...(data.conflicts || []), ...(data.errors || [])];
+  if (!failed.length) return;
+  const first = failed[0];
+  const message = first.message || Object.values(first.fieldErrors || {})[0] || fallback;
+  throw Object.assign(new Error(message), { code: first.message ? 'CONFLICT' : 'VALIDATION' });
 }
 
 /**
@@ -539,13 +558,11 @@ export async function approveReregistration(id) {
 }
 
 /**
- * 재등록 반려 = 회원 삭제. :batch 는 실패를 던지지 않고 errors 로 돌려주므로
- * (스터디 리더는 삭제가 막힌다) 여기서 예외로 바꿔 호출부가 알아채게 한다.
+ * 재등록 반려 = 회원 삭제. 행 실패(스터디 리더는 삭제가 막힌다)는 saveBatch 가
+ * 사유를 담은 예외로 바꿔 주므로 여기서는 그대로 올려보낸다.
  */
 async function deleteMember(id) {
-  const res = await saveBatch('member', { deletes: [id] });
-  const failed = (res?.errors || [])[0];
-  if (failed) throw new Error(Object.values(failed.fieldErrors || {})[0] || '삭제하지 못했습니다.');
+  await saveBatch('member', { deletes: [id] });
 }
 
 export async function rejectApplication(id, reason) {

@@ -175,7 +175,8 @@ export function TableView({ resource: fixedResource }) {
       applySaved(resource);
       showToast(TOAST.saved(dcount));
     },
-    onError: () => showToast(MESSAGES.savePartialFail),
+    // 서버가 돌려준 거절 사유를 그대로 보여 준다 — 어느 규칙에 걸렸는지는 서버만 안다.
+    onError: (error) => showToast(error?.message || MESSAGES.savePartialFail),
   });
 
   // 졸업생 전환은 진행 중인 임원 임기를 종료시킨다. 되돌릴 수 없으므로 저장 전에 확인을 받는다.
@@ -191,6 +192,15 @@ export function TableView({ resource: fixedResource }) {
     const creates = slice.creates.map(({ id, _new, ...fields }) => ({ tempId: id, fields }));
     const deletes = Object.keys(slice.deletes);
 
+    // 수습회원은 서버가 OB 전환을 막는다(준회원·정회원을 거쳐야 한다). 아래 확인
+    // 대화상자는 임기가 끝난다고 알리는데, 애초에 일어나지 않을 일이라 헛경고가 된다.
+    // 서버 규칙을 한 번 더 적는 셈이지만 최종 판정은 그대로 서버가 하므로, 이 검사가
+    // 낡아도 헛경고가 돌아올 뿐 잘못 저장되지는 않는다.
+    const blocked = updates.filter((u) => u.fields.grade === '졸업생' && origById[u.id]?.grade === '수습회원');
+    if (blocked.length) {
+      showToast(MESSAGES.newcomerCannotGraduate);
+      return;
+    }
     const ending = updates.filter((u) => u.fields.grade === '졸업생' && origById[u.id]?.title);
     if (ending.length) {
       setGraduating({ count: ending.length, payload: { updates, creates, deletes } });

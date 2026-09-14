@@ -32,16 +32,20 @@ export function useResourceList(resource, params, options = {}) {
   });
 }
 
-/** 변경분 일괄 저장. onSuccess 에서 목록 invalidate. */
+/**
+ * 변경분 일괄 저장. 성공·실패를 가리지 않고(onSettled) 목록을 invalidate 한다 —
+ * 배치는 부분 성공이라 예외가 던져진 뒤에도 커밋된 행이 있을 수 있고, onSuccess 에만
+ * 두면 그 행들이 표에 반영되지 않은 채 남는다.
+ */
 export function useBatchSave(resource, options = {}) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (payload) => api.saveBatch(resource, payload),
     ...options,
-    onSuccess: (data, vars, ctx) => {
+    onSettled: (data, err, vars, ctx) => {
       qc.invalidateQueries({ queryKey: ['admin', 'list', resource] });
       qc.invalidateQueries({ queryKey: adminKeys.dashboard() });
-      options.onSuccess?.(data, vars, ctx);
+      options.onSettled?.(data, err, vars, ctx);
     },
   });
 }
