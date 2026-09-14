@@ -277,7 +277,7 @@ paths:
     get:
       tags: [seminar]
       summary: 참석자 미리보기 (신규)
-      description: 로그인한 회원 누구나 조회. sid(학번) 미노출 — officer 전용 roster와 구분.
+      description: 로그인한 회원 누구나 조회. sid(학번) 미노출 — SEMINAR_ROSTER_READ 가 필요한 roster 와 구분.
       security: [{ bearerAuth: [] }]
       parameters:
         - $ref: '#/components/parameters/SeminarId'
@@ -1205,7 +1205,7 @@ components:
           schema: { $ref: '#/components/schemas/ErrorResponse' }
           example: { code: REREGISTRATION_REQUIRED, message: 재등록이 승인되어야 이용할 수 있습니다. }
     Forbidden:
-      description: 권한 부족 (officer 전용)
+      description: 그 동작에 필요한 권한(permissions)이 없다. 현직 임기가 있어도 직책에 따라 받을 수 있다.
       content:
         application/json:
           schema: { $ref: '#/components/schemas/ErrorResponse' }
@@ -1258,10 +1258,6 @@ components:
         reason: { type: string, description: 거절/반려 사유 (필수) }
 
     # ── enum ──
-    Authority:
-      type: string
-      description: 권한. 서버가 title에서 파생한다 (title이 있으면 OFFICER, 없으면 MEMBER).
-      enum: [MEMBER, OFFICER]
     MemberDepartment:
       type: [string, 'null']
       description: 부서. enum name으로 전송 (라벨은 FE 매핑).
@@ -1319,13 +1315,12 @@ components:
           items: { $ref: '#/components/schemas/MemberCareer' }
     MeProfile:
       type: object
-      required: [id, name, email, authority]
+      required: [id, name, email]
       properties:
         id: { type: string }
         name: { type: string }
         studentId: { type: string }
         email: { type: string, format: email }
-        authority: { $ref: '#/components/schemas/Authority' }
         grade: { $ref: '#/components/schemas/MemberGrade' }
         status: { $ref: '#/components/schemas/MemberStatus' }
         reregisterRequestedAt:
@@ -1396,12 +1391,11 @@ components:
         password: { type: string, format: password }
     UserSummary:
       type: object
-      required: [id, name, email, authority]
+      required: [id, name, email]
       properties:
         id: { type: string }
         name: { type: string }
         email: { type: string, format: email }
-        authority: { $ref: '#/components/schemas/Authority' }
         roles:
           type: array
           description: 현직 임기에서 파생한 역할. 임기가 없으면 [MEMBER].
