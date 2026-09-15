@@ -6,3 +6,4 @@ export { MyStudyView } from './MyStudyView';
 export { ManageView } from './ManageView';
 export { ApplyModal } from './ApplyModal';
 export { CreateModal } from './CreateModal';
+export { ManageStudyModal } from './ManageStudyModal';

@@ -26,6 +26,7 @@ import {
   ManageView,
   ApplyModal,
   CreateModal,
+  ManageStudyModal,
 } from './views';
 import { ModalShell } from './views/ModalShell';
 
@@ -71,7 +72,7 @@ export default function StudyPage() {
   const [reject, setReject] = useState(NO_REJECT); // { kind: 'study'|'applicant', id }
   const [reason, setReason] = useState('');
 
-  const [_managing, setManaging] = useState(null);                   // Task 11 이 읽는다
+  const [managing, setManaging] = useState(null);                   // 관리하기 모달
   const [_viewingAttendance, setViewingAttendance] = useState(null); // Task 12 가 읽는다
   const [deleting, setDeleting] = useState(null);                   // 반려 신청 카드
 
@@ -254,6 +255,14 @@ export default function StudyPage() {
       )}
 
       {createOpen && <CreateModal form={createForm} onClose={() => setCreateOpen(false)} onSubmit={submitCreate} />}
+
+      {managing && (
+        <ManageStudyModal
+          study={managing}
+          onClose={() => setManaging(null)}
+          onToast={showToast}
+        />
+      )}
 
       {deleting && (
         <ModalShell
