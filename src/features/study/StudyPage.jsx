@@ -1,8 +1,8 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useMemo } from 'react';
 import './study.css';
 import { Button } from '@/design-system';
 import { useForm } from './useForm';
-import { MESSAGES, TOAST } from './study.data';
+import { MESSAGES, TOAST, toMyStudyItems } from './study.data';
 import {
   useStudies,
   usePending,
@@ -14,6 +14,7 @@ import {
   useRejectStudy,
   useApproveApplicant,
   useRejectApplicant,
+  useDeleteApplication,
 } from './study.queries';
 import {
   AppHeader,
@@ -21,15 +22,16 @@ import {
   Eyebrow,
   TabButton,
   BrowseView,
-  MyActivityView,
+  MyStudyView,
   ManageView,
   ApplyModal,
   CreateModal,
 } from './views';
+import { ModalShell } from './views/ModalShell';
 
 const SUB_NAV = [
   { key: 'browse', label: '스터디' },
-  { key: 'mine', label: '내 활동' },
+  { key: 'mine', label: '내 스터디' },
   { key: 'manage', label: '관리' },
 ];
 
@@ -69,6 +71,10 @@ export default function StudyPage() {
   const [reject, setReject] = useState(NO_REJECT); // { kind: 'study'|'applicant', id }
   const [reason, setReason] = useState('');
 
+  const [_managing, setManaging] = useState(null);                   // Task 11 이 읽는다
+  const [_viewingAttendance, setViewingAttendance] = useState(null); // Task 12 가 읽는다
+  const [deleting, setDeleting] = useState(null);                   // 반려 신청 카드
+
   const [toast, setToast] = useState(null);
   const toastTimer = useRef(null);
 
@@ -95,6 +101,13 @@ export default function StudyPage() {
   const applicantsQ = useApplicants();
   const myActivityQ = useMyActivity();
 
+  // 관계는 서버가 아니라 여기서 정한다 — /my 의 두 배열과 둘러보기 목록을 합친다.
+  // 두 쿼리 다 이 페이지가 이미 부르므로 호출이 늘지 않는다.
+  const myItems = useMemo(
+    () => toMyStudyItems(myActivityQ.data, studiesQ.data?.items ?? []),
+    [myActivityQ.data, studiesQ.data],
+  );
+
   const applyM = useApplyStudy({
     onSuccess: () => { setApplyStudy(null); showToast(TOAST.applied); },
   });
@@ -108,11 +121,15 @@ export default function StudyPage() {
   const rejectStudyM = useRejectStudy({
     onSuccess: () => { cancelReject(); showToast(TOAST.studyRejected); },
   });
-  const approveApplicantM = useApproveApplicant({
+  // 관리 탭은 임원용 전체 목록이라 스터디별 목록을 쓰지 않는다 — studyId 가 null 이다.
+  const approveApplicantM = useApproveApplicant(null, {
     onSuccess: (_d, vars) => { setReject(NO_REJECT); showToast(TOAST.applicantApproved(vars.name)); },
   });
-  const rejectApplicantM = useRejectApplicant({
+  const rejectApplicantM = useRejectApplicant(null, {
     onSuccess: () => { cancelReject(); showToast(TOAST.applicantRejected); },
+  });
+  const deleteApplicationM = useDeleteApplication({
+    onSuccess: () => { setDeleting(null); showToast(TOAST.applicationDeleted); },
   });
 
   // --- apply ---
@@ -190,12 +207,18 @@ export default function StudyPage() {
           )
         )}
         {view === 'mine' && (
-          myActivityQ.isLoading ? (
+          myActivityQ.isLoading || studiesQ.isLoading ? (
             <Notice>불러오는 중…</Notice>
           ) : myActivityQ.isError ? (
-            <Notice>내 활동을 불러오지 못했습니다.</Notice>
+            <Notice>내 스터디를 불러오지 못했습니다.</Notice>
           ) : (
-            <MyActivityView apps={myActivityQ.data?.apps ?? []} studies={myActivityQ.data?.studies ?? []} />
+            <MyStudyView
+              items={myItems}
+              onManage={setManaging}
+              onAttendance={setViewingAttendance}
+              onDelete={setDeleting}
+              onBrowse={() => go('browse')}
+            />
           )
         )}
         {view === 'manage' && (
@@ -231,6 +254,24 @@ export default function StudyPage() {
       )}
 
       {createOpen && <CreateModal form={createForm} onClose={() => setCreateOpen(false)} onSubmit={submitCreate} />}
+
+      {deleting && (
+        <ModalShell
+          title="신청 삭제"
+          lead={`'${deleting.title}' 신청 기록을 지웁니다. 삭제하면 이 스터디에 다시 신청할 수 있습니다.`}
+          onClose={() => setDeleting(null)}
+        >
+          <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 28 }}>
+            <Button variant="secondary" onClick={() => setDeleting(null)}>취소</Button>
+            <Button
+              onClick={() => deleteApplicationM.mutate({ applicationId: deleting.applicationId })}
+              disabled={deleteApplicationM.isPending}
+            >
+              삭제하기
+            </Button>
+          </div>
+        </ModalShell>
+      )}
 
       <Toast message={toast} />
     </div>

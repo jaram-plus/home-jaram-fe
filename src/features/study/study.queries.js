@@ -12,6 +12,9 @@ export const studyKeys = {
   pending: ['studies', 'pending'],
   applicants: ['studies', 'applicants'],
   my: ['studies', 'my'],
+  applicantsOf: (studyId) => ['studies', studyId, 'applicants'],
+  attendance: (studyId) => ['studies', studyId, 'attendance'],
+  myAttendance: (studyId) => ['studies', studyId, 'attendance', 'me'],
 };
 
 export function useStudies() {
@@ -44,7 +47,7 @@ function useInvalidatingMutation(mutationFn, invalidate, options) {
 }
 
 export function useApplyStudy(options) {
-  return useInvalidatingMutation(api.applyStudy, [studyKeys.my], options);
+  return useInvalidatingMutation(api.applyStudy, [studyKeys.my, studyKeys.studies], options);
 }
 
 export function useCreateStudy(options) {
@@ -59,10 +62,69 @@ export function useRejectStudy(options) {
   return useInvalidatingMutation(api.rejectStudy, [studyKeys.pending], options);
 }
 
-export function useApproveApplicant(options) {
-  return useInvalidatingMutation(api.approveApplicant, [studyKeys.applicants], options);
+// 신청 승인·반려는 '내 스터디' 카드의 pendingApplicants 숫자를 바꾼다.
+export function useApproveApplicant(studyId, options) {
+  return useInvalidatingMutation(api.approveApplicant,
+    [studyKeys.applicants, studyKeys.applicantsOf(studyId), studyKeys.my], options);
 }
 
-export function useRejectApplicant(options) {
-  return useInvalidatingMutation(api.rejectApplicant, [studyKeys.applicants], options);
+export function useRejectApplicant(studyId, options) {
+  return useInvalidatingMutation(api.rejectApplicant,
+    [studyKeys.applicants, studyKeys.applicantsOf(studyId), studyKeys.my], options);
+}
+
+/** studyId 가 없으면 돌지 않는다 — 모달이 닫혀 있을 때 부르지 않기 위해서다. */
+export function useStudyApplicants(studyId) {
+  return useQuery({
+    queryKey: studyKeys.applicantsOf(studyId),
+    queryFn: () => api.listStudyApplicants({ studyId }),
+    enabled: !!studyId,
+  });
+}
+
+export function useAttendanceBoard(studyId) {
+  return useQuery({
+    queryKey: studyKeys.attendance(studyId),
+    queryFn: () => api.attendanceBoard({ studyId }),
+    enabled: !!studyId,
+  });
+}
+
+export function useMyAttendance(studyId) {
+  return useQuery({
+    queryKey: studyKeys.myAttendance(studyId),
+    queryFn: () => api.myAttendance({ studyId }),
+    enabled: !!studyId,
+  });
+}
+
+export function useSaveAttendance(studyId, options) {
+  return useInvalidatingMutation(
+    api.saveAttendance, [studyKeys.attendance(studyId), studyKeys.my], options);
+}
+
+export function useAddWeek(studyId, options) {
+  return useInvalidatingMutation(
+    api.addWeek, [studyKeys.attendance(studyId), studyKeys.my], options);
+}
+
+export function useEditWeek(studyId, options) {
+  return useInvalidatingMutation(api.editWeek, [studyKeys.attendance(studyId)], options);
+}
+
+export function useDeleteWeek(studyId, options) {
+  return useInvalidatingMutation(
+    api.deleteWeek, [studyKeys.attendance(studyId), studyKeys.my], options);
+}
+
+export function useDeleteApplication(options) {
+  return useInvalidatingMutation(api.deleteApplication, [studyKeys.my, studyKeys.studies], options);
+}
+
+export function useCloseRecruiting(options) {
+  return useInvalidatingMutation(api.closeRecruiting, [studyKeys.my, studyKeys.studies], options);
+}
+
+export function useFinishStudy(options) {
+  return useInvalidatingMutation(api.finishStudy, [studyKeys.my, studyKeys.studies], options);
 }
