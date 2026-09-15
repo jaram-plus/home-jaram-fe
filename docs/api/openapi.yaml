@@ -540,7 +540,7 @@ paths:
   /api/studies/my:
     get:
       tags: [study]
-      summary: 내 활동 조회 (UC-T4)
+      summary: 내 스터디 조회 (UC-T4)
       security: [{ bearerAuth: [] }]
       responses:
         '200':
@@ -656,6 +656,181 @@ paths:
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
         '422': { $ref: '#/components/responses/Validation' }
+        '5XX': { $ref: '#/components/responses/ServerError' }
+
+  /api/studies/{id}/applicants:
+    get:
+      tags: [study]
+      summary: 그 스터디의 신청 목록 (스터디장 or STUDY_EDIT)
+      description: pending 에만 motive 가 실린다. 학번은 싣지 않는다.
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: '#/components/parameters/StudyId'
+      responses:
+        '200':
+          description: 대기 중 신청과 승인된 멤버
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/StudyApplicantList' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '5XX': { $ref: '#/components/responses/ServerError' }
+
+  /api/studies/{id}/attendance:
+    get:
+      tags: [study]
+      summary: 출석 격자 (스터디장 or STUDY_EDIT)
+      description: 주차가 열, 멤버가 행이다. 스터디장도 멤버로 들어간다.
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: '#/components/parameters/StudyId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AttendanceBoard' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '5XX': { $ref: '#/components/responses/ServerError' }
+
+  /api/studies/{id}/attendance/me:
+    get:
+      tags: [study]
+      summary: 내 주차별 출석 (참여 멤버)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: '#/components/parameters/StudyId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MyAttendance' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '5XX': { $ref: '#/components/responses/ServerError' }
+
+  /api/studies/{id}/weeks:
+    post:
+      tags: [study]
+      summary: 커리큘럼 주차를 맨 뒤에 더한다 (스터디장 or STUDY_EDIT)
+      description: 종료된 스터디는 409 STUDY_FINISHED.
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: '#/components/parameters/StudyId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/WeekUpsert' }
+      responses:
+        '201':
+          description: 더해진 주차
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/StudyWeek' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/Validation' }
+        '5XX': { $ref: '#/components/responses/ServerError' }
+
+  /api/studies/{id}/weeks/{weekNo}:
+    put:
+      tags: [study]
+      summary: 주차의 제목·내용을 고친다 (스터디장 or STUDY_EDIT)
+      description: 출석을 찍은 뒤에도 언제나 고칠 수 있다. 종료된 스터디만 409 STUDY_FINISHED.
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: '#/components/parameters/StudyId'
+        - name: weekNo
+          in: path
+          required: true
+          schema: { type: integer, minimum: 1 }
+          description: 주차 번호(1-based)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/WeekUpsert' }
+      responses:
+        '204': { description: 고쳐짐 }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/Validation' }
+        '5XX': { $ref: '#/components/responses/ServerError' }
+    delete:
+      tags: [study]
+      summary: 맨 뒤 주차를 지운다 (스터디장 or STUDY_EDIT)
+      description: >
+        맨 뒤가 아니면 409 WEEK_NOT_LAST. 마지막 한 주차는 409 WEEK_MIN.
+        출석을 찍고 24시간이 지났으면 409 ATTENDANCE_LOCKED.
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: '#/components/parameters/StudyId'
+        - name: weekNo
+          in: path
+          required: true
+          schema: { type: integer, minimum: 1 }
+          description: 주차 번호(1-based)
+      responses:
+        '204': { description: 지워짐 }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '5XX': { $ref: '#/components/responses/ServerError' }
+
+  /api/studies/{id}/weeks/{weekNo}/attendance:
+    put:
+      tags: [study]
+      summary: 그 주차의 출석을 통째로 바꾼다 (스터디장 or STUDY_EDIT)
+      description: >
+        present 에 없는 멤버는 결석이 된다. 첫 저장에 takenAt 이 박히고,
+        그로부터 24시간이 지나면 409 ATTENDANCE_LOCKED. STUDY_EDIT 은 창에 걸리지 않는다.
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: '#/components/parameters/StudyId'
+        - name: weekNo
+          in: path
+          required: true
+          schema: { type: integer, minimum: 1 }
+          description: 주차 번호(1-based)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AttendanceUpdate' }
+      responses:
+        '204': { description: 저장됨 }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/Validation' }
+        '5XX': { $ref: '#/components/responses/ServerError' }
+
+  /api/studies/applicants/{id}:
+    delete:
+      tags: [study]
+      summary: 반려된 내 신청을 지운다
+      description: 지워야 그 스터디에 다시 신청할 수 있다. 반려된 것이 아니면 409 NOT_REJECTED.
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: '#/components/parameters/ApplicantId'
+      responses:
+        '204': { description: 지워짐 }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
         '5XX': { $ref: '#/components/responses/ServerError' }
 
   # ─────────────────────────── admin (member approval, UC-A5) ───────────────────────────
@@ -1867,6 +2042,9 @@ components:
         title: { type: string }
         status: { $ref: '#/components/schemas/StudyStatus' }
         reason: { type: [string, 'null'], description: 반려 사유 }
+        pendingApplicants:
+          type: [integer, 'null']
+          description: 상태가 RECRUITING 일 때 대기 중인 신청 수. 그 외에는 null
     MyActivity:
       type: object
       required: [apps, studies]
@@ -1877,6 +2055,88 @@ components:
         studies:
           type: array
           items: { $ref: '#/components/schemas/MyStudy' }
+    AttendanceState:
+      type: string
+      description: PRESENT=출석, ABSENT=결석, NOT_TAKEN=아직 기록하지 않은 주차
+      enum: [PRESENT, ABSENT, NOT_TAKEN]
+    StudyApplicantEntry:
+      type: object
+      required: [applicationId, name]
+      properties:
+        applicationId: { type: string }
+        name: { type: string }
+        gen: { type: [integer, 'null'] }
+        motive: { type: [string, 'null'], description: approved 묶음에서는 언제나 null }
+    StudyApplicantList:
+      type: object
+      required: [pending, approved]
+      properties:
+        pending:
+          type: array
+          items: { $ref: '#/components/schemas/StudyApplicantEntry' }
+        approved:
+          type: array
+          items: { $ref: '#/components/schemas/StudyApplicantEntry' }
+    AttendanceWeek:
+      type: object
+      required: [weekNo, title, editable]
+      properties:
+        weekNo: { type: integer, minimum: 1 }
+        title: { type: string }
+        takenAt: { type: [string, 'null'], format: date-time }
+        editable: { type: boolean, description: 호출한 사람 기준. STUDY_EDIT 은 언제나 true }
+    AttendanceMember:
+      type: object
+      required: [memberId, name, leader, present]
+      properties:
+        memberId: { type: string }
+        name: { type: string }
+        gen: { type: [integer, 'null'] }
+        leader: { type: boolean }
+        present:
+          type: array
+          items: { type: integer }
+          description: 출석한 weekNo 들
+    AttendanceBoard:
+      type: object
+      required: [weeks, members]
+      properties:
+        weeks:
+          type: array
+          items: { $ref: '#/components/schemas/AttendanceWeek' }
+        members:
+          type: array
+          items: { $ref: '#/components/schemas/AttendanceMember' }
+    MyAttendanceWeek:
+      type: object
+      required: [weekNo, title, state]
+      properties:
+        weekNo: { type: integer, minimum: 1 }
+        title: { type: string }
+        state: { $ref: '#/components/schemas/AttendanceState' }
+    MyAttendance:
+      type: object
+      required: [attended, taken, weeks]
+      properties:
+        attended: { type: integer, description: 출석한 횟수 }
+        taken: { type: integer, description: 출석을 기록한 주차 수. 출석률의 분모다 }
+        weeks:
+          type: array
+          items: { $ref: '#/components/schemas/MyAttendanceWeek' }
+    AttendanceUpdate:
+      type: object
+      required: [present]
+      properties:
+        present:
+          type: array
+          items: { type: string }
+          description: 이 주차에 출석한 memberId 들. 빈 배열은 전원 결석이다.
+    WeekUpsert:
+      type: object
+      required: [title]
+      properties:
+        title: { type: string, minLength: 1 }
+        content: { type: [string, 'null'] }
     PendingStudy:
       type: object
       required: [id, title, fields, creator, capacity, createdAt]
