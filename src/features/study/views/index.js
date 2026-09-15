@@ -7,3 +7,4 @@ export { ManageView } from './ManageView';
 export { ApplyModal } from './ApplyModal';
 export { CreateModal } from './CreateModal';
 export { ManageStudyModal } from './ManageStudyModal';
+export { MyAttendanceModal } from './MyAttendanceModal';

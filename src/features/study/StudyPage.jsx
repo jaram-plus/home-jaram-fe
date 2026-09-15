@@ -27,6 +27,7 @@ import {
   ApplyModal,
   CreateModal,
   ManageStudyModal,
+  MyAttendanceModal,
 } from './views';
 import { ModalShell } from './views/ModalShell';
 
@@ -73,7 +74,7 @@ export default function StudyPage() {
   const [reason, setReason] = useState('');
 
   const [managing, setManaging] = useState(null);                   // 관리하기 모달
-  const [_viewingAttendance, setViewingAttendance] = useState(null); // Task 12 가 읽는다
+  const [viewingAttendance, setViewingAttendance] = useState(null); // 멤버의 내 출석 모달
   const [deleting, setDeleting] = useState(null);                   // 반려 신청 카드
 
   const [toast, setToast] = useState(null);
@@ -261,6 +262,13 @@ export default function StudyPage() {
           study={managing}
           onClose={() => setManaging(null)}
           onToast={showToast}
+        />
+      )}
+
+      {viewingAttendance && (
+        <MyAttendanceModal
+          study={viewingAttendance}
+          onClose={() => setViewingAttendance(null)}
         />
       )}
 
