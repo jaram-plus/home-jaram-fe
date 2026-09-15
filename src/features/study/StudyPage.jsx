@@ -186,7 +186,7 @@ export default function StudyPage() {
           ) : studiesQ.isError ? (
             <Notice>스터디 목록을 불러오지 못했습니다.</Notice>
           ) : (
-            <BrowseView studies={studiesQ.data ?? []} filter={filter} onFilter={setFilter} onApply={openApply} />
+            <BrowseView studies={studiesQ.data?.items ?? []} filter={filter} onFilter={setFilter} onApply={openApply} />
           )
         )}
         {view === 'mine' && (

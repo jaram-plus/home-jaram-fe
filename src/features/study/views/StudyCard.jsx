@@ -40,7 +40,6 @@ export function StudyCard({ study, onApply }) {
         rows={[
           ['스터디장', <strong style={{ fontWeight: 'var(--w-medium)' }}>{study.leader}</strong>],
           ['일정', study.schedule],
-          ['기간', study.period],
           ['진행', study.mode],
         ]}
       />

@@ -9,7 +9,7 @@
  */
 
 // Browsable studies. `status` drives the badge; `apply` drives the CTA state.
-//   status (StudyStatus): RECRUITING | ONGOING | CLOSED  (CLOSED = 모집 마감·종료)
+//   status (StudyStatus): PENDING | REJECTED | RECRUITING | ONGOING | FINISHED
 //   apply  (ApplyState):  OPEN | APPLIED | CLOSED | JOINED
 export const STUDIES = [
   { id: 's1', title: 'React 심화 스터디', fields: ['Frontend', 'React'], leader: '이성장', schedule: '매주 화 19:00', period: '8주 과정', mode: '온·오프라인 병행', cur: 3, cap: 6, status: 'RECRUITING', apply: 'OPEN' },
@@ -22,9 +22,11 @@ export const STUDIES = [
 
 // status → Tag content. tone maps to the design-system Tag `tone` prop.
 export const STATUS_BADGE = {
+  PENDING: { label: '승인 대기', tone: 'neutral' },
+  REJECTED: { label: '반려됨', tone: 'neutral' },
   RECRUITING: { label: '모집 중', tone: 'brand' },
   ONGOING: { label: '진행 중', tone: 'seal' },
-  CLOSED: { label: '모집 마감', tone: 'neutral' },
+  FINISHED: { label: '종료', tone: 'neutral' },
 };
 
 // apply state → disabled CTA label (when the user can't apply).
