@@ -4,7 +4,15 @@ import './study.css';
 import { Button } from '@/design-system';
 import { useAuthStore } from '@/shared/auth/auth.store';
 import { useForm } from './useForm';
-import { MESSAGES, TOAST, toMyStudyItems } from './study.data';
+import {
+  MESSAGES,
+  TOAST,
+  toMyStudyItems,
+  CREATE_BLANK,
+  toCreatePayload,
+  validateCreate,
+  createErrorMessage,
+} from './study.data';
 import {
   useStudies,
   useMyActivity,
@@ -82,7 +90,7 @@ export default function StudyPage() {
   const [applyErr, setApplyErr] = useState('');
 
   const [createOpen, setCreateOpen] = useState(false);
-  const createForm = useForm({ title: '', fields: '', recruit: '', schedule: '', period: '', mode: '', intro: '' });
+  const createForm = useForm(CREATE_BLANK);
 
   const [managing, setManaging] = useState(null);                   // 관리하기 모달
   const [viewingAttendance, setViewingAttendance] = useState(null); // 멤버의 내 출석 모달
@@ -102,6 +110,11 @@ export default function StudyPage() {
   // --- server state ---
   const studiesQ = useStudies();
   const myActivityQ = useMyActivity(isAuthenticated);
+
+  // 개설 신청 창. 임원이 관리자 콘솔 '스터디 관리'에서 여닫고, 서버는 닫혀 있으면
+  // POST /api/studies 를 409 RECRUIT_CLOSED 로 막는다. 닫힌 창 앞에 버튼만 세워 두면
+  // 눌러 본 사람만 그 사실을 알게 되므로, 버튼 자체를 내린다.
+  const recruiting = Boolean(studiesQ.data?.recruiting);
 
   // 관계는 서버가 아니라 여기서 정한다 — /my 의 두 배열과 둘러보기 목록을 합친다.
   // 두 쿼리 다 이 페이지가 이미 부르므로 호출이 늘지 않는다.
@@ -137,14 +150,16 @@ export default function StudyPage() {
   // --- create ---
   function openCreate() {
     createForm.reset();
+    createM.reset(); // 지난번 실패 문구를 빈 폼에 얹지 않는다.
     setCreateOpen(true);
   }
   function submitCreate() {
-    if (!createForm.values.title.trim()) {
-      createForm.setErrors({ title: MESSAGES.titleRequired });
+    const errors = validateCreate(createForm.values);
+    if (Object.keys(errors).length > 0) {
+      createForm.setErrors(errors);
       return;
     }
-    createM.mutate(createForm.values);
+    createM.mutate(toCreatePayload(createForm.values));
   }
 
   return (
@@ -163,7 +178,7 @@ export default function StudyPage() {
               자람에서 함께 공부할 스터디를 찾아보세요.
             </p>
           </div>
-          <Button onClick={openCreate}>＋ 스터디 개설하기</Button>
+          {recruiting && <Button onClick={openCreate}>＋ 스터디 개설하기</Button>}
         </div>
 
         <div style={{ display: 'flex', gap: 4, marginTop: 34, borderBottom: '1px solid var(--border)' }}>
@@ -213,7 +228,15 @@ export default function StudyPage() {
         />
       )}
 
-      {createOpen && <CreateModal form={createForm} onClose={() => setCreateOpen(false)} onSubmit={submitCreate} />}
+      {createOpen && (
+        <CreateModal
+          form={createForm}
+          onClose={() => setCreateOpen(false)}
+          onSubmit={submitCreate}
+          pending={createM.isPending}
+          error={createErrorMessage(createM.error)}
+        />
+      )}
 
       {managing && (
         <ManageStudyModal

@@ -64,6 +64,9 @@ export const SEED_APPLICANTS = [
 export const MESSAGES = {
   motiveRequired: '지원 동기를 입력해 주세요.',
   titleRequired: '제목을 입력해 주세요.',
+  recruitClosed: '지금은 개설 신청을 받지 않습니다. 임원에게 문의해 주세요.',
+  signInRequired: '로그인 후 신청할 수 있습니다.',
+  createFailed: '개설 신청을 보내지 못했습니다. 잠시 후 다시 시도해 주세요.',
 };
 
 // Transient toast strings.
@@ -189,4 +192,88 @@ export const ATTENDANCE_LABEL = {
   ABSENT: '결석',
   NOT_TAKEN: '아직',
 };
+
+/* ── 개설 신청 폼 ─────────────────────────────────────────────────
+ * 계약 StudyCreateRequest 는 아홉 칸이 전부 필수다 — period 는 없어졌고
+ * 커리큘럼 주차 수가 그 자리를 대신한다. 화면이 계약보다 느슨하면 서버가 422 로
+ * 돌려보내는데, 그때는 어느 칸이 비었는지 볼 폼이 이미 닫힌 뒤다. 여기서 먼저 막는다.
+ */
+
+/** 주차 한 줄. weekNo 는 저장할 때 순서가 정하므로 담지 않는다. */
+export const BLANK_WEEK = { title: '', content: '' };
+
+export const CREATE_BLANK = {
+  title: '',
+  fields: '',
+  capacity: '',
+  schedule: '',
+  place: '',
+  mode: '',
+  contact: '',
+  intro: '',
+  weeks: [{ ...BLANK_WEEK }],
+};
+
+/** 분야 태그는 한 칸에 쉼표로 적고 배열로 나간다. */
+export function splitFields(s) {
+  return String(s ?? '')
+    .split(',')
+    .map((t) => t.trim())
+    .filter(Boolean);
+}
+
+/** 계약 StudyCreateRequest 로 옮긴다. weekNo 는 화면에 놓인 순서가 곧 답이다. */
+export function toCreatePayload(v) {
+  return {
+    title: v.title.trim(),
+    fields: splitFields(v.fields),
+    capacity: Number(v.capacity),
+    intro: v.intro.trim(),
+    schedule: v.schedule.trim(),
+    place: v.place.trim(),
+    mode: v.mode.trim(),
+    contact: v.contact.trim(),
+    weeks: v.weeks.map((w, i) => ({
+      weekNo: i + 1,
+      title: w.title.trim(),
+      content: w.content.trim() || null,
+    })),
+  };
+}
+
+const CREATE_REQUIRED = {
+  title: MESSAGES.titleRequired,
+  schedule: '언제 모이는지 적어 주세요.',
+  place: '어디서 모이는지 적어 주세요.',
+  mode: '진행 방식을 적어 주세요.',
+  contact: '문의받을 연락처를 적어 주세요.',
+  intro: '스터디 소개를 적어 주세요.',
+};
+
+/** 빈 오류 맵이면 보낼 수 있다. 키는 폼 필드 이름과 같다. */
+export function validateCreate(v) {
+  const e = {};
+  Object.entries(CREATE_REQUIRED).forEach(([k, msg]) => {
+    if (!String(v[k] ?? '').trim()) e[k] = msg;
+  });
+  if (splitFields(v.fields).length === 0) e.fields = '분야를 하나 이상 적어 주세요.';
+  const cap = Number(v.capacity);
+  if (!String(v.capacity).trim() || !Number.isInteger(cap) || cap < 1) {
+    e.capacity = '희망 인원은 1 이상의 숫자입니다.';
+  }
+  // 주차는 제목이 필수고 내용은 선택이다. 빈 줄을 조용히 버리면 적다 만 주차가
+  // 말없이 사라지므로, 채우든 지우든 사용자가 고르게 한다.
+  if (v.weeks.every((w) => !w.title.trim())) e.weeks = '커리큘럼을 한 주차 이상 적어 주세요.';
+  else if (v.weeks.some((w) => !w.title.trim())) e.weeks = '제목이 빈 주차가 있습니다. 채우거나 지워 주세요.';
+  return e;
+}
+
+/** 개설 신청이 실패한 이유 한 줄. 서버가 code 를 주면 그것을 믿는다. */
+export function createErrorMessage(error) {
+  if (!error) return '';
+  const status = error.response?.status;
+  if (error.response?.data?.code === 'RECRUIT_CLOSED') return MESSAGES.recruitClosed;
+  if (status === 401) return MESSAGES.signInRequired;
+  return error.response?.data?.message || MESSAGES.createFailed;
+}
 
