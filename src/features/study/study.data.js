@@ -49,7 +49,7 @@ export const MY_STUDIES = [
   { id: 'my3', title: '블록체인 기초', message: '개설이 반려되었습니다. 사유: 유사한 스터디가 이미 운영 중입니다.', badge: '반려됨', tone: 'neutral' },
 ];
 
-// --- officer management (original mock, now unused — see study.api.js listPending/listApplicants) ---
+// --- officer management (original mock, unused — 임원 승인은 관리자 콘솔로 옮겼다) ---
 export const SEED_PENDING = [
   { id: 'p1', title: 'Rust 입문 스터디', field: 'Backend', creator: '김자람', recruit: '4명', schedule: '매주 화 19:00 · 8주 과정', intro: '시스템 프로그래밍 언어 Rust의 소유권 모델부터 비동기까지 함께 학습합니다.', date: '2026.06.20' },
   { id: 'p2', title: 'Figma UI 스터디', field: 'Design', creator: '박나눔', recruit: '6명', schedule: '매주 목 18:00 · 6주 과정', intro: '컴포넌트 설계와 오토레이아웃 중심으로 실무형 UI를 만들어 봅니다.', date: '2026.06.22' },
@@ -66,21 +66,16 @@ export const MESSAGES = {
   titleRequired: '제목을 입력해 주세요.',
 };
 
-// Transient toast strings. `studyPublished` / `applicantApproved` take a name.
+// Transient toast strings.
+// 임원의 승인·반려 문구는 여기 없다 — 관리자 콘솔이 admin.data.js 에 들고 있다.
 export const TOAST = {
   applied: '신청이 접수되었습니다. 승인 결과를 기다려 주세요.',
   created: '스터디 개설을 신청했습니다. 임원 승인 후 공개됩니다.',
-  studyPublished: (title) => `‘${title}’을(를) 공개했습니다.`,
-  studyRejected: '스터디 개설을 반려했습니다.',
-  applicantApproved: (name) => `${name} 님의 신청을 승인했습니다.`,
-  applicantRejected: '신청을 거절했습니다.',
   applicationDeleted: '신청을 삭제했습니다. 다시 신청할 수 있습니다.',
 };
 
 export const EMPTY = {
   studies: '현재 진행 중인 스터디가 없습니다.',
-  pending: '승인 대기 중인 스터디가 없습니다.',
-  applicants: '대기 중인 신청이 없습니다.',
 };
 
 /**

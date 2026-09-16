@@ -9,16 +9,6 @@ export async function listStudies() {
   return data;
 }
 
-export async function listPending() {
-  const { data } = await client.get('/api/studies/pending');
-  return data;
-}
-
-export async function listApplicants() {
-  const { data } = await client.get('/api/studies/applicants');
-  return data;
-}
-
 // 내 활동 — { apps, studies }
 export async function listMyActivity() {
   const { data } = await client.get('/api/studies/my');
@@ -32,16 +22,6 @@ export async function applyStudy({ studyId, motive }) {
 
 export async function createStudy(payload) {
   const { data } = await client.post('/api/studies', payload);
-  return data;
-}
-
-export async function approveStudy({ studyId }) {
-  const { data } = await client.post(`/api/studies/${studyId}/approve`);
-  return data;
-}
-
-export async function rejectStudy({ studyId, reason }) {
-  const { data } = await client.post(`/api/studies/${studyId}/reject`, { reason });
   return data;
 }
 

@@ -1,19 +1,15 @@
 import React, { useState, useRef, useCallback, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './study.css';
 import { Button } from '@/design-system';
+import { useAuthStore } from '@/shared/auth/auth.store';
 import { useForm } from './useForm';
 import { MESSAGES, TOAST, toMyStudyItems } from './study.data';
 import {
   useStudies,
-  usePending,
-  useApplicants,
   useMyActivity,
   useApplyStudy,
   useCreateStudy,
-  useApproveStudy,
-  useRejectStudy,
-  useApproveApplicant,
-  useRejectApplicant,
   useDeleteApplication,
 } from './study.queries';
 import {
@@ -23,21 +19,20 @@ import {
   TabButton,
   BrowseView,
   MyStudyView,
-  ManageView,
   ApplyModal,
   CreateModal,
   ManageStudyModal,
   MyAttendanceModal,
 } from './views';
 import { ModalShell } from './views/ModalShell';
+import { EmptyState } from './views/parts';
 
+// 임원의 개설 승인·신청자 관리는 관리자 콘솔 '스터디 관리'(/admin/studies)가 맡는다.
+// 회원용 페이지에 임원 탭을 두면 모두에게 보이고 모두가 403 을 받는다.
 const SUB_NAV = [
   { key: 'browse', label: '스터디' },
   { key: 'mine', label: '내 스터디' },
-  { key: 'manage', label: '관리' },
 ];
-
-const NO_REJECT = { kind: null, id: null };
 
 /** 목록 영역의 로딩/에러 안내 한 줄. */
 function Notice({ children }) {
@@ -49,9 +44,27 @@ function Notice({ children }) {
 }
 
 /**
+ * 로그인 전 '내 스터디'. 관계가 있어야 존재하는 탭이라 비어 있는 것이 아니라
+ * 아직 볼 자격이 없는 것이고, 빈 목록과 같은 얼굴을 하면 거짓이 된다.
+ * 비어 있을 때의 '스터디 둘러보기'와 같은 자리에 갈 곳을 하나 둔다.
+ */
+function SignInPrompt() {
+  const navigate = useNavigate();
+  return (
+    <div className="jr-anim">
+      <EmptyState>내 스터디는 가입 후 이용할 수 있습니다.</EmptyState>
+      <div style={{ display: 'flex', justifyContent: 'center' }}>
+        <Button onClick={() => navigate('/login?redirect=/study')}>로그인하기</Button>
+      </div>
+    </div>
+  );
+}
+
+/**
  * JARAM study page — browse the catalogue, apply (motivation required), create
- * a study (officer approval), and the officer-side management of study
- * approvals and applicants, as a single-route view machine.
+ * a study (officer approval), and '내 스터디', as a single-route view machine.
+ *
+ * 임원의 개설 승인·신청자 관리는 여기 없다 — 관리자 콘솔이 맡는다.
  *
  * Submit/approve/reject handlers call the real Spring endpoints via
  * study.api.js (paths are a proposed REST contract until the backend confirms
@@ -59,9 +72,10 @@ function Notice({ children }) {
  * (study.queries.js) so the lists refresh from the server.
  */
 export default function StudyPage() {
-  const [view, setView] = useState('browse'); // browse | mine | manage
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+
+  const [view, setView] = useState('browse'); // browse | mine
   const [filter, setFilter] = useState('all'); // all | recruiting | ongoing
-  const [manageTab, setManageTab] = useState('studies'); // studies | applicants
 
   const [applyStudy, setApplyStudy] = useState(null);
   const [applyMotive, setApplyMotive] = useState('');
@@ -69,9 +83,6 @@ export default function StudyPage() {
 
   const [createOpen, setCreateOpen] = useState(false);
   const createForm = useForm({ title: '', fields: '', recruit: '', schedule: '', period: '', mode: '', intro: '' });
-
-  const [reject, setReject] = useState(NO_REJECT); // { kind: 'study'|'applicant', id }
-  const [reason, setReason] = useState('');
 
   const [managing, setManaging] = useState(null);                   // 관리하기 모달
   const [viewingAttendance, setViewingAttendance] = useState(null); // 멤버의 내 출석 모달
@@ -86,22 +97,11 @@ export default function StudyPage() {
     toastTimer.current = setTimeout(() => setToast(null), 2800);
   }, []);
 
-  const cancelReject = useCallback(() => {
-    setReject(NO_REJECT);
-    setReason('');
-  }, []);
-
-  const go = useCallback((next) => {
-    setView(next);
-    setReject(NO_REJECT);
-    setReason('');
-  }, []);
+  const go = useCallback((next) => setView(next), []);
 
   // --- server state ---
   const studiesQ = useStudies();
-  const pendingQ = usePending();
-  const applicantsQ = useApplicants();
-  const myActivityQ = useMyActivity();
+  const myActivityQ = useMyActivity(isAuthenticated);
 
   // 관계는 서버가 아니라 여기서 정한다 — /my 의 두 배열과 둘러보기 목록을 합친다.
   // 두 쿼리 다 이 페이지가 이미 부르므로 호출이 늘지 않는다.
@@ -115,20 +115,6 @@ export default function StudyPage() {
   });
   const createM = useCreateStudy({
     onSuccess: () => { setCreateOpen(false); showToast(TOAST.created); },
-  });
-  // 승인·거절 성공 시 관련 목록은 훅이 무효화한다 — 여기선 UI 상태만 정리.
-  const approveStudyM = useApproveStudy({
-    onSuccess: (_d, vars) => { setReject(NO_REJECT); showToast(TOAST.studyPublished(vars.title)); },
-  });
-  const rejectStudyM = useRejectStudy({
-    onSuccess: () => { cancelReject(); showToast(TOAST.studyRejected); },
-  });
-  // 관리 탭은 임원용 전체 목록이라 스터디별 목록을 쓰지 않는다 — studyId 가 null 이다.
-  const approveApplicantM = useApproveApplicant(null, {
-    onSuccess: (_d, vars) => { setReject(NO_REJECT); showToast(TOAST.applicantApproved(vars.name)); },
-  });
-  const rejectApplicantM = useRejectApplicant(null, {
-    onSuccess: () => { cancelReject(); showToast(TOAST.applicantRejected); },
   });
   const deleteApplicationM = useDeleteApplication({
     onSuccess: () => { setDeleting(null); showToast(TOAST.applicationDeleted); },
@@ -160,17 +146,6 @@ export default function StudyPage() {
     }
     createM.mutate(createForm.values);
   }
-
-  // --- manage ---
-  const startReject = (kind, id) => {
-    setReject({ kind, id });
-    setReason('');
-  };
-
-  const approveStudy = (p) => approveStudyM.mutate({ studyId: p.id, title: p.title });
-  const rejectStudy = (p) => rejectStudyM.mutate({ studyId: p.id, reason });
-  const approveApplicant = (a) => approveApplicantM.mutate({ applicantId: a.id, name: a.name });
-  const rejectApplicant = (a) => rejectApplicantM.mutate({ applicantId: a.id, reason });
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--surface-page)' }}>
@@ -209,7 +184,9 @@ export default function StudyPage() {
           )
         )}
         {view === 'mine' && (
-          myActivityQ.isLoading || studiesQ.isLoading ? (
+          !isAuthenticated ? (
+            <SignInPrompt />
+          ) : myActivityQ.isLoading || studiesQ.isLoading ? (
             <Notice>불러오는 중…</Notice>
           ) : myActivityQ.isError ? (
             <Notice>내 스터디를 불러오지 못했습니다.</Notice>
@@ -222,25 +199,6 @@ export default function StudyPage() {
               onBrowse={() => go('browse')}
             />
           )
-        )}
-        {view === 'manage' && (
-          <ManageView
-            tab={manageTab}
-            onTab={(t) => { setManageTab(t); cancelReject(); }}
-            pending={pendingQ.data ?? []}
-            applicants={applicantsQ.data ?? []}
-            loading={pendingQ.isLoading || applicantsQ.isLoading}
-            error={pendingQ.isError || applicantsQ.isError}
-            reject={reject}
-            reason={reason}
-            onReason={(e) => setReason(e.target.value)}
-            onCancelReject={cancelReject}
-            onStartReject={startReject}
-            onApproveStudy={approveStudy}
-            onRejectStudy={rejectStudy}
-            onApproveApplicant={approveApplicant}
-            onRejectApplicant={rejectApplicant}
-          />
         )}
       </section>
 
