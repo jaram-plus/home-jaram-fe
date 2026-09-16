@@ -17,7 +17,7 @@ export function ConfirmDialog({ title, message, confirmLabel = '확인', cancelL
       <div
         className="adm-anim-pop"
         onClick={(e) => e.stopPropagation()}
-        style={{ width: '100%', maxWidth: 420, background: 'var(--surface-card)', border: '1px solid var(--border)', borderTop: '3px solid var(--brand)', borderRadius: 'var(--radius-lg, 14px)', boxShadow: 'var(--shadow-lg)', padding: 28 }}
+        style={{ width: '100%', maxWidth: 420, background: 'var(--surface-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg, 14px)', boxShadow: 'var(--shadow-lg)', padding: 28 }}
       >
         <h3 style={{ margin: 0, fontFamily: 'var(--font-serif)', fontWeight: 400, fontSize: 22, color: 'var(--text-strong)' }}>{title}</h3>
         {message && <p style={{ margin: '10px 0 0', fontSize: 14, color: 'var(--text-muted)', lineHeight: 1.6 }}>{message}</p>}

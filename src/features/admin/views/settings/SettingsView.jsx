@@ -5,6 +5,7 @@ import { useAdminStore } from '../../admin.store';
 import { settingsSchema } from '../../admin.validation';
 import { TOAST } from '../../admin.data';
 import { SITE_LINKS, EMPTY_SITE_LINKS } from '@/shared/club/links';
+import { Toggle } from '../forms/Toggle';
 
 /**
  * 설정 — 학기·현재 기수, 외부 링크, 신학기 자동 승급, Google Drive 연동. (기획.md §3.7)
@@ -156,10 +157,3 @@ function TermSelect({ value, onChange }) {
   );
 }
 
-function Toggle({ on, onClick }) {
-  return (
-    <button type="button" onClick={onClick} aria-pressed={on} style={{ width: 46, height: 26, borderRadius: 999, background: on ? 'var(--brand)' : 'var(--border-strong)', position: 'relative', cursor: 'pointer', transition: 'background 200ms', border: 'none', flexShrink: 0, padding: 0 }}>
-      <span style={{ position: 'absolute', top: 3, left: on ? 23 : 3, width: 20, height: 20, borderRadius: '50%', background: '#fff', transition: 'left 200ms', boxShadow: '0 1px 3px rgba(0,0,0,0.25)' }} />
-    </button>
-  );
-}

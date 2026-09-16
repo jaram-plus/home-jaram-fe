@@ -27,8 +27,11 @@ export { GradDetailModal } from './forms/GradDetailModal';
 export { PickerModal, PickerHeader, MemberPicker, PickerNote, PickerFooter } from './forms/PickerModal';
 export { ExecAssignModal } from './forms/ExecAssignModal';
 export { ContribAddModal } from './forms/ContribAddModal';
+export { Toggle } from './forms/Toggle';
 export { Toast } from './Toast';
 
 export { ScheduleAdminView } from './schedules/ScheduleAdminView';
 export { ScheduleAdminCard } from './schedules/ScheduleAdminCard';
 export { CreateScheduleModal } from './schedules/CreateScheduleModal';
+
+export { StudyAdminView } from './studies/StudyAdminView';

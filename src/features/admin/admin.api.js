@@ -1,9 +1,8 @@
 /**
  * admin API — 순수 HTTP 계층. (DEVELOPMENT.md §5 · 기획.md §6)
  *
- * 별도 Spring 백엔드의 admin 엔드포인트 준비 여부가 아직 확정되지 않아, 기본값은
- * mock(SEED) 유지입니다. `.env`에 `VITE_ADMIN_MOCK=false` 를 설정하면 실 서버로
- * 전환됩니다(opt-in). 실 연동 시 아래 client.* 호출은 docs/api/openapi.yaml 과
+ * 모든 리소스가 실 서버를 봅니다. 목록/저장에 쓰던 mock(SEED)은 스터디까지
+ * 연동되면서 남김없이 걷어냈습니다. client.* 호출은 docs/api/openapi.yaml 과
  * 대조해 두었으니, 스펙이 바뀌면 함께 맞춰주세요.
  *
  * 책임
@@ -14,19 +13,11 @@
 import { client } from '@/shared/api/client';
 import { titleKey, titleLabel } from '@/shared/member/enums';
 import {
-  SEED, RESOURCES,
+  RESOURCES,
   GRADE_LABEL, STATUS_LABEL, DEPARTMENT_LABEL,
   APPLICATION_STATUS_LABEL, PENDING_KIND_LABEL,
   SEMINAR_STATUS_LABELS, TARGET_GRADE_LABELS, STUDY_STATUS_LABEL,
 } from './admin.data';
-
-// 기본값은 mock 유지(백엔드 확정 전). 실 서버로 붙이려면 .env 에 VITE_ADMIN_MOCK=false.
-const USE_MOCK = import.meta.env.VITE_ADMIN_MOCK !== 'false';
-const delay = (ms) => new Promise((r) => setTimeout(r, ms));
-
-// 백엔드 연동이 끝난 리소스 — USE_MOCK 여부와 무관하게 항상 실 서버를 쓴다.
-const LIVE_RESOURCES = new Set(['member', 'exec', 'contrib', 'grad', 'seminars', 'seminarApprovals', 'applications']);
-const mocked = (resource) => USE_MOCK && !LIVE_RESOURCES.has(resource);
 
 /**
  * 서버 에러 → code 를 붙인 Error (seminar.api.js checkAttendance 와 동일 규약).
@@ -109,10 +100,6 @@ export function toWire(resource, fields) {
 
 /* ── 목록 조회 (검색·필터·정렬·페이지) ─────────────────────────────── */
 export async function fetchList(resource, params = {}) {
-  if (mocked(resource)) {
-    await delay(200);
-    return mockList(resource, params);
-  }
   if (resource === 'member') return fetchMembers(params);
   if (resource === 'exec') return fetchExecs(params);
   if (resource === 'contrib') return fetchContribs(params);
@@ -120,6 +107,7 @@ export async function fetchList(resource, params = {}) {
   if (resource === 'applications') return fetchPendingApplications(params);
   if (resource === 'seminarApprovals') return fetchPendingSeminarApprovals(params);
   if (resource === 'seminars') return fetchSeminars(params);
+  if (resource === 'studies') return fetchStudies(params);
   // GET /api/admin/{resource}?tab=&q=&grade=&gen=&status=&sort=&page=&size= (AdminListResponse)
   const { path } = RESOURCES[resource];
   const query = toListQuery(resource, params);
@@ -156,6 +144,32 @@ async function fetchSeminars(params = {}) {
 
 /** 서버가 페이지를 나눠주지 않는 목록을 한 번에 받을 때 쓰는 넉넉한 size. */
 const ALL_ROWS_SIZE = 1000;
+
+/**
+ * 스터디 목록. 서버가 상태 필터를 보지 않으므로(AdminResourceService.list) 전체를 받아
+ * 이 계층에서 검색·필터·정렬·페이지를 처리한다 — 다른 목록들과 같은 이유다.
+ *
+ * 행에는 leaderId 만 오고 이름이 없다. id 를 그대로 내보일 수는 없어 회원 명단을 한 번
+ * 더 받아 이름을 붙인다. 찾지 못하면 id 를 남겨 둔다 — 빈칸은 '스터디장이 없다'로
+ * 읽히지만 실제로는 '이름을 찾지 못했다'이기 때문이다.
+ *
+ * 개설 승인 대기(PENDING)도 여기 섞여 나온다. 승인·반려는 '승인 대기' 탭에서 사유와
+ * 함께 처리하는 일이고, 이 표의 상태 칸은 잘못 눌린 전이를 되돌리는 손이다.
+ */
+async function fetchStudies(params = {}) {
+  const [studyRes, memberRes] = await Promise.all([
+    client.get('/api/admin/studies', { params: { page: 1, size: ALL_ROWS_SIZE } }),
+    client.get('/api/admin/members', { params: { tab: 'member', page: 1, size: ALL_ROWS_SIZE } }),
+  ]);
+  const nameById = Object.fromEntries((memberRes.data.items || []).map((m) => [m.id, m.name]));
+  const rows = (studyRes.data.items || []).map((s) => ({
+    ...fromWire('studies', s),
+    fields: (s.fields || []).join(', '),
+    leader: nameById[s.leaderId] || s.leaderId || '',
+    createdAt: (s.createdAt || '').slice(0, 10),
+  }));
+  return queryLocally(rows, params);
+}
 
 /**
  * 회원 명단(member 탭). 서버 목록은 tab·q·sort·page 만 처리하고 등급·기수·상태
@@ -396,10 +410,6 @@ export async function saveBatch(resource, { updates = [], creates = [], deletes 
     creates: creates.map((c) => ({ tempId: c.tempId, fields: toWire(resource, c.fields) })),
     deletes,
   };
-  if (mocked(resource)) {
-    await delay(600);
-    return mockBatch(resource, body);   // mock 은 전부 성공이라 열어볼 실패가 없다
-  }
   let data;
   if (resource === 'applications') data = await saveApplicationsQueue(updates, deletes);
   else if (resource === 'seminarApprovals') data = await saveSeminarApprovalsQueue(updates, deletes);
@@ -710,11 +720,77 @@ export async function rejectSeminar(id, reason) {
   }
 }
 
+/* ── 스터디 임원 관리 ────────────────────────────────────────────────────────────────────
+ * 개설 승인과 신청자 승인. 서버는 이미 STUDY_APPROVE·STUDY_APPLICANT_MANAGE 권한으로
+ * 이 경로들을 가르고 있어, admin 전용 경로를 따로 내지 않고 /api/studies 를 그대로
+ * 씁니다(일정 관리와 같은 판단입니다). 단건 액션이라 배치저장을 거치지 않고 즉시
+ * 반영됩니다.
+ */
+/**
+ * 개설 신청 창이 열려 있는가. 전용 GET 이 없고 목록 응답(StudyList)에 얹혀 오므로
+ * 그 한 값을 위해 목록을 부른다 — 계약이 그렇게 정해져 있고, 값이 하나뿐인 설정에
+ * 엔드포인트를 새로 내는 것보다 낫다는 판단이다.
+ */
+export async function fetchRecruitmentOpen() {
+  const { data } = await client.get('/api/studies');
+  return Boolean(data?.recruiting);
+}
+
+export async function setRecruitmentOpen(open) {
+  try {
+    const { data } = await client.put('/api/studies/recruitment', { open });
+    return data;
+  } catch (error) {
+    throwWireError(error, 'FORBIDDEN');
+  }
+}
+
+export async function fetchPendingStudies() {
+  const { data } = await client.get('/api/studies/pending');
+  return data;
+}
+export async function fetchStudyApplicants() {
+  const { data } = await client.get('/api/studies/applicants');
+  return data;
+}
+export async function approveStudy(id) {
+  try {
+    const { data } = await client.post(`/api/studies/${id}/approve`);
+    return data;
+  } catch (error) {
+    throwWireError(error, 'NOT_FOUND');
+  }
+}
+export async function rejectStudy(id, reason) {
+  try {
+    const { data } = await client.post(`/api/studies/${id}/reject`, { reason });
+    return data;
+  } catch (error) {
+    throwWireError(error, 'VALIDATION');
+  }
+}
+export async function approveStudyApplicant(id) {
+  try {
+    const { data } = await client.post(`/api/studies/applicants/${id}/approve`);
+    return data;
+  } catch (error) {
+    throwWireError(error, 'NOT_FOUND');
+  }
+}
+export async function rejectStudyApplicant(id, reason) {
+  try {
+    const { data } = await client.post(`/api/studies/applicants/${id}/reject`, { reason });
+    return data;
+  } catch (error) {
+    throwWireError(error, 'VALIDATION');
+  }
+}
+
 /* ── 일정(Schedule) 관리 ────────────────────────────────────────────────────────────────────
  * 슬롯별 개별 액션(해제)이 필요해 TableView 배치저장 모델에 안 맞는다 — 즉시 반영되는
  * 단건 액션으로 구현한다. 목록 조회는 공개 GET과 같은 데이터를 admin 전용 화면에서
  * 다시 쓰는 것뿐이라 별도 admin 전용 조회 엔드포인트를 만들지 않는다.
- * 백엔드 연동 완료로 USE_MOCK 여부와 무관하게 항상 실 서버를 쓴다.
+ * 백엔드 연동 완료.
  */
 export async function fetchSchedules() {
   const { data } = await client.get('/api/schedules');
@@ -768,13 +844,13 @@ export async function forceUnassignSlot(scheduleId, index) {
 }
 
 /* ── 대시보드 · 설정 · 내보내기 ─────────────────────────────────────── */
-// 백엔드 연동 완료(AdminDashboardController) — USE_MOCK 여부와 무관하게 항상 실 서버.
+// 백엔드 연동 완료(AdminDashboardController).
 export async function fetchDashboardStats() {
   const { data } = await client.get('/api/admin/dashboard/stats');
   return data; // DashboardStats
 }
 
-// 백엔드 연동 완료(AdminSettingsController) — USE_MOCK 여부와 무관하게 항상 실 서버.
+// 백엔드 연동 완료(AdminSettingsController).
 // 설정값은 푸터가 공개 경로로 읽어 가므로, 목에 저장하면 저장은 됐는데 화면은
 // 안 바뀌는 상태가 된다.
 //
@@ -802,7 +878,6 @@ export async function saveSettings(payload) {
 
 /** 현재 필터/정렬을 반영한 스프레드시트 생성 → { fileUrl, fileId }. */
 export async function exportToDrive(resource, { filters, columns } = {}) {
-  if (USE_MOCK) { await delay(500); return { fileUrl: '#', fileId: 'mock-file' }; }
   try {
     const { data } = await client.post('/api/admin/export/google-drive', { resource: RESOURCES[resource].path, filters, columns });
     return data;
@@ -830,18 +905,3 @@ export async function saveGradDetail({ id, gradYear, careers }) {
   }
 }
 
-/* ── 개발용 mock 구현 (USE_MOCK 전용 — 백엔드 연동 시 통째로 삭제) ───── */
-function mockList(resource, params) {
-  return queryLocally(SEED[resource] || [], params);
-}
-
-function mockBatch(resource, body) {
-  // 실제 서버는 여기서 검증·충돌·부분성공을 판정합니다. mock 은 전부 성공 처리.
-  return {
-    updated: body.updates.map((u) => ({ id: u.id })),
-    created: body.creates.map((c, i) => ({ tempId: c.tempId, id: 'srv-' + Date.now() + '-' + i })),
-    deleted: body.deletes,
-    conflicts: [],
-    errors: [],
-  };
-}

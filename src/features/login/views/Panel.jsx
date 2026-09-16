@@ -12,7 +12,6 @@ export function Panel({ center = false, children }) {
         style={{
           background: 'var(--surface-card)',
           border: '1px solid var(--border)',
-          borderTop: '3px solid var(--brand)',
           borderRadius: 'var(--radius-lg)',
           boxShadow: 'var(--shadow-md)',
           padding: center ? '44px 40px' : '40px',
