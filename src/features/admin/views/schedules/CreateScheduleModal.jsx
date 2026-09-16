@@ -12,7 +12,7 @@ export function CreateScheduleModal({ values, errors, onChange, onClose, onSubmi
       <div
         className="adm-anim-pop"
         onClick={(e) => e.stopPropagation()}
-        style={{ width: '100%', maxWidth: 440, background: 'var(--surface-card)', border: '1px solid var(--border)', borderTop: '3px solid var(--brand)', borderRadius: 14, boxShadow: 'var(--shadow-lg)', padding: 28 }}
+        style={{ width: '100%', maxWidth: 440, background: 'var(--surface-card)', border: '1px solid var(--border)', borderRadius: 14, boxShadow: 'var(--shadow-lg)', padding: 28 }}
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <h3 style={{ margin: 0, fontFamily: 'var(--font-serif)', fontWeight: 400, fontSize: 24, color: 'var(--text-strong)' }}>일정 만들기</h3>

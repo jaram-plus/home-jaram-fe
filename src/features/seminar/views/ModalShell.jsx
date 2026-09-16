@@ -32,7 +32,6 @@ export function ModalShell({ title, lead, onClose, maxWidth = 480, align = 'cent
           maxWidth,
           background: 'var(--surface-card)',
           border: '1px solid var(--border)',
-          borderTop: '3px solid var(--brand)',
           borderRadius: 'var(--radius-lg)',
           boxShadow: 'var(--shadow-lg)',
           padding: 32,

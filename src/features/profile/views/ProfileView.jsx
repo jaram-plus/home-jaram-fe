@@ -8,7 +8,7 @@ import { EYEBROW, GROUPS, READONLY_LABELS, LABELS, MESSAGES, ACTIONS, TERMS_EMPT
 const markSrc = typeof jaramMark === 'string' ? jaramMark : jaramMark.src;
 
 /**
- * 읽기 모드 카드. 상단 빨강 룰(accent="top") + PROFILE 아이라벨, 이름(디스플레이),
+ * 읽기 모드 카드. PROFILE 아이라벨, 이름(디스플레이),
  * 학번/부서 등 읽기 전용 행, 그리고 bio/github/blog 값. 우상단 "수정"·"로그아웃" 버튼.
  * `canAdmin`(권한을 가진 회원)이면 그 앞에 "관리자 콘솔" 진입 버튼이 함께 놓인다.
  */
@@ -38,7 +38,7 @@ export function ProfileView({ me, canAdmin, onAdmin, onEdit, onLogout, onWithdra
     );
 
   return (
-    <Card accent="top">
+    <Card>
       {/* 시그니처: 카드 우상단에 옅게 깔린 오버사이즈 JR 인장(워터마크). */}
       <img
         src={markSrc}

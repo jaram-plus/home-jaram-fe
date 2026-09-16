@@ -33,7 +33,7 @@ export function GradDetailModal({ row, onClose, onDone }) {
       <div
         className="adm-anim-pop"
         onClick={(e) => e.stopPropagation()}
-        style={{ width: '100%', maxWidth: 640, background: 'var(--surface-card)', border: '1px solid var(--border)', borderTop: '3px solid var(--brand)', borderRadius: 14, boxShadow: 'var(--shadow-lg)', padding: 32 }}
+        style={{ width: '100%', maxWidth: 640, background: 'var(--surface-card)', border: '1px solid var(--border)', borderRadius: 14, boxShadow: 'var(--shadow-lg)', padding: 32 }}
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
           <div style={{ minWidth: 0 }}>

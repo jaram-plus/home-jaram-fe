@@ -25,7 +25,7 @@ export function PickerModal({ onClose, children }) {
       <div
         className="adm-anim-pop"
         onClick={(e) => e.stopPropagation()}
-        style={{ width: WIDTH, maxWidth: '100%', height: HEIGHT, maxHeight: '100%', display: 'flex', flexDirection: 'column', background: 'var(--surface-card)', border: '1px solid var(--border)', borderTop: '3px solid var(--brand)', borderRadius: 14, boxShadow: 'var(--shadow-lg)', padding: 28, boxSizing: 'border-box' }}
+        style={{ width: WIDTH, maxWidth: '100%', height: HEIGHT, maxHeight: '100%', display: 'flex', flexDirection: 'column', background: 'var(--surface-card)', border: '1px solid var(--border)', borderRadius: 14, boxShadow: 'var(--shadow-lg)', padding: 28, boxSizing: 'border-box' }}
       >
         {children}
       </div>

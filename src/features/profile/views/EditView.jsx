@@ -9,7 +9,7 @@ import { EYEBROW, READONLY_LABELS, LABELS, PLACEHOLDERS, MESSAGES } from '../pro
  */
 export function EditView({ me, values, errors, field, onSave, onCancel, saving, formError }) {
   return (
-    <Card accent="top">
+    <Card>
       <Eyebrow>{EYEBROW}</Eyebrow>
       <h1 style={{ margin: '8px 0 4px', fontFamily: 'var(--font-display)', fontSize: 'var(--fs-h1)', color: 'var(--text-strong)' }}>
         {me.name}

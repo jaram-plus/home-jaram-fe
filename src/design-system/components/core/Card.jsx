@@ -2,9 +2,12 @@ import React from 'react';
 
 /**
  * JARAM Card — a paper surface for grouped content.
- * `interactive` adds a hover lift; `accent="top"` draws a red rule across the head.
+ * `interactive` adds a hover lift.
+ *
+ * 상단 빨강 룰(`accent="top"`)은 없앴다 — 카드·모달에 빨간 강조 줄을 두지 않는다.
+ * 구분은 테두리 한 줄과 여백·타이포 위계가 맡는다.
  */
-export function Card({ children, interactive = false, accent = 'none', padding = 'lg', style, ...rest }) {
+export function Card({ children, interactive = false, padding = 'lg', style, ...rest }) {
   const pads = { sm: '16px', md: '24px', lg: '32px' };
   const base = {
     position: 'relative',
@@ -17,9 +20,6 @@ export function Card({ children, interactive = false, accent = 'none', padding =
     overflow: 'hidden',
     ...style,
   };
-  if (accent === 'top') {
-    base.borderTop = '3px solid var(--brand)';
-  }
   const handlers = interactive ? {
     onMouseEnter: (e) => {
       e.currentTarget.style.transform = 'translateY(-4px)';

@@ -4,8 +4,6 @@ export interface CardProps {
   children?: React.ReactNode;
   /** Adds a hover lift for clickable cards. @default false */
   interactive?: boolean;
-  /** Decorative red rule. @default "none" */
-  accent?: 'none' | 'top';
   /** @default "lg" */
   padding?: 'sm' | 'md' | 'lg';
   style?: React.CSSProperties;

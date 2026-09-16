@@ -28,7 +28,6 @@ export function MyStudyCard({ item, onManage, onAttendance, onDelete }) {
         flexDirection: 'column',
         background: 'var(--surface-card)',
         border: '1px solid var(--border)',
-        borderTop: '3px solid var(--brand)',
         borderRadius: 'var(--radius-lg)',
         boxShadow: 'var(--shadow-sm)',
         padding: 24,
