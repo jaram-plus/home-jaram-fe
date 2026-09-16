@@ -390,23 +390,33 @@ paths:
     get:
       tags: [study]
       summary: 스터디 목록 조회 (UC-T1)
-      description: APPROVED 스터디만. 인증 시 사용자별 apply 상태 포함. public.
+      description: >
+        파라미터가 없으면 RECRUITING + ONGOING. status 로 하나만 고를 수 있고
+        PENDING·REJECTED 는 고를 수 없다. 인증 시 사용자별 apply 상태 포함. public.
       security:
         - {}
         - { bearerAuth: [] }
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [RECRUITING, ONGOING, FINISHED]
       responses:
         '200':
-          description: 스터디 목록
+          description: 모집 토글 상태와 스터디 목록
           content:
             application/json:
-              schema:
-                type: array
-                items: { $ref: '#/components/schemas/Study' }
+              schema: { $ref: '#/components/schemas/StudyList' }
+        '422': { $ref: '#/components/responses/Validation' }
         '5XX': { $ref: '#/components/responses/ServerError' }
     post:
       tags: [study]
       summary: 스터디 개설 신청 (UC-T3)
-      description: approvalStatus=PENDING 비공개 스터디 생성. 신청자가 leader.
+      description: >
+        status=PENDING 비공개 스터디 생성. 신청자가 leader. 모집 토글이 닫혀 있으면
+        409 RECRUIT_CLOSED.
       security: [{ bearerAuth: [] }]
       requestBody:
         required: true
@@ -421,7 +431,85 @@ paths:
               schema: { $ref: '#/components/schemas/Study' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/ReregistrationRequired' }
+        '409': { $ref: '#/components/responses/Conflict' }
         '422': { $ref: '#/components/responses/Validation' }
+        '5XX': { $ref: '#/components/responses/ServerError' }
+
+  /api/studies/recruitment:
+    put:
+      tags: [study]
+      summary: 스터디 개설 모집 토글 (STUDY_EDIT)
+      description: 개설 신청 버튼의 표시와 동작만 가른다. 어떤 스터디의 status 도 바뀌지 않는다.
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RecruitmentUpdate' }
+      responses:
+        '204': { description: 저장됨 }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '422': { $ref: '#/components/responses/Validation' }
+        '5XX': { $ref: '#/components/responses/ServerError' }
+
+  /api/studies/{id}:
+    get:
+      tags: [study]
+      summary: 스터디 상세 (UC-T9)
+      description: 커리큘럼과 지원 인원 명단을 포함한다. 학번은 서버가 마스킹한다. 로그인 필수.
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: 스터디 상세
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/StudyDetail' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '5XX': { $ref: '#/components/responses/ServerError' }
+
+  /api/studies/{id}/close-recruiting:
+    post:
+      tags: [study]
+      summary: 모집 완료 (스터디장 or STUDY_EDIT)
+      description: RECRUITING 에서만 통과한다. 아니면 409 INVALID_STATE.
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '204': { description: ONGOING 으로 바뀜 }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '5XX': { $ref: '#/components/responses/ServerError' }
+
+  /api/studies/{id}/finish:
+    post:
+      tags: [study]
+      summary: 스터디 종료 (스터디장 or STUDY_EDIT)
+      description: ONGOING 에서만 통과한다. 아니면 409 INVALID_STATE.
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '204': { description: FINISHED 로 바뀜 }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
         '5XX': { $ref: '#/components/responses/ServerError' }
 
   /api/studies/{id}/apply:
@@ -1369,12 +1457,17 @@ components:
       description: 세미나 공개 대상 등급
     StudyStatus:
       type: string
-      enum: [RECRUITING, ONGOING, CLOSED]
-      description: CLOSED = 모집 마감·종료 (3상태)
+      enum: [PENDING, REJECTED, RECRUITING, ONGOING, FINISHED]
+      description: >
+        스터디 생애축. 개설 승인 대기(PENDING) → 승인(RECRUITING) → 모집 완료(ONGOING)
+        → 종료(FINISHED). 개설 반려는 REJECTED. 옛 CLOSED(정원 마감)는 없어졌다.
     ApplyState:
       type: [string, 'null']
       enum: [OPEN, APPLIED, CLOSED, JOINED, null]
-      description: 사용자별 파생. 미인증 시 null.
+      description: >
+        사용자별 파생. 미인증 시 null. OPEN=스터디가 RECRUITING 이고 내 신청 기록이
+        없다, APPLIED=내 신청이 대기, JOINED=승인됨 또는 내가 스터디장,
+        CLOSED=RECRUITING 이 아니거나 내가 반려당했다. 정원은 더 이상 보지 않는다.
     ApprovalStatus:
       type: string
       enum: [PENDING, APPROVED, REJECTED]
@@ -1665,26 +1758,93 @@ components:
           type: array
           items: { type: string }
         leader: { type: string, description: leader 이름 }
+        leaderGen: { type: [integer, 'null'], description: leader 기수. 미승인 회원이면 null }
+        intro: { type: [string, 'null'], description: 카드에 뜨는 설명 }
         schedule: { type: [string, 'null'] }
-        period: { type: [string, 'null'] }
         mode: { type: [string, 'null'] }
-        cur: { type: integer, description: 현재 인원 (파생) }
-        cap: { type: integer, description: 정원 }
+        cur: { type: integer, description: 승인되어 확정된 인원 }
+        cap: { type: integer, description: 개설 시 목표한 희망 인원. 상한이 아니다 }
         status: { $ref: '#/components/schemas/StudyStatus' }
         apply: { $ref: '#/components/schemas/ApplyState' }
+    StudyList:
+      type: object
+      required: [recruiting, items]
+      properties:
+        recruiting: { type: boolean, description: 스터디 개설 신청을 받는 중인가 (모집 토글) }
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/Study' }
+    StudyWeek:
+      type: object
+      required: [weekNo, title]
+      properties:
+        weekNo: { type: integer, minimum: 1 }
+        title: { type: string }
+        content: { type: [string, 'null'] }
+    StudyRosterEntry:
+      type: object
+      required: [studentId, name]
+      properties:
+        studentId: { type: string, description: 마스킹된 학번 (예 2022*****9) }
+        gen: { type: [integer, 'null'] }
+        name: { type: string }
+    StudyDetail:
+      type: object
+      required: [id, title, fields, leader, cur, cap, status, weeks, roster]
+      properties:
+        id: { type: string }
+        title: { type: string }
+        fields:
+          type: array
+          items: { type: string }
+        intro: { type: [string, 'null'] }
+        leader: { type: string }
+        leaderGen: { type: [integer, 'null'] }
+        schedule: { type: [string, 'null'] }
+        place: { type: [string, 'null'] }
+        mode: { type: [string, 'null'] }
+        contact: { type: [string, 'null'] }
+        cur: { type: integer }
+        cap: { type: integer }
+        status: { $ref: '#/components/schemas/StudyStatus' }
+        apply: { $ref: '#/components/schemas/ApplyState' }
+        weeks:
+          type: array
+          items: { $ref: '#/components/schemas/StudyWeek' }
+        roster:
+          type: array
+          items: { $ref: '#/components/schemas/StudyRosterEntry' }
     StudyCreateRequest:
       type: object
-      required: [title, fields, capacity]
+      required: [title, fields, capacity, intro, schedule, place, mode, contact, weeks]
       properties:
         title: { type: string }
         fields:
           type: array
           items: { type: string }
-        capacity: { type: integer, minimum: 1 }
-        schedule: { type: [string, 'null'] }
-        period: { type: [string, 'null'] }
-        mode: { type: [string, 'null'] }
-        intro: { type: [string, 'null'] }
+          minItems: 1
+        capacity: { type: integer, minimum: 1, description: 희망 인원 }
+        intro: { type: string }
+        schedule: { type: string, description: 일시 }
+        place: { type: string, description: 장소 }
+        mode: { type: string, description: 진행 방식 }
+        contact: { type: string, description: 문의 연락처 }
+        weeks:
+          type: array
+          minItems: 1
+          items: { $ref: '#/components/schemas/StudyWeekInput' }
+    StudyWeekInput:
+      type: object
+      required: [weekNo, title]
+      properties:
+        weekNo: { type: integer, minimum: 1 }
+        title: { type: string }
+        content: { type: [string, 'null'], maxLength: 2000 }
+    RecruitmentUpdate:
+      type: object
+      required: [open]
+      properties:
+        open: { type: boolean }
     ApplyRequest:
       type: object
       required: [motive]
@@ -1701,11 +1861,10 @@ components:
         reason: { type: [string, 'null'], description: 거절 사유 }
     MyStudy:
       type: object
-      required: [id, title, approvalStatus, status]
+      required: [id, title, status]
       properties:
         id: { type: string }
         title: { type: string }
-        approvalStatus: { $ref: '#/components/schemas/ApprovalStatus' }
         status: { $ref: '#/components/schemas/StudyStatus' }
         reason: { type: [string, 'null'], description: 반려 사유 }
     MyActivity:
@@ -1730,7 +1889,6 @@ components:
         creator: { type: string, description: 개설자 이름 }
         capacity: { type: integer }
         schedule: { type: [string, 'null'] }
-        period: { type: [string, 'null'] }
         intro: { type: [string, 'null'] }
         createdAt: { type: string, format: date-time }
     Applicant:
