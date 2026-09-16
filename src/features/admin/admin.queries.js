@@ -18,6 +18,9 @@ export const adminKeys = {
   dashboard: () => ['admin', 'dashboard'],
   settings: () => ['admin', 'settings'],
   schedules: () => ['admin', 'schedules'],
+  pendingStudies: () => ['admin', 'pendingStudies'],
+  studyApplicants: () => ['admin', 'studyApplicants'],
+  studyRecruitment: () => ['admin', 'studyRecruitment'],
 };
 
 /** 리소스 목록. params = { q, filters, sort, page, size } (searchParams 에서 조립). */
@@ -337,4 +340,82 @@ export function useSaveSettings(options = {}) {
 
 export function useDriveExport(resource, options = {}) {
   return useMutation({ mutationFn: (args) => api.exportToDrive(resource, args), ...options });
+}
+
+/* ── 스터디 임원 관리 ─────────────────────────────────────────
+ * 승인·반려는 대기 목록에서 그 행을 덜어내고, 공개된 스터디는 목록 표에 들어간다.
+ * 그래서 두 키를 함께 무효화한다.
+ */
+/** 개설 신청 창. 이 값이 false 면 회원의 POST /api/studies 가 409 로 막힌다. */
+export function useRecruitmentOpen(options = {}) {
+  return useQuery({ queryKey: adminKeys.studyRecruitment(), queryFn: api.fetchRecruitmentOpen, ...options });
+}
+
+export function useSetRecruitmentOpen(options = {}) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ open }) => api.setRecruitmentOpen(open),
+    ...options,
+    onSuccess: (...a) => {
+      qc.invalidateQueries({ queryKey: adminKeys.studyRecruitment() });
+      options.onSuccess?.(...a);
+    },
+  });
+}
+
+export function usePendingStudies(options = {}) {
+  return useQuery({ queryKey: adminKeys.pendingStudies(), queryFn: api.fetchPendingStudies, ...options });
+}
+
+export function useStudyApplicants(options = {}) {
+  return useQuery({ queryKey: adminKeys.studyApplicants(), queryFn: api.fetchStudyApplicants, ...options });
+}
+
+export function useApproveStudy(options = {}) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id }) => api.approveStudy(id),
+    ...options,
+    onSuccess: (...a) => {
+      qc.invalidateQueries({ queryKey: adminKeys.pendingStudies() });
+      qc.invalidateQueries({ queryKey: ['admin', 'list', 'studies'] });
+      options.onSuccess?.(...a);
+    },
+  });
+}
+
+export function useRejectStudy(options = {}) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, reason }) => api.rejectStudy(id, reason),
+    ...options,
+    onSuccess: (...a) => {
+      qc.invalidateQueries({ queryKey: adminKeys.pendingStudies() });
+      options.onSuccess?.(...a);
+    },
+  });
+}
+
+export function useApproveStudyApplicant(options = {}) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id }) => api.approveStudyApplicant(id),
+    ...options,
+    onSuccess: (...a) => {
+      qc.invalidateQueries({ queryKey: adminKeys.studyApplicants() });
+      options.onSuccess?.(...a);
+    },
+  });
+}
+
+export function useRejectStudyApplicant(options = {}) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, reason }) => api.rejectStudyApplicant(id, reason),
+    ...options,
+    onSuccess: (...a) => {
+      qc.invalidateQueries({ queryKey: adminKeys.studyApplicants() });
+      options.onSuccess?.(...a);
+    },
+  });
 }

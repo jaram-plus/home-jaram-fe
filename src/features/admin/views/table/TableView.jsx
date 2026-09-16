@@ -30,8 +30,9 @@ const PAGE_SIZE = 8;
  *
  * @param resource 고정 리소스('seminars'|'studies'|'applications'). 인원 관리는 생략 →
  *                 ?tab= 로 member|exec|contrib|grad 를 고릅니다.
+ * @param hideHeader 바깥 화면이 이미 제목을 그렸을 때(StudyAdminView) 머리글을 생략합니다.
  */
-export function TableView({ resource: fixedResource }) {
+export function TableView({ resource: fixedResource, hideHeader = false }) {
   const [sp, setSp] = useSearchParams();
   const tab = sp.get('tab') || 'member';
   const resource = fixedResource || tab;
@@ -233,9 +234,13 @@ export function TableView({ resource: fixedResource }) {
 
   return (
     <div>
-      <p style={{ margin: '0 0 10px', fontSize: 12, fontWeight: 600, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--brand)' }}>{schema.eyebrow}</p>
-      <h1 style={{ margin: '0 0 6px', fontFamily: 'var(--font-display)', fontSize: 40, lineHeight: 1.1, color: 'var(--text-strong)' }}>{schema.title}</h1>
-      <p style={{ margin: '0 0 20px', fontSize: 15, color: 'var(--text-muted)' }}>{schema.desc}</p>
+      {!hideHeader && (
+        <>
+          <p style={{ margin: '0 0 10px', fontSize: 12, fontWeight: 600, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--brand)' }}>{schema.eyebrow}</p>
+          <h1 style={{ margin: '0 0 6px', fontFamily: 'var(--font-display)', fontSize: 40, lineHeight: 1.1, color: 'var(--text-strong)' }}>{schema.title}</h1>
+          <p style={{ margin: '0 0 20px', fontSize: 15, color: 'var(--text-muted)' }}>{schema.desc}</p>
+        </>
+      )}
 
       {isPeople && (
         <div style={{ display: 'flex', gap: 28, borderBottom: '1px solid var(--border)', marginBottom: 20 }}>

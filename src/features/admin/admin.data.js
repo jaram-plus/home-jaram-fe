@@ -21,7 +21,18 @@ export const DEPARTMENT_LABEL = DEPARTMENT_LABELS;
 export const APPLICATION_STATUS_LABEL = { PENDING: '대기', APPROVED: '승인', REJECTED: '반려' };
 /** 승인 탭 한 줄의 구분. 재등록은 신청 여부까지 상태 칸에 드러난다. */
 export const PENDING_KIND_LABEL = { SIGNUP: '가입', REREGISTER: '재등록' };
-export const STUDY_STATUS_LABEL = { RECRUITING: '모집', ONGOING: '진행', CLOSED: '종료' };
+/**
+ * 스터디 생애축(BE StudyStatus). 선언 순서가 곧 생애 순서입니다.
+ * 옛 CLOSED('정원이 찼다')는 그 개념 자체가 없어져 버렸고, 개설 승인 축이
+ * 접히면서 PENDING·REJECTED 가 여기로 들어왔습니다.
+ */
+export const STUDY_STATUS_LABEL = {
+  PENDING: '승인 대기',
+  REJECTED: '반려',
+  RECRUITING: '모집',
+  ONGOING: '진행',
+  FINISHED: '종료',
+};
 // admin.api.js / admin.validation.js 는 여기서 재수출된 걸 import한다(수입 경로 최소 변경).
 export { SEMINAR_STATUS_LABELS, TARGET_GRADE_LABELS };
 
@@ -152,17 +163,21 @@ export const SCHEMAS = {
     ],
   },
   studies: {
-    eyebrow: 'STUDY', title: '스터디 관리', addLabel: '스터디 개설',
-    desc: '스터디 모집·진행·출석률을 관리합니다.',
-    filters: [{ key: 'status', label: '상태', options: ['전체', '모집', '진행', '종료'] }],
+    // 수기 개설(creates)은 두지 않는다 — 서버가 leaderId 를 요구하는데 표에는 사람을
+    // 고를 자리가 없고, 개설은 회원이 스터디 페이지에서 신청하는 절차이기 때문이다.
+    // 그 절차를 여닫는 손잡이가 제목 아래 '개설 신청' 토글이다.
+    eyebrow: 'STUDY', title: '스터디 관리', addLabel: '',
+    desc: '개설된 스터디 전체입니다. 셀을 눌러 바로 수정하고, 변경분을 모아 저장하세요.',
+    filters: [{ key: 'status', label: '상태', options: ['전체', '승인 대기', '반려', '모집', '진행', '종료'] }],
+    // 고칠 수 있는 칸은 서버 화이트리스트(AdminBatchExecutor.updateStudy)와 같다 —
+    // 제목·정원·상태 셋뿐이라 나머지는 static 이다. 분야·일정은 스터디장이 고친다.
     cols: [
-      { key: 'title', label: '스터디명', type: 'text', width: '1.4fr' },
-      { key: 'leader', label: '스터디장', type: 'text', width: '0.8fr' },
-      { key: 'count', label: '인원', type: 'text', width: '0.6fr', align: 'center' },
-      { key: 'schedule', label: '요일·시간', type: 'text', width: '0.9fr' },
-      { key: 'period', label: '기간', type: 'text', width: '1fr' },
-      { key: 'rate', label: '출석률', type: 'text', width: '0.6fr', align: 'center' },
-      { key: 'status', label: '상태', type: 'select', width: '0.8fr', options: ['모집', '진행', '종료'] },
+      { key: 'title', label: '스터디명', type: 'text', width: '1.6fr' },
+      { key: 'fields', label: '분야', type: 'static', width: '1fr' },
+      { key: 'leader', label: '스터디장', type: 'static', width: '0.9fr' },
+      { key: 'capacity', label: '정원', type: 'text', width: '0.55fr', align: 'center' },
+      { key: 'status', label: '상태', type: 'select', width: '0.9fr', options: ['승인 대기', '반려', '모집', '진행', '종료'] },
+      { key: 'createdAt', label: '개설 신청일', type: 'static', width: '1fr', align: 'center' },
       { key: '__act', label: '', type: 'actions', width: '0.55fr', align: 'center', actions: ['delete'] },
     ],
   },
@@ -230,6 +245,13 @@ export const TOAST = {
   attendeeRemoved: (name) => `${name} 님의 출석을 취소했습니다.`,
   exported: '현재 목록을 Google Drive 스프레드시트로 내보냈습니다.',
   settingsSaved: '설정이 저장되었습니다.',
+  // 스터디 임원 관리 — 문구는 스터디 페이지 관리 탭에서 쓰던 것을 그대로 옮겼습니다.
+  studyPublished: (title) => `‘${title}’을(를) 공개했습니다.`,
+  studyRejected: '스터디 개설을 반려했습니다.',
+  studyApplicantApproved: (name) => `${name} 님의 신청을 승인했습니다.`,
+  studyApplicantRejected: '신청을 거절했습니다.',
+  recruitmentOpened: '스터디 개설 신청을 받기 시작했습니다.',
+  recruitmentClosed: '스터디 개설 신청을 닫았습니다.',
 };
 
 export const EMPTY = {
@@ -237,15 +259,38 @@ export const EMPTY = {
   noResult: { title: '검색 결과가 없어요', desc: '검색어나 필터를 바꿔 보세요.' },
 };
 
-/* ── 개발용 시드 (USE_MOCK=true) — 백엔드 연동 시 삭제 ────────────────── */
-export const SEED = {
-  // member·exec·contrib·grad 는 실 서버(GET /api/admin/members)로 전환되어 시드를 두지 않는다.
-  studies: [
-    { id: 'st1', title: '알고리즘 코테반', leader: '강준혁', count: '12명', schedule: '월 20:00', period: '2026-03 ~ 06', rate: '92%', status: '진행' },
-    { id: 'st2', title: 'CS 전공 스터디', leader: '최유나', count: '8명', schedule: '수 19:00', period: '2026-03 ~ 06', rate: '85%', status: '진행' },
-    { id: 'st3', title: '토이 프로젝트 A', leader: '박도윤', count: '5명', schedule: '금 18:00', period: '2026-03 ~ 08', rate: '78%', status: '진행' },
-    { id: 'st4', title: '리액트 심화', leader: '이하은', count: '6명', schedule: '화 20:00', period: '2026-03 ~ 06', rate: '—', status: '모집' },
-    { id: 'st5', title: 'AI 논문 리딩', leader: '윤서아', count: '7명', schedule: '목 19:00', period: '2026-03 ~ 06', rate: '81%', status: '진행' },
-    { id: 'st6', title: '자바 백엔드', leader: '정시우', count: '9명', schedule: '토 14:00', period: '2025-09 ~ 12', rate: '88%', status: '종료' },
-  ],
+/**
+ * 스터디 관리 상단 탭 (URL ?tab= 으로 상태화).
+ *
+ * 목록은 기존 표(TableView)를 그대로 쓰고, 승인 대기·신청자는 즉시 반영되는
+ * 단건 액션이라 배치저장 모델에 맞지 않아 카드형 커스텀 뷰로 둡니다.
+ */
+export const STUDY_TABS = [
+  { key: 'list', label: '목록' },
+  {
+    key: 'pending',
+    label: '승인 대기',
+    // 두 탭은 이름이 비슷해 헷갈립니다. 승인하는 대상이 '스터디'인지 '사람'인지가
+    // 차이의 전부라, 설명도 그 한 가지만 말합니다.
+    desc: '회원이 새로 만들겠다고 올린 스터디입니다. 승인 대상은 스터디이고, 승인하면 목록에 공개되어 모집이 시작됩니다. 반려하면 사유가 개설자에게 전달됩니다.',
+  },
+  {
+    key: 'applicants',
+    label: '신청자',
+    desc: '이미 공개된 스터디에 참여하겠다고 지원한 사람입니다. 승인 대상은 사람이고, 승인하면 그 스터디의 멤버가 됩니다. 스터디장도 자기 스터디의 지원자는 직접 처리할 수 있으며, 여기서는 임원이 모든 스터디의 지원자를 한자리에서 봅니다.',
+  },
+];
+
+export const STUDY_EMPTY = {
+  pending: '승인 대기 중인 스터디가 없습니다.',
+  applicants: '대기 중인 신청이 없습니다.',
 };
+
+/** 개설 신청 창 — 회원이 스터디 페이지에서 새 스터디를 올릴 수 있는지 가릅니다. */
+export const STUDY_RECRUITMENT = {
+  title: '스터디 개설 신청',
+  on: '회원이 새 스터디를 올릴 수 있습니다.',
+  off: '지금은 개설 신청을 받지 않습니다. 회원이 올리려 하면 거절됩니다.',
+};
+
+// 개발용 시드(SEED)는 없다 — 모든 리소스가 실 서버를 본다.
