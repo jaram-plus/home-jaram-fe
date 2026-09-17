@@ -71,6 +71,16 @@ export function useRejectApplicant(studyId, options) {
     [studyKeys.applicantsOf(studyId), studyKeys.my], options);
 }
 
+/**
+ * 스터디원을 내보낸다. 명단·상세·목록이 모두 이 인원 수를 쓰므로 넷을 무효화한다 —
+ * 상세 모달의 명단과 카드의 'n / m명'이 방금 뺀 사람을 계속 세면 저장이 안 된 줄 안다.
+ */
+export function useRemoveMember(studyId, options) {
+  return useInvalidatingMutation(api.removeMember,
+    [studyKeys.applicantsOf(studyId), studyKeys.detail(studyId),
+      studyKeys.attendance(studyId), studyKeys.studies, studyKeys.my], options);
+}
+
 /** studyId 가 없으면 돌지 않는다 — 모달이 닫혀 있을 때 부르지 않기 위해서다. */
 export function useStudyApplicants(studyId) {
   return useQuery({

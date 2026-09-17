@@ -90,6 +90,15 @@ export async function deleteApplication({ applicationId }) {
   await client.delete(`/api/studies/applicants/${applicationId}`);
 }
 
+/**
+ * 참여 확정된 스터디원을 내보낸다. 위의 deleteApplication 과 URL 이 다른 것은 뜻이
+ * 달라서다 — 저쪽은 본인이 자기 반려 신청을 지우는 자리고, 여기는 스터디장·임원이
+ * 남을 명단에서 빼는 자리다. 그 사람의 출석도 서버가 함께 지운다.
+ */
+export async function removeMember({ studyId, applicationId }) {
+  await client.delete(`/api/studies/${studyId}/members/${applicationId}`);
+}
+
 export async function closeRecruiting({ studyId }) {
   await client.post(`/api/studies/${studyId}/close-recruiting`);
 }
