@@ -1,24 +1,15 @@
 /**
- * Study page copy + seed data — pure data, no JSX.
+ * Study page copy — pure data, no JSX.
  *
- * `STUDIES`, `MY_APPS`, `MY_STUDIES`, `SEED_PENDING` / `SEED_APPLICANTS` mirror
- * the original mock catalogue/officer-management lists; the page now fetches
- * all of these from the backend via study.api.js, so these exports are
- * currently unused. Keep only the static copy (messages, badge maps, empty
- * states) here.
+ * 목록도 내 활동도 신청자도 전부 서버에서 온다(study.api.js). 화면을 먼저 그리던
+ * 시절의 목업 카탈로그(`STUDIES` · `MY_APPS` · `MY_STUDIES` · `SEED_PENDING` ·
+ * `SEED_APPLICANTS`)는 지웠다 — 실 서버에 붙은 리소스의 시드는 남기지 않는다
+ * (admin.data.js 가 같은 규칙을 따른다). 남겨 두면 어느 쪽이 참인지 파일을 열어
+ * 봐야 알 수 있고, 목업의 'CLOSED' 처럼 계약에 없는 값이 섞여 들어온다.
+ *
+ * 여기 남는 것은 정적인 것뿐이다 — 배지·라벨 맵, 문구, 그리고 서버 응답을 화면
+ * 모양으로 옮기는 순수 함수.
  */
-
-// Browsable studies. `status` drives the badge; `apply` drives the CTA state.
-//   status (StudyStatus): PENDING | REJECTED | RECRUITING | ONGOING | FINISHED
-//   apply  (ApplyState):  OPEN | APPLIED | CLOSED | JOINED
-export const STUDIES = [
-  { id: 's1', title: 'React 심화 스터디', fields: ['Frontend', 'React'], leader: '이성장', schedule: '매주 화 19:00', period: '8주 과정', mode: '온·오프라인 병행', cur: 3, cap: 6, status: 'RECRUITING', apply: 'OPEN' },
-  { id: 's2', title: '알고리즘 문제풀이', fields: ['Algorithm', 'C++'], leader: '김자람', schedule: '매주 목 20:00', period: '12주 과정', mode: '오프라인', cur: 5, cap: 6, status: 'RECRUITING', apply: 'APPLIED' },
-  { id: 's3', title: '운영체제 뿌수기', fields: ['CS', 'OS'], leader: '박나눔', schedule: '매주 월 19:30', period: '10주 과정', mode: '온라인', cur: 6, cap: 6, status: 'CLOSED', apply: 'CLOSED' },
-  { id: 's4', title: 'Spring 백엔드 실전', fields: ['Backend', 'Spring'], leader: '최순환', schedule: '매주 수 19:00', period: '진행 중', mode: '오프라인', cur: 5, cap: 5, status: 'ONGOING', apply: 'JOINED' },
-  { id: 's5', title: '자료구조 입문', fields: ['CS'], leader: '한그루', schedule: '매주 금 18:00', period: '8주 과정', mode: '온라인', cur: 2, cap: 8, status: 'RECRUITING', apply: 'OPEN' },
-  { id: 's6', title: 'Docker · Kubernetes', fields: ['DevOps'], leader: '정포부', schedule: '격주 토 14:00', period: '6주 과정', mode: '온·오프라인 병행', cur: 4, cap: 5, status: 'RECRUITING', apply: 'OPEN' },
-];
 
 // status → Tag content. tone maps to the design-system Tag `tone` prop.
 export const STATUS_BADGE = {
@@ -35,30 +26,6 @@ export const APPLY_LABEL = {
   CLOSED: '모집이 마감되었습니다',
   JOINED: '참여 중인 스터디입니다',
 };
-
-// --- "내 활동" (original mock, now unused — see study.api.js listMyActivity) ---
-export const MY_APPS = [
-  { id: 'app1', title: 'React 심화 스터디', message: '승인 대기 중입니다.', badge: '대기', tone: 'neutral' },
-  { id: 'app2', title: '알고리즘 문제풀이', message: '참여가 확정되었습니다.', badge: '승인', tone: 'brand' },
-  { id: 'app3', title: '운영체제 뿌수기', message: '이번 스터디에는 함께하지 못하게 되었습니다. 사유: 모집 인원이 모두 마감되었습니다.', badge: '거절', tone: 'neutral' },
-];
-
-export const MY_STUDIES = [
-  { id: 'my1', title: 'Rust 입문 스터디', message: '임원 확인 후 공개됩니다.', badge: '승인 대기', tone: 'neutral' },
-  { id: 'my2', title: 'Spring 백엔드 실전', message: '전체에 공개되어 모집 중입니다.', badge: '공개 중', tone: 'brand' },
-  { id: 'my3', title: '블록체인 기초', message: '개설이 반려되었습니다. 사유: 유사한 스터디가 이미 운영 중입니다.', badge: '반려됨', tone: 'neutral' },
-];
-
-// --- officer management (original mock, unused — 임원 승인은 관리자 콘솔로 옮겼다) ---
-export const SEED_PENDING = [
-  { id: 'p1', title: 'Rust 입문 스터디', field: 'Backend', creator: '김자람', recruit: '4명', schedule: '매주 화 19:00 · 8주 과정', intro: '시스템 프로그래밍 언어 Rust의 소유권 모델부터 비동기까지 함께 학습합니다.', date: '2026.06.20' },
-  { id: 'p2', title: 'Figma UI 스터디', field: 'Design', creator: '박나눔', recruit: '6명', schedule: '매주 목 18:00 · 6주 과정', intro: '컴포넌트 설계와 오토레이아웃 중심으로 실무형 UI를 만들어 봅니다.', date: '2026.06.22' },
-];
-
-export const SEED_APPLICANTS = [
-  { id: 'a1', name: '이정민', sid: '2023012345', motive: '프론트엔드 실력을 키우고 실제 프로젝트에 기여하고 싶습니다. 꾸준히 참여하겠습니다.', date: '2026.06.21' },
-  { id: 'a2', name: '홍서연', sid: '2022098765', motive: '알고리즘 기초가 약해 함께 꾸준히 문제를 풀며 성장하고 싶어 신청합니다.', date: '2026.06.23' },
-];
 
 // Client-side validation messages.
 export const MESSAGES = {
