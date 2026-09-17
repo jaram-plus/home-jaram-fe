@@ -477,9 +477,16 @@ paths:
       tags: [study]
       summary: 스터디 정보 수정 (스터디장 or STUDY_EDIT)
       description: >
-        개설 때 적은 여덟 칸을 다시 적는다. RECRUITING 에서만 통과한다 — 아니면 409
-        INVALID_STATE. 진행 중부터는 신청자가 이 내용을 보고 지원한 뒤라 말없이
-        바뀌면 안 된다.
+        개설 때 적은 여덟 칸을 다시 적는다. 스터디장은 RECRUITING 에서만 통과한다 —
+        아니면 409 INVALID_STATE. 진행 중부터는 신청자가 이 내용을 보고 지원한 뒤라
+        말없이 바뀌면 안 된다.
+
+
+        STUDY_EDIT 임원은 이 상태 제약을 넘는다. 출석 편집 창(24시간)을 임원이
+        넘는 것과 같은 자리다 — 스터디장이 스스로 고칠 수 없게 된 것을 고쳐 주는
+        손잡이가 임원에게 하나는 있어야 한다. 다만 FINISHED 는 임원도 막힌다 (409
+        STUDY_FINISHED): 끝난 스터디의 기록이 나중에 바뀌면 그 기록을 근거로 한
+        것이 전부 흔들린다.
 
 
         PATCH 가 아니라 PUT 인 것은 호출부가 폼 하나라 여덟 칸을 늘 함께 보내기
@@ -697,7 +704,7 @@ paths:
     get:
       tags: [study]
       summary: 그 스터디의 신청 목록 (스터디장 or STUDY_EDIT)
-      description: pending 에만 motive 가 실린다. 학번은 싣지 않는다.
+      description: pending 에만 motive 가 실린다. 학번은 마스킹해 싣는다 — 동명이인을 가르는 것이 학번뿐이다.
       security: [{ bearerAuth: [] }]
       parameters:
         - $ref: '#/components/parameters/StudyId'
@@ -710,6 +717,40 @@ paths:
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
+        '5XX': { $ref: '#/components/responses/ServerError' }
+
+  /api/studies/{id}/members/{applicationId}:
+    delete:
+      tags: [study]
+      summary: 참여 확정된 스터디원을 내보낸다 (스터디장 or STUDY_APPLICANT_MANAGE)
+      description: >
+        승인된 신청을 지운다. 명단은 승인된 신청에서 파생되므로, 내보내기는 그 행을
+        지우는 것이다. 그 사람의 출석 기록도 함께 지운다 — 명단에 없는 사람의 출석이
+        남으면 출석률의 분모와 분자가 어긋난다.
+
+
+        경로에 스터디 id 가 함께 있는 것은 /api/studies/applicants/{id} 와 뜻이
+        다르기 때문이다. 저쪽은 본인이 자기 반려 신청을 지우는 자리고, 여기는
+        스터디장이 남을 내보내는 자리다. 한 URL 에 두 뜻을 겹치면 권한 표현식이
+        누구를 위한 것인지 읽히지 않는다.
+
+
+        지운 뒤에는 그 사람이 다시 신청할 수 있다 (모집 중이라면). 승인된 신청이
+        아니면 409 NOT_APPROVED, 종료된 스터디면 409 STUDY_FINISHED.
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: '#/components/parameters/StudyId'
+        - name: applicationId
+          in: path
+          required: true
+          description: 그 스터디원의 승인된 신청 id (StudyApplicantEntry.applicationId)
+          schema: { type: string }
+      responses:
+        '204': { description: 내보냄 }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
         '5XX': { $ref: '#/components/responses/ServerError' }
 
   /api/studies/{id}/attendance:
@@ -2114,9 +2155,13 @@ components:
       enum: [PRESENT, ABSENT, NOT_TAKEN]
     StudyApplicantEntry:
       type: object
-      required: [applicationId, name]
+      required: [applicationId, studentId, name]
       properties:
         applicationId: { type: string }
+        studentId:
+          type: string
+          description: 서버가 마스킹한 학번. StudyRosterEntry 와 같은 규칙이다 (앞 4 + 가운데 '*' + 뒤 1).
+          example: '2022*****9'
         name: { type: string }
         gen: { type: [integer, 'null'] }
         motive: { type: [string, 'null'], description: approved 묶음에서는 언제나 null }
