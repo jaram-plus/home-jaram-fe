@@ -18,12 +18,18 @@ function rank(item) {
   return 3;   // APPLIED
 }
 
+/**
+ * 제목은 선택이다. 탭이 이미 '내 스터디'라고 말하고 있어 살아 있는 관계 묶음은
+ * 제목 없이 두고, 뜻이 따로 있는 '지난 신청'만 이름을 단다.
+ */
 function Section({ title, children }) {
   return (
     <div>
-      <h2 style={{ margin: '0 0 18px', fontFamily: 'var(--font-serif)', fontSize: 'var(--fs-title-3)', fontWeight: 'var(--w-bold)', color: 'var(--text-strong)' }}>
-        {title}
-      </h2>
+      {title && (
+        <h2 style={{ margin: '0 0 18px', fontFamily: 'var(--font-serif)', fontSize: 'var(--fs-title-3)', fontWeight: 'var(--w-bold)', color: 'var(--text-strong)' }}>
+          {title}
+        </h2>
+      )}
       <div style={{ display: 'grid', gap: 16, gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))' }}>
         {children}
       </div>
@@ -55,7 +61,7 @@ export function MyStudyView({ items = [], onManage, onAttendance, onDelete, onBr
   return (
     <div className="jr-anim" style={{ display: 'grid', gap: 40 }}>
       {live.length > 0 && (
-        <Section title="내 스터디">
+        <Section>
           {live.map((i) => (
             <MyStudyCard key={i.id + i.relation} item={i}
               onManage={onManage} onAttendance={onAttendance} onDelete={onDelete} />
