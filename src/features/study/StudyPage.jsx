@@ -27,6 +27,7 @@ import {
   TabButton,
   BrowseView,
   MyStudyView,
+  StudyDetailModal,
   ApplyModal,
   CreateModal,
   ManageStudyModal,
@@ -84,6 +85,7 @@ export default function StudyPage() {
   const [view, setView] = useState('browse'); // browse | mine
   const [filter, setFilter] = useState('all'); // all | recruiting | ongoing
 
+  const [detailStudy, setDetailStudy] = useState(null);  // 읽기 전용 상세 모달
   const [applyStudy, setApplyStudy] = useState(null);
   const [applyMotive, setApplyMotive] = useState('');
   const [applyErr, setApplyErr] = useState('');
@@ -171,7 +173,7 @@ export default function StudyPage() {
           <div>
             <Eyebrow>Study</Eyebrow>
             <h1 style={{ margin: 0, fontFamily: 'var(--font-serif)', fontWeight: 400, fontSize: 'var(--fs-title-1)', color: 'var(--text-strong)', lineHeight: 1.1 }}>
-              진행 중인 스터디
+              스터디
             </h1>
             <p style={{ margin: '14px 0 0', fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-lead)', color: 'var(--text-muted)', lineHeight: 'var(--lh-normal)' }}>
               자람에서 함께 공부할 스터디를 찾아보세요.
@@ -194,7 +196,8 @@ export default function StudyPage() {
           ) : studiesQ.isError ? (
             <Notice>스터디 목록을 불러오지 못했습니다.</Notice>
           ) : (
-            <BrowseView studies={studiesQ.data?.items ?? []} filter={filter} onFilter={setFilter} onApply={openApply} />
+            <BrowseView studies={studiesQ.data?.items ?? []} filter={filter} onFilter={setFilter}
+              onOpen={setDetailStudy} onApply={openApply} />
           )
         )}
         {view === 'mine' && (
@@ -215,6 +218,14 @@ export default function StudyPage() {
           )
         )}
       </section>
+
+      {detailStudy && (
+        <StudyDetailModal
+          study={detailStudy}
+          authenticated={isAuthenticated}
+          onClose={() => setDetailStudy(null)}
+        />
+      )}
 
       {applyStudy && (
         <ApplyModal

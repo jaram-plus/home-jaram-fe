@@ -34,6 +34,8 @@ export const MESSAGES = {
   recruitClosed: '지금은 개설 신청을 받지 않습니다. 임원에게 문의해 주세요.',
   signInRequired: '로그인 후 신청할 수 있습니다.',
   createFailed: '개설 신청을 보내지 못했습니다. 잠시 후 다시 시도해 주세요.',
+  notRecruiting: '모집 중일 때만 고칠 수 있습니다. 이미 진행 중인 스터디입니다.',
+  updateFailed: '수정을 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.',
 };
 
 // Transient toast strings.
@@ -189,8 +191,11 @@ export function splitFields(s) {
     .filter(Boolean);
 }
 
-/** 계약 StudyCreateRequest 로 옮긴다. weekNo 는 화면에 놓인 순서가 곧 답이다. */
-export function toCreatePayload(v) {
+/**
+ * 계약 StudyUpdateRequest — 개설 폼의 여덟 칸. 개설과 수정이 같은 칸을 쓰므로
+ * 옮기는 자리도 하나로 둔다. 둘로 두면 한쪽에만 칸이 늘어나는 날이 온다.
+ */
+export function toUpdatePayload(v) {
   return {
     title: v.title.trim(),
     fields: splitFields(v.fields),
@@ -200,11 +205,32 @@ export function toCreatePayload(v) {
     place: v.place.trim(),
     mode: v.mode.trim(),
     contact: v.contact.trim(),
+  };
+}
+
+/** 계약 StudyCreateRequest 로 옮긴다. weekNo 는 화면에 놓인 순서가 곧 답이다. */
+export function toCreatePayload(v) {
+  return {
+    ...toUpdatePayload(v),
     weeks: v.weeks.map((w, i) => ({
       weekNo: i + 1,
       title: w.title.trim(),
       content: w.content.trim() || null,
     })),
+  };
+}
+
+/** StudyDetail 을 편집 폼 값으로 되돌린다. 분야는 한 칸에 쉼표로 편다. */
+export function toInfoForm(detail) {
+  return {
+    title: detail.title ?? '',
+    fields: (detail.fields ?? []).join(', '),
+    capacity: String(detail.cap ?? ''),
+    schedule: detail.schedule ?? '',
+    place: detail.place ?? '',
+    mode: detail.mode ?? '',
+    contact: detail.contact ?? '',
+    intro: detail.intro ?? '',
   };
 }
 
@@ -217,8 +243,8 @@ const CREATE_REQUIRED = {
   intro: '스터디 소개를 적어 주세요.',
 };
 
-/** 빈 오류 맵이면 보낼 수 있다. 키는 폼 필드 이름과 같다. */
-export function validateCreate(v) {
+/** 여덟 칸 검증. 빈 오류 맵이면 보낼 수 있다. 키는 폼 필드 이름과 같다. */
+export function validateInfo(v) {
   const e = {};
   Object.entries(CREATE_REQUIRED).forEach(([k, msg]) => {
     if (!String(v[k] ?? '').trim()) e[k] = msg;
@@ -228,6 +254,12 @@ export function validateCreate(v) {
   if (!String(v.capacity).trim() || !Number.isInteger(cap) || cap < 1) {
     e.capacity = '희망 인원은 1 이상의 숫자입니다.';
   }
+  return e;
+}
+
+/** 개설은 여덟 칸에 커리큘럼이 더 붙는다. */
+export function validateCreate(v) {
+  const e = validateInfo(v);
   // 주차는 제목이 필수고 내용은 선택이다. 빈 줄을 조용히 버리면 적다 만 주차가
   // 말없이 사라지므로, 채우든 지우든 사용자가 고르게 한다.
   if (v.weeks.every((w) => !w.title.trim())) e.weeks = '커리큘럼을 한 주차 이상 적어 주세요.';
@@ -242,5 +274,19 @@ export function createErrorMessage(error) {
   if (error.response?.data?.code === 'RECRUIT_CLOSED') return MESSAGES.recruitClosed;
   if (status === 401) return MESSAGES.signInRequired;
   return error.response?.data?.message || MESSAGES.createFailed;
+}
+
+/**
+ * 정보 수정이 실패한 이유 한 줄.
+ *
+ * INVALID_STATE 만 따로 적는다 — 서버 문구("지금 상태에서는 할 수 없는 동작입니다")는
+ * 전이와 수정이 함께 쓰는 말이라, 이 폼 앞에서는 무엇이 막혔는지 알려주지 않는다.
+ */
+export function updateErrorMessage(error) {
+  if (!error) return '';
+  const status = error.response?.status;
+  if (error.response?.data?.code === 'INVALID_STATE') return MESSAGES.notRecruiting;
+  if (status === 401) return MESSAGES.signInRequired;
+  return error.response?.data?.message || MESSAGES.updateFailed;
 }
 

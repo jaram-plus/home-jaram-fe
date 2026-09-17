@@ -473,6 +473,41 @@ paths:
         '401': { $ref: '#/components/responses/Unauthorized' }
         '404': { $ref: '#/components/responses/NotFound' }
         '5XX': { $ref: '#/components/responses/ServerError' }
+    put:
+      tags: [study]
+      summary: 스터디 정보 수정 (스터디장 or STUDY_EDIT)
+      description: >
+        개설 때 적은 여덟 칸을 다시 적는다. RECRUITING 에서만 통과한다 — 아니면 409
+        INVALID_STATE. 진행 중부터는 신청자가 이 내용을 보고 지원한 뒤라 말없이
+        바뀌면 안 된다.
+
+
+        PATCH 가 아니라 PUT 인 것은 호출부가 폼 하나라 여덟 칸을 늘 함께 보내기
+        때문이다. 커리큘럼 주차는 /weeks 가, 상태는 close-recruiting·finish 가
+        따로 맡으므로 이 본문에 없다.
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/StudyUpdateRequest' }
+      responses:
+        '200':
+          description: 수정된 스터디 상세
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/StudyDetail' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/Validation' }
+        '5XX': { $ref: '#/components/responses/ServerError' }
 
   /api/studies/{id}/close-recruiting:
     post:
@@ -2008,6 +2043,24 @@ components:
           type: array
           minItems: 1
           items: { $ref: '#/components/schemas/StudyWeekInput' }
+    StudyUpdateRequest:
+      description: >
+        StudyCreateRequest 에서 weeks 를 뺀 여덟 칸. 주차는 개설할 때만 함께 받고,
+        그 뒤로는 /api/studies/{id}/weeks 가 맡는다.
+      type: object
+      required: [title, fields, capacity, intro, schedule, place, mode, contact]
+      properties:
+        title: { type: string }
+        fields:
+          type: array
+          items: { type: string }
+          minItems: 1
+        capacity: { type: integer, minimum: 1, description: 희망 인원 }
+        intro: { type: string }
+        schedule: { type: string, description: 일시 }
+        place: { type: string, description: 장소 }
+        mode: { type: string, description: 진행 방식 }
+        contact: { type: string, description: 문의 연락처 }
     StudyWeekInput:
       type: object
       required: [weekNo, title]

@@ -35,6 +35,20 @@
   text-underline-offset: 3px;
 }
 
+/* 상세로 가는 카드. 눌리는 것임을 hover 로 알리고, 키보드에도 같은 자리를 준다. */
+.jr-card-click {
+  transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
+}
+.jr-card-click:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--border-strong);
+}
+.jr-card-click:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 3px;
+}
+
 ::selection {
   background: var(--brand);
   color: #fff;
@@ -45,5 +59,10 @@
   .jr-pop,
   .jr-toast {
     animation: none !important;
+  }
+  .jr-card-click,
+  .jr-card-click:hover {
+    transition: none;
+    transform: none;
   }
 }

@@ -12,6 +12,7 @@ import * as api from './study.api';
 export const studyKeys = {
   studies: ['studies'],
   my: ['studies', 'my'],
+  detail: (studyId) => ['studies', studyId, 'detail'],
   applicantsOf: (studyId) => ['studies', studyId, 'applicants'],
   attendance: (studyId) => ['studies', studyId, 'attendance'],
   myAttendance: (studyId) => ['studies', studyId, 'attendance', 'me'],
@@ -19,6 +20,18 @@ export const studyKeys = {
 
 export function useStudies() {
   return useQuery({ queryKey: studyKeys.studies, queryFn: api.listStudies });
+}
+
+/**
+ * 상세. 로그인 전에는 부르지 않는다 — 서버가 401 로 막으므로 부르면 안내 대신
+ * 에러 문구가 뜬다. 비로그인 화면은 목록이 이미 준 값으로 그린다.
+ */
+export function useStudyDetail(studyId, enabled = true) {
+  return useQuery({
+    queryKey: studyKeys.detail(studyId),
+    queryFn: () => api.getStudy({ studyId }),
+    enabled: enabled && Boolean(studyId),
+  });
 }
 
 /** 로그인 전에는 부르지 않는다 — 401 을 받으면 안내 대신 에러 문구가 뜬다. */
@@ -104,6 +117,18 @@ export function useDeleteWeek(studyId, options) {
 
 export function useDeleteApplication(options) {
   return useInvalidatingMutation(api.deleteApplication, [studyKeys.my, studyKeys.studies], options);
+}
+
+/**
+ * 정보 수정. 상세는 물론이고 둘러보기 목록과 '내 스터디' 카드도 이 값들을 쓰므로
+ * 셋 다 무효화한다 — 제목을 고쳐 놓고 목록에 옛 제목이 남으면 저장이 안 된 줄 안다.
+ */
+export function useUpdateStudy(studyId, options) {
+  return useInvalidatingMutation(
+    api.updateStudy,
+    [studyKeys.detail(studyId), studyKeys.studies, studyKeys.my],
+    options,
+  );
 }
 
 export function useCloseRecruiting(options) {
