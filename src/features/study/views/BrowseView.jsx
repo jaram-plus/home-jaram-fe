@@ -9,8 +9,8 @@ const FILTERS = [
   { key: 'ONGOING', label: '진행 중' },
 ];
 
-/** Browse view — filter chips + responsive study grid. */
-export function BrowseView({ studies, filter, onFilter, onApply }) {
+/** Browse view — filter chips + responsive study grid. 카드를 누르면 상세가 열린다. */
+export function BrowseView({ studies, filter, onFilter, onOpen, onApply }) {
   const shown = studies.filter((s) => (filter === 'all' ? true : s.status === filter));
   return (
     <div className="jr-anim">
@@ -25,7 +25,7 @@ export function BrowseView({ studies, filter, onFilter, onApply }) {
       {shown.length > 0 ? (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(330px, 1fr))', gap: 22 }}>
           {shown.map((s) => (
-            <StudyCard key={s.id} study={s} onApply={onApply} />
+            <StudyCard key={s.id} study={s} onOpen={onOpen} onApply={onApply} />
           ))}
         </div>
       ) : (

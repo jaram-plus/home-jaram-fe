@@ -9,6 +9,13 @@ export async function listStudies() {
   return data;
 }
 
+// 상세 — 커리큘럼과 참여 인원 명단이 붙는다. 명단 때문에 로그인 필수이고,
+// 목록(GET /api/studies)과 달리 permitAll 이 아니다. 학번 마스킹은 서버가 한다.
+export async function getStudy({ studyId }) {
+  const { data } = await client.get(`/api/studies/${studyId}`);
+  return data;
+}
+
 // 내 활동 — { apps, studies }
 export async function listMyActivity() {
   const { data } = await client.get('/api/studies/my');
