@@ -1,7 +1,5 @@
 import React from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { useAuthStore } from '@/shared/auth/auth.store';
-import { can } from '@/shared/auth/roles';
 import { Pill } from '@/features/study/views/parts';
 import {
   ApplicantsPane, AttendancePane, CurriculumPane, InfoPane,
@@ -24,13 +22,16 @@ const OFFICER_NOTE = '임원은 모집이 끝난 뒤에도 고칠 수 있습니�
  * (features/study/views/panes). 두 화면이 같은 엔드포인트를 부르므로 화면도 한
  * 벌입니다 — 갈라 두면 한쪽만 고쳐지는 날이 옵니다.
  *
- * 탭이 권한으로 갈리는 이유: 학술부원은 STUDY_APPLICANT_MANAGE 만 있어 신청은
- * 처리하지만 정보·출석은 서버가 403 으로 막습니다. 누를 수 없는 것은 보이지 않는
- * 편이 낫습니다.
+ * 세 탭에 권한 분기를 두지 않습니다. 이 모달은 표의 행에서만 열리는데, 그 표를
+ * 부르는 GET /api/admin/studies 가 이미 STUDY_EDIT 를 요구하기
+ * 때문입니다(AdminResourceAccess.canList). 세 탭이 쓰는 권한 중 가장 좁은 것이
+ * 그 STUDY_EDIT 라, 표가 보이는 사람에게는 셋 다 열립니다. 여기서 한 벌 더
+ * 판정하면 실제로는 돌지 않는 분기가 보안 경계처럼 보입니다.
+ *
+ * 그 목록 권한이 언젠가 넓어지면(예: 학술부원의 STUDY_APPLICANT_MANAGE) 정보·
+ * 출석 탭이 403 을 받습니다. 그때 가릴 자리가 여기입니다.
  */
 export function StudyDetailModal({ row, onClose, onDone }) {
-  const user = useAuthStore((s) => s.user);
-  const mayEdit = can(user, 'STUDY_EDIT');
   const [tab, setTab] = React.useState('applicants');
   const qc = useQueryClient();
 
@@ -74,13 +75,13 @@ export function StudyDetailModal({ row, onClose, onDone }) {
 
         <div style={{ display: 'flex', gap: 6, marginTop: 20 }}>
           <Pill active={tab === 'applicants'} onClick={() => setTab('applicants')}>신청</Pill>
-          {mayEdit && <Pill active={tab === 'info'} onClick={() => setTab('info')}>정보</Pill>}
-          {mayEdit && <Pill active={tab === 'attendance'} onClick={() => setTab('attendance')}>출석</Pill>}
+          <Pill active={tab === 'info'} onClick={() => setTab('info')}>정보</Pill>
+          <Pill active={tab === 'attendance'} onClick={() => setTab('attendance')}>출석</Pill>
         </div>
 
         {tab === 'applicants' && <ApplicantsPane study={study} onToast={report} />}
 
-        {mayEdit && tab === 'info' && (
+        {tab === 'info' && (
           <>
             <InfoPane study={study} onToast={report} note={OFFICER_NOTE} />
             <div style={{ marginTop: 28, paddingTop: 20, borderTop: '1px solid var(--border-soft, var(--border))' }}>
@@ -92,13 +93,7 @@ export function StudyDetailModal({ row, onClose, onDone }) {
           </>
         )}
 
-        {mayEdit && tab === 'attendance' && <AttendancePane study={study} onToast={report} />}
-
-        {!mayEdit && (
-          <p style={{ margin: '22px 0 0', fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-xs)', color: 'var(--text-faint)', lineHeight: 'var(--lh-normal)' }}>
-            정보와 출석은 학술부장 이상이 고칩니다.
-          </p>
-        )}
+        {tab === 'attendance' && <AttendancePane study={study} onToast={report} />}
       </div>
     </div>
   );
