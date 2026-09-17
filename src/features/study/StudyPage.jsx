@@ -74,10 +74,9 @@ function SignInPrompt() {
  *
  * 임원의 개설 승인·신청자 관리는 여기 없다 — 관리자 콘솔이 맡는다.
  *
- * Submit/approve/reject handlers call the real Spring endpoints via
- * study.api.js (paths are a proposed REST contract until the backend confirms
- * them — see that file's header); success invalidates the affected queries
- * (study.queries.js) so the lists refresh from the server.
+ * 제출 핸들러는 study.api.js 로 실 서버를 부른다 — 경로와 응답 모양의 단일 출처는
+ * docs/api/openapi.yaml 이고, 백엔드가 그대로 구현하고 있다. 성공하면 영향받는
+ * 쿼리를 무효화해(study.queries.js) 목록이 서버에서 다시 온다.
  */
 export default function StudyPage() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
