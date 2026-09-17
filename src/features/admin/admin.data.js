@@ -167,18 +167,21 @@ export const SCHEMAS = {
     // 고를 자리가 없고, 개설은 회원이 스터디 페이지에서 신청하는 절차이기 때문이다.
     // 그 절차를 여닫는 손잡이가 제목 아래 '개설 신청' 토글이다.
     eyebrow: 'STUDY', title: '스터디 관리', addLabel: '',
-    desc: '개설된 스터디 전체입니다. 셀을 눌러 바로 수정하고, 변경분을 모아 저장하세요.',
+    desc: '개설된 스터디 전체입니다. 표에서는 상태만 바꾸고, 나머지는 \'상세\'에서 고치세요.',
     filters: [{ key: 'status', label: '상태', options: ['전체', '승인 대기', '반려', '모집', '진행', '종료'] }],
-    // 고칠 수 있는 칸은 서버 화이트리스트(AdminBatchExecutor.updateStudy)와 같다 —
-    // 제목·정원·상태 셋뿐이라 나머지는 static 이다. 분야·일정은 스터디장이 고친다.
+    // 표에서 고칠 수 있는 것은 상태 하나다. 제목·정원도 서버 화이트리스트
+    // (AdminBatchExecutor.updateStudy)에는 있지만 여기서 내주지 않는다 — 스터디
+    // 정보는 여덟 칸이 한 벌이라, 표에서 두 칸만 고치면 나머지 여섯과 어긋난 채로
+    // 저장된다. 여덟 칸과 커리큘럼·명단·출석은 '상세' 모달이 한자리에서 다룬다.
+    // 상태만 남긴 것은 그것이 표에서 훑고 바꾸는 값이기 때문이다.
     cols: [
-      { key: 'title', label: '스터디명', type: 'text', width: '1.6fr' },
+      { key: 'title', label: '스터디명', type: 'static', width: '1.6fr' },
       { key: 'fields', label: '분야', type: 'static', width: '1fr' },
       { key: 'leader', label: '스터디장', type: 'static', width: '0.9fr' },
-      { key: 'capacity', label: '정원', type: 'text', width: '0.55fr', align: 'center' },
+      { key: 'capacity', label: '정원', type: 'static', width: '0.55fr', align: 'center' },
       { key: 'status', label: '상태', type: 'select', width: '0.9fr', options: ['승인 대기', '반려', '모집', '진행', '종료'] },
       { key: 'createdAt', label: '개설 신청일', type: 'static', width: '1fr', align: 'center' },
-      { key: '__act', label: '', type: 'actions', width: '0.55fr', align: 'center', actions: ['delete'] },
+      { key: '__act', label: '', type: 'actions', width: '1fr', align: 'center', actions: ['detail', 'delete'] },
     ],
   },
   applications: {

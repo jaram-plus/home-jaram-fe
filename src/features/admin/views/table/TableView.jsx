@@ -17,6 +17,7 @@ import { MemberDetailModal } from '../forms/MemberDetailModal';
 import { SeminarDetailModal } from '../forms/SeminarDetailModal';
 import { SeminarCreateModal } from '../forms/SeminarCreateModal';
 import { GradDetailModal } from '../forms/GradDetailModal';
+import { StudyDetailModal } from '../forms/StudyDetailModal';
 import { ExecAssignModal } from '../forms/ExecAssignModal';
 import { ContribAddModal } from '../forms/ContribAddModal';
 
@@ -321,12 +322,15 @@ export function TableView({ resource: fixedResource, hideHeader = false }) {
         />
       )}
 
-      {/* 졸업생 상세는 조회 전용이 아니라 졸업연도·이력을 고치는 자리라 모달이 따로다. */}
+      {/* 상세 모달은 리소스마다 다르다 — 회원은 조회 전용이고, 졸업생은 졸업연도·
+          이력을, 스터디는 인원·정보·출석을 고치는 자리다. */}
       {detailRow && (resource === 'seminars'
         ? <SeminarDetailModal row={detailRow} onClose={closeDetail} onDone={showToast} />
         : resource === 'grad'
           ? <GradDetailModal row={detailRow} onClose={closeDetail} onDone={showToast} />
-          : <MemberDetailModal row={detailRow} onClose={closeDetail} />)}
+          : resource === 'studies'
+            ? <StudyDetailModal row={detailRow} onClose={closeDetail} onDone={showToast} />
+            : <MemberDetailModal row={detailRow} onClose={closeDetail} />)}
 
       {assigning && (
         <ExecAssignModal
