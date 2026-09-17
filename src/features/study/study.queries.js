@@ -119,6 +119,18 @@ export function useDeleteApplication(options) {
   return useInvalidatingMutation(api.deleteApplication, [studyKeys.my, studyKeys.studies], options);
 }
 
+/**
+ * 정보 수정. 상세는 물론이고 둘러보기 목록과 '내 스터디' 카드도 이 값들을 쓰므로
+ * 셋 다 무효화한다 — 제목을 고쳐 놓고 목록에 옛 제목이 남으면 저장이 안 된 줄 안다.
+ */
+export function useUpdateStudy(studyId, options) {
+  return useInvalidatingMutation(
+    api.updateStudy,
+    [studyKeys.detail(studyId), studyKeys.studies, studyKeys.my],
+    options,
+  );
+}
+
 export function useCloseRecruiting(options) {
   return useInvalidatingMutation(api.closeRecruiting, [studyKeys.my, studyKeys.studies], options);
 }

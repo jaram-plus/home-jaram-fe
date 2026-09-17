@@ -1,12 +1,15 @@
 import React, { useState, useMemo } from 'react';
-import { Button, Tag } from '@/design-system';
+import { Button, Input, Tag } from '@/design-system';
 import { ModalShell } from './ModalShell';
 import { Pill } from './parts';
+import { useForm } from '../useForm';
+import { toInfoForm, toUpdatePayload, validateInfo, updateErrorMessage } from '../study.data';
 import {
   useStudyApplicants, useAttendanceBoard, useSaveAttendance,
   useAddWeek, useDeleteWeek,
   useCloseRecruiting, useFinishStudy,
   useApproveApplicant, useRejectApplicant,
+  useStudyDetail, useUpdateStudy,
 } from '../study.queries';
 
 /** 가장 빠른 빈 주차 — 아직 안 찍은 첫 주차. 없으면 마지막 주차. */
@@ -282,18 +285,102 @@ function Note({ children }) {
   );
 }
 
+/* ── 모집 중: 정보 수정 ─────────────────────────────────────────── */
+
+/**
+ * 개설할 때 적은 여덟 칸을 다시 적는다. 서버도 RECRUITING 에서만 받으므로
+ * (PUT /api/studies/{id} → 409 INVALID_STATE) 이 탭은 모집 중에만 선다.
+ *
+ * 폼을 상세 응답으로 초기화하려고 effect 를 쓰지 않는다. 불러온 뒤에야 이 컴포넌트가
+ * 생기게 해서 useForm 의 초기값으로 넘긴다 — 빈 폼이 먼저 떴다가 값이 덮어쓰는
+ * 순간이 없어야, 사용자가 그 사이에 친 글자를 잃지 않는다.
+ */
+function InfoForm({ study, detail, onToast }) {
+  const form = useForm(toInfoForm(detail));
+  const saveM = useUpdateStudy(study.id, {
+    onSuccess: () => onToast('스터디 정보를 수정했습니다.'),
+  });
+
+  function submit() {
+    const errors = validateInfo(form.values);
+    if (Object.keys(errors).length > 0) {
+      form.setErrors(errors);
+      return;
+    }
+    saveM.mutate({ studyId: study.id, ...toUpdatePayload(form.values) });
+  }
+
+  const error = updateErrorMessage(saveM.error);
+
+  return (
+    <div style={{ marginTop: 22, display: 'grid', gap: 14 }}>
+      <Input label="제목" value={form.values.title} onChange={form.field('title')} error={form.errors.title} />
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1.7fr 1fr', gap: 14 }}>
+        <Input label="카테고리" hint="쉼표로 구분합니다." value={form.values.fields}
+          onChange={form.field('fields')} error={form.errors.fields} />
+        <Input label="희망 인원" inputMode="numeric" value={form.values.capacity}
+          onChange={form.field('capacity')} error={form.errors.capacity} />
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+        <Input label="일시" value={form.values.schedule} onChange={form.field('schedule')} error={form.errors.schedule} />
+        <Input label="장소" value={form.values.place} onChange={form.field('place')} error={form.errors.place} />
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+        <Input label="진행 방식" value={form.values.mode} onChange={form.field('mode')} error={form.errors.mode} />
+        <Input label="문의 연락처" value={form.values.contact} onChange={form.field('contact')} error={form.errors.contact} />
+      </div>
+
+      <Input as="textarea" label="소개" value={form.values.intro} onChange={form.field('intro')} error={form.errors.intro} />
+
+      <p style={{ margin: 0, fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-xs)', color: 'var(--text-faint)', lineHeight: 'var(--lh-normal)' }}>
+        모집을 완료하면 더 이상 고칠 수 없습니다. 신청한 사람이 이 내용을 보고 지원했기 때문입니다.
+        커리큘럼 주차는 모집 완료 뒤 &apos;정보&apos; 탭에서 늘리고 줄입니다.
+      </p>
+
+      {error && (
+        <p style={{
+          margin: 0, padding: '11px 14px', borderRadius: 'var(--radius-md)',
+          background: 'var(--brand-tint)', border: '1px solid var(--brand)',
+          fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-sm)', color: 'var(--text-body)',
+          lineHeight: 'var(--lh-normal)',
+        }}>
+          {error}
+        </p>
+      )}
+
+      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+        <Button onClick={submit} disabled={saveM.isPending}>
+          {saveM.isPending ? '저장 중…' : '저장'}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function InfoPane({ study, onToast }) {
+  const q = useStudyDetail(study.id);
+  if (q.isLoading) return <Note>불러오는 중…</Note>;
+  if (q.isError) return <Note>스터디 정보를 불러오지 못했습니다.</Note>;
+  return <InfoForm study={study} detail={q.data} onToast={onToast} />;
+}
+
 /**
  * 스터디장의 '관리하기'. 스터디 상태가 무엇을 열지 정한다.
  *
- * 모집 중이면 신청 관리와 '모집 완료', 진행 중이면 출석/정보 탭과 '종료'.
+ * 모집 중이면 신청/정보 탭과 '모집 완료', 진행 중이면 출석/정보 탭과 '종료'.
+ * 같은 '정보'라도 여는 것이 다르다 — 모집 중에는 개설 때 적은 여덟 칸을 고치고,
+ * 진행 중에는 커리큘럼 주차를 늘리고 줄인다. 여덟 칸은 모집이 닫히는 순간 잠긴다.
  * 두 버튼 모두 확인을 한 단계 둔다 — 되돌릴 손잡이가 임원에게만 있고(D12),
  * '종료'는 이 스터디를 '내 스터디'에서 사라지게 한다.
  */
 export function ManageStudyModal({ study, onClose, onToast }) {
-  const [tab, setTab] = useState('attendance');
-  const [confirming, setConfirming] = useState(false);
-
   const recruiting = study.status === 'RECRUITING';
+  // 첫 탭은 그 상태에서 제일 할 일이 많은 쪽이다 — 모집 중이면 쌓인 신청, 진행 중이면 출석.
+  const [tab, setTab] = useState(recruiting ? 'applicants' : 'attendance');
+  const [confirming, setConfirming] = useState(false);
 
   const closeM = useCloseRecruiting({
     onSuccess: () => { onClose(); onToast('모집을 완료했습니다. 이제 진행 중입니다.'); },
@@ -307,17 +394,25 @@ export function ManageStudyModal({ study, onClose, onToast }) {
     : '종료하면 이 스터디가 \'내 스터디\'에서 사라집니다. 출석 기록도 더 이상 고칠 수 없습니다.';
 
   return (
-    <ModalShell title={study.title} lead={recruiting ? '신청 관리' : '출석과 커리큘럼'}
+    <ModalShell title={study.title} lead={recruiting ? '신청 관리와 정보 수정' : '출석과 커리큘럼'}
       onClose={onClose} maxWidth={720} align="top">
 
-      {!recruiting && (
-        <div style={{ display: 'flex', gap: 6, marginTop: 20 }}>
-          <Pill active={tab === 'attendance'} onClick={() => setTab('attendance')}>출석</Pill>
-          <Pill active={tab === 'info'} onClick={() => setTab('info')}>정보</Pill>
-        </div>
-      )}
+      <div style={{ display: 'flex', gap: 6, marginTop: 20 }}>
+        {recruiting ? (
+          <>
+            <Pill active={tab === 'applicants'} onClick={() => setTab('applicants')}>신청</Pill>
+            <Pill active={tab === 'edit'} onClick={() => setTab('edit')}>정보</Pill>
+          </>
+        ) : (
+          <>
+            <Pill active={tab === 'attendance'} onClick={() => setTab('attendance')}>출석</Pill>
+            <Pill active={tab === 'info'} onClick={() => setTab('info')}>정보</Pill>
+          </>
+        )}
+      </div>
 
-      {recruiting && <ApplicantsPane study={study} onToast={onToast} />}
+      {recruiting && tab === 'applicants' && <ApplicantsPane study={study} onToast={onToast} />}
+      {recruiting && tab === 'edit' && <InfoPane study={study} onToast={onToast} />}
       {!recruiting && tab === 'attendance' && <AttendancePane study={study} onToast={onToast} />}
       {!recruiting && tab === 'info' && <CurriculumPane study={study} onToast={onToast} />}
 
