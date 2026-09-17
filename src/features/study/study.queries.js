@@ -116,8 +116,10 @@ export function useAddWeek(studyId, options) {
     api.addWeek, [studyKeys.attendance(studyId), studyKeys.my], options);
 }
 
+/** 제목은 출석 격자가, 내용은 상세가 들고 있어 둘 다 턴다. */
 export function useEditWeek(studyId, options) {
-  return useInvalidatingMutation(api.editWeek, [studyKeys.attendance(studyId)], options);
+  return useInvalidatingMutation(api.editWeek,
+    [studyKeys.attendance(studyId), studyKeys.detail(studyId)], options);
 }
 
 export function useDeleteWeek(studyId, options) {
