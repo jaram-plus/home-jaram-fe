@@ -749,10 +749,6 @@ export async function fetchPendingStudies() {
   const { data } = await client.get('/api/studies/pending');
   return data;
 }
-export async function fetchStudyApplicants() {
-  const { data } = await client.get('/api/studies/applicants');
-  return data;
-}
 export async function approveStudy(id) {
   try {
     const { data } = await client.post(`/api/studies/${id}/approve`);
@@ -764,22 +760,6 @@ export async function approveStudy(id) {
 export async function rejectStudy(id, reason) {
   try {
     const { data } = await client.post(`/api/studies/${id}/reject`, { reason });
-    return data;
-  } catch (error) {
-    throwWireError(error, 'VALIDATION');
-  }
-}
-export async function approveStudyApplicant(id) {
-  try {
-    const { data } = await client.post(`/api/studies/applicants/${id}/approve`);
-    return data;
-  } catch (error) {
-    throwWireError(error, 'NOT_FOUND');
-  }
-}
-export async function rejectStudyApplicant(id, reason) {
-  try {
-    const { data } = await client.post(`/api/studies/applicants/${id}/reject`, { reason });
     return data;
   } catch (error) {
     throwWireError(error, 'VALIDATION');

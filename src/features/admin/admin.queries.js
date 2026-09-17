@@ -19,7 +19,6 @@ export const adminKeys = {
   settings: () => ['admin', 'settings'],
   schedules: () => ['admin', 'schedules'],
   pendingStudies: () => ['admin', 'pendingStudies'],
-  studyApplicants: () => ['admin', 'studyApplicants'],
   studyRecruitment: () => ['admin', 'studyRecruitment'],
 };
 
@@ -367,10 +366,6 @@ export function usePendingStudies(options = {}) {
   return useQuery({ queryKey: adminKeys.pendingStudies(), queryFn: api.fetchPendingStudies, ...options });
 }
 
-export function useStudyApplicants(options = {}) {
-  return useQuery({ queryKey: adminKeys.studyApplicants(), queryFn: api.fetchStudyApplicants, ...options });
-}
-
 export function useApproveStudy(options = {}) {
   const qc = useQueryClient();
   return useMutation({
@@ -391,30 +386,6 @@ export function useRejectStudy(options = {}) {
     ...options,
     onSuccess: (...a) => {
       qc.invalidateQueries({ queryKey: adminKeys.pendingStudies() });
-      options.onSuccess?.(...a);
-    },
-  });
-}
-
-export function useApproveStudyApplicant(options = {}) {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: ({ id }) => api.approveStudyApplicant(id),
-    ...options,
-    onSuccess: (...a) => {
-      qc.invalidateQueries({ queryKey: adminKeys.studyApplicants() });
-      options.onSuccess?.(...a);
-    },
-  });
-}
-
-export function useRejectStudyApplicant(options = {}) {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: ({ id, reason }) => api.rejectStudyApplicant(id, reason),
-    ...options,
-    onSuccess: (...a) => {
-      qc.invalidateQueries({ queryKey: adminKeys.studyApplicants() });
       options.onSuccess?.(...a);
     },
   });

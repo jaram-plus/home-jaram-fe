@@ -17,6 +17,10 @@ const LOCK_NOTE = '모집을 완료하면 더 이상 고칠 수 없습니다. �
  * 두 버튼 모두 확인을 한 단계 둔다 — 되돌릴 손잡이가 임원에게만 있고(D12),
  * '종료'는 이 스터디를 '내 스터디'에서 사라지게 한다.
  *
+ * 그 두 버튼은 각각 한 탭에만 선다 — '모집 완료'는 신청 탭, '종료'는 정보 탭.
+ * 정보를 고치거나 출석을 부르는 동안에는 스터디를 끝내는 손잡이가 화면에
+ * 없어야 한다.
+ *
  * 패널 자체는 views/panes 에 있다. 관리자 콘솔의 스터디 '상세' 모달이 같은 것을
  * 쓰기 때문이다 — 여기서 갈라 두면 스터디장 쪽만 고쳐지는 날이 온다.
  */
@@ -25,6 +29,11 @@ export function ManageStudyModal({ study, onClose, onToast }) {
   // 첫 탭은 그 상태에서 제일 할 일이 많은 쪽이다 — 모집 중이면 쌓인 신청, 진행 중이면 출석.
   const [tab, setTab] = useState(recruiting ? 'applicants' : 'attendance');
   const [confirming, setConfirming] = useState(false);
+
+  // 탭을 옮기면 열어 둔 확인을 닫는다 — 돌아왔을 때 누르기 직전 상태로 남아 있으면 위험하다.
+  const goTab = (next) => { setTab(next); setConfirming(false); };
+
+  const showAction = recruiting ? tab === 'applicants' : tab === 'info';
 
   const closeM = useCloseRecruiting({
     onSuccess: () => { onClose(); onToast('모집을 완료했습니다. 이제 진행 중입니다.'); },
@@ -44,13 +53,13 @@ export function ManageStudyModal({ study, onClose, onToast }) {
       <div style={{ display: 'flex', gap: 6, marginTop: 20 }}>
         {recruiting ? (
           <>
-            <Pill active={tab === 'applicants'} onClick={() => setTab('applicants')}>신청</Pill>
-            <Pill active={tab === 'edit'} onClick={() => setTab('edit')}>정보</Pill>
+            <Pill active={tab === 'applicants'} onClick={() => goTab('applicants')}>신청</Pill>
+            <Pill active={tab === 'edit'} onClick={() => goTab('edit')}>정보</Pill>
           </>
         ) : (
           <>
-            <Pill active={tab === 'attendance'} onClick={() => setTab('attendance')}>출석</Pill>
-            <Pill active={tab === 'info'} onClick={() => setTab('info')}>정보</Pill>
+            <Pill active={tab === 'attendance'} onClick={() => goTab('attendance')}>출석</Pill>
+            <Pill active={tab === 'info'} onClick={() => goTab('info')}>정보</Pill>
           </>
         )}
       </div>
@@ -60,26 +69,28 @@ export function ManageStudyModal({ study, onClose, onToast }) {
       {!recruiting && tab === 'attendance' && <AttendancePane study={study} onToast={onToast} />}
       {!recruiting && tab === 'info' && <CurriculumPane study={study} onToast={onToast} />}
 
-      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 28, paddingTop: 20, borderTop: '1px solid var(--border-soft)' }}>
-        {confirming ? (
-          <>
-            <span style={{ flex: 1, fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-sm)', color: 'var(--text-muted)', lineHeight: 'var(--lh-normal)' }}>
-              {confirmText}
-            </span>
-            <Button variant="secondary" onClick={() => setConfirming(false)}>취소</Button>
-            <Button
-              disabled={closeM.isPending || finishM.isPending}
-              onClick={() => (recruiting ? closeM : finishM).mutate({ studyId: study.id })}
-            >
+      {showAction && (
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 28, paddingTop: 20, borderTop: '1px solid var(--border-soft)' }}>
+          {confirming ? (
+            <>
+              <span style={{ flex: 1, fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-sm)', color: 'var(--text-muted)', lineHeight: 'var(--lh-normal)' }}>
+                {confirmText}
+              </span>
+              <Button variant="secondary" onClick={() => setConfirming(false)}>취소</Button>
+              <Button
+                disabled={closeM.isPending || finishM.isPending}
+                onClick={() => (recruiting ? closeM : finishM).mutate({ studyId: study.id })}
+              >
+                {recruiting ? '모집 완료' : '종료'}
+              </Button>
+            </>
+          ) : (
+            <Button variant="secondary" onClick={() => setConfirming(true)}>
               {recruiting ? '모집 완료' : '종료'}
             </Button>
-          </>
-        ) : (
-          <Button variant="secondary" onClick={() => setConfirming(true)}>
-            {recruiting ? '모집 완료' : '종료'}
-          </Button>
-        )}
-      </div>
+          )}
+        </div>
+      )}
     </ModalShell>
   );
 }
