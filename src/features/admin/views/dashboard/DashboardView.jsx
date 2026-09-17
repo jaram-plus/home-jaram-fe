@@ -61,27 +61,12 @@ export function DashboardView() {
       </div>
 
       <div style={panel}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
-          <div>
-            <p style={panelTitle}>월별 출석률 추세</p>
-            <p style={{ ...panelSub, margin: 0 }}>세미나 · 스터디</p>
-          </div>
-          <div style={{ display: 'flex', gap: 18 }}>
-            <Legend color="var(--brand)" label="세미나" />
-            <Legend color="var(--ink-400, var(--text-muted))" label="스터디" />
-          </div>
+        <div style={{ marginBottom: 18 }}>
+          <p style={panelTitle}>월별 출석률 추세</p>
+          <p style={{ ...panelSub, margin: 0 }}>최근 6개월</p>
         </div>
         <LineChart data={s.attendanceTrend} />
       </div>
-    </div>
-  );
-}
-
-function Legend({ color, label }) {
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-      <span style={{ width: 16, height: 3, borderRadius: 2, background: color }} />
-      <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{label}</span>
     </div>
   );
 }
