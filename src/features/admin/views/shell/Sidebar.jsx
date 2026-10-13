@@ -1,6 +1,7 @@
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/shared/auth/auth.store';
+import { hasPermission } from '@/shared/auth/roles';
 import { NavItem } from './NavItem';
 import { useResourceList } from '../../admin.queries';
 
@@ -16,7 +17,7 @@ const NAV = [
   { to: 'seminars', label: '세미나 관리', icon: I(<><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" /><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" /></>) },
   { to: 'seminar-approvals', label: '세미나 승인', icon: I(<><path d="M9 11l3 3L22 4" /><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" /></>) },
   { to: 'studies', label: '스터디 관리', icon: I(<><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" /></>) },
-  { to: 'applications', label: '가입 신청·승인', badgeKey: 'pendingApplications', icon: I(<><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><line x1="19" y1="8" x2="19" y2="14" /><line x1="22" y1="11" x2="16" y2="11" /></>) },
+  { to: 'applications', permission: 'MEMBER_READ', label: '가입 신청·승인', badgeKey: 'pendingApplications', icon: I(<><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><line x1="19" y1="8" x2="19" y2="14" /><line x1="22" y1="11" x2="16" y2="11" /></>) },
   { to: 'settings', label: '설정', icon: I(<><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" /></>) },
 ];
 
@@ -24,14 +25,17 @@ const NAV = [
  * 관리자 사이드바 — JR 마크 + ADMIN 라벨, 네비(활성/대기 배지), 하단 운영진 칩.
  * 활성 표시는 현재 경로 기준. 대기 건수 배지는 해당 목록의 total 에서 가져옵니다
  * (승인·거절 mutation 이 같은 쿼리키를 invalidate 하므로 자동으로 갱신됩니다).
+ * 가입 신청 메뉴·배지·조회는 MEMBER_READ 가 있을 때만 쓰입니다.
  */
 export function Sidebar({ onNavigate }) {
   const { pathname } = useLocation();
   const navigate = useNavigate();
-  // 배지 숫자만 필요하므로 최소 페이지(size 1)로 total 만 받는다.
-  const { data: pendingApplications } = useResourceList('applications', { page: 1, size: 1 });
-  const badges = { pendingApplications: pendingApplications?.total ?? 0 };
   const user = useAuthStore((s) => s.user);
+  // 대기 목록은 MEMBER_READ 보유자만 볼 수 있다. 없으면 요청 자체를 보내지 않는다.
+  const canPending = hasPermission(user, 'MEMBER_READ');
+  // 배지 숫자만 필요하므로 최소 페이지(size 1)로 total 만 받는다.
+  const { data: pendingApplications } = useResourceList('applications', { page: 1, size: 1 }, { enabled: canPending });
+  const badges = { pendingApplications: pendingApplications?.total ?? 0 };
   const clear = useAuthStore((s) => s.clear);
 
   const isActive = (to) => pathname === `/admin/${to}` || pathname.startsWith(`/admin/${to}`);
@@ -55,7 +59,7 @@ export function Sidebar({ onNavigate }) {
       </div>
 
       <nav style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-        {NAV.map((n) => (
+        {NAV.filter((n) => !n.permission || hasPermission(user, n.permission)).map((n) => (
           <NavItem
             key={n.to}
             to={n.to}

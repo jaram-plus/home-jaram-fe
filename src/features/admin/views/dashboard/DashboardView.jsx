@@ -1,4 +1,6 @@
 import React from 'react';
+import { useAuthStore } from '@/shared/auth/auth.store';
+import { hasPermission } from '@/shared/auth/roles';
 import { useDashboardStats } from '../../admin.queries';
 import { KpiCard } from './KpiCard';
 import { DonutChart } from './DonutChart';
@@ -13,9 +15,11 @@ const panelSub = { margin: '0 0 18px', fontSize: 12, color: 'var(--text-faint)' 
 /**
  * 대시보드 — KPI 카드 행 + 도넛/막대/라인 차트 + 가입 신청 배너.
  * 수치는 useDashboardStats(GET /admin/dashboard/stats) 에서 옵니다.
+ * 가입 신청 배너는 대기 목록(MEMBER_READ)으로 가는 진입점이라 그 권한이 있을 때만 그립니다.
  */
 export function DashboardView() {
   const { data: s, isLoading, isError } = useDashboardStats();
+  const user = useAuthStore((st) => st.user);
 
   if (isLoading) return <DashboardSkeleton />;
   if (isError || !s) return <p style={{ color: 'var(--text-muted)' }}>대시보드를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.</p>;
@@ -38,7 +42,9 @@ export function DashboardView() {
       <h1 style={{ margin: '0 0 6px', fontFamily: 'var(--font-display)', fontSize: 44, lineHeight: 1.1, color: 'var(--text-strong)' }}>한눈에 보는 <span style={{ color: 'var(--brand)' }}>자람</span></h1>
       <p style={{ margin: '0 0 26px', fontSize: 16, color: 'var(--text-muted)' }}>오늘 기준 현황</p>
 
-      <PendingBanner count={s.pendingApplications} breakdown={s.pendingBreakdown} />
+      {hasPermission(user, 'MEMBER_READ') && (
+        <PendingBanner count={s.pendingApplications} breakdown={s.pendingBreakdown} />
+      )}
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 18, marginBottom: 22 }}>
         <KpiCard label="전체 재학 회원" value={s.totalMembers} suffix="명" tone="up" caption={`이번 학기 +${s.deltas?.members ?? 0}`} />

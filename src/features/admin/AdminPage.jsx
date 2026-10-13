@@ -1,6 +1,8 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import './admin.css';
+import { useAuthStore } from '@/shared/auth/auth.store';
+import { hasPermission } from '@/shared/auth/roles';
 import { AdminShell } from './views';
 import { DashboardView } from './views';
 import { TableView } from './views';
@@ -21,10 +23,14 @@ import { StudyAdminView } from './views';
  * `schedules`와 `studies`는 예외 — 즉시 반영되는 단건 액션(슬롯 해제, 개설 승인)이
  * 배치저장 모델에 맞지 않아 커스텀 뷰다. `studies`는 목록 탭에서만 TableView를 품는다.
  *
+ * `applications` 는 MEMBER_READ 가 없으면 대시보드로 돌려보냅니다(대기 목록 API 를 부르지 않도록).
+ *
  * AdminShell 은 <Outlet/> 을 감싸는 레이아웃 라우트라, 화면 전환 시 사이드바·헤더는
  * 리렌더되지 않고 main 만 교체됩니다.
  */
 export default function AdminPage() {
+  const user = useAuthStore((s) => s.user);
+  const canPending = hasPermission(user, 'MEMBER_READ');
   return (
     <Routes>
       <Route element={<AdminShell />}>
@@ -33,7 +39,10 @@ export default function AdminPage() {
         <Route path="members" element={<TableView />} />
         <Route path="seminars" element={<TableView resource="seminars" />} />
         <Route path="studies" element={<StudyAdminView />} />
-        <Route path="applications" element={<TableView resource="applications" />} />
+        <Route
+          path="applications"
+          element={canPending ? <TableView resource="applications" /> : <Navigate to="/admin/dashboard" replace />}
+        />
         <Route path="schedules" element={<ScheduleAdminView />} />
         <Route path="seminar-approvals" element={<TableView resource="seminarApprovals" />} />
         <Route path="settings" element={<SettingsView />} />
