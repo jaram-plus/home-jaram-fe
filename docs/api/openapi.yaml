@@ -756,8 +756,8 @@ paths:
   /api/studies/{id}/attendance:
     get:
       tags: [study]
-      summary: 출석 격자 (스터디장 or STUDY_EDIT)
-      description: 주차가 열, 멤버가 행이다. 스터디장도 멤버로 들어간다.
+      summary: 출석 격자 (스터디장 or STUDY_READ)
+      description: 주차가 열, 멤버가 행이다. 스터디장도 멤버로 들어간다. 저장(PUT)은 여전히 스터디장 or STUDY_EDIT 이다.
       security: [{ bearerAuth: [] }]
       parameters:
         - $ref: '#/components/parameters/StudyId'
@@ -917,6 +917,7 @@ paths:
       description: >
         admin 「가입 신청·승인」 화면의 목록 소스. 페이지네이션 없이 PENDING 전체를 반환하고,
         검색·페이지는 FE가 얹는다. 승인/반려는 아래 단건 엔드포인트로 처리한다.
+        MEMBER_READ 권한이 필요하다(회원 목록 MEMBER_LIST 와 다르다).
       security: [{ bearerAuth: [] }]
       responses:
         '200':
@@ -987,7 +988,7 @@ paths:
       description: >
         admin 「인원 관리」 회원 탭 상세 모달의 소스. 관리 목록(AdminListResponse)이 주지 않는
         연락처·학부·자기소개·링크·신청일·임기 이력까지 반환한다. 조회 전용이며, 수정은
-        {resource}:batch 로만 한다.
+        {resource}:batch 로만 한다. MEMBER_READ 권한이 필요하고, 권한 검사가 404보다 먼저다.
       security: [{ bearerAuth: [] }]
       parameters:
         - $ref: '#/components/parameters/MemberId'
@@ -1038,6 +1039,8 @@ paths:
       description: >
         리소스별 행을 페이지 단위로 반환. members는 tab(member/exec/contrib/grad)으로 세부 구분.
         임의 필터 키(grade·gen·status·department 등)는 쿼리 파라미터로 전달하며 값은 와이어 enum 키(UPPER_SNAKE).
+        리소스별 목록 권한이 필요하다(members MEMBER_LIST, seminars SEMINAR_LIST, studies STUDY_LIST).
+        임기가 있는 모든 직책이 세 권한을 받는다.
       security: [{ bearerAuth: [] }]
       parameters:
         - name: resource
@@ -2182,7 +2185,7 @@ components:
         weekNo: { type: integer, minimum: 1 }
         title: { type: string }
         takenAt: { type: [string, 'null'], format: date-time }
-        editable: { type: boolean, description: 호출한 사람 기준. STUDY_EDIT 은 언제나 true }
+        editable: { type: boolean, description: '호출한 사람 기준. STUDY_EDIT 은 언제나 true. STUDY_EDIT 이 없으면 아직 안 찍은 주차이거나 첫 저장 후 24시간 이내일 때만 true 이며, 스터디장 여부와 무관하다. 스터디장이 아니고 STUDY_EDIT 도 없는 호출자(STUDY_READ 만 가진 임원)의 저장(PUT)은 403이다' }
     AttendanceMember:
       type: object
       required: [memberId, name, leader, present]
@@ -2341,7 +2344,7 @@ components:
           items:
             type: object
             additionalProperties: true
-            description: 리소스별 행. 필드는 FE 화면 스키마(admin.data SCHEMAS)를 따르며 enum 필드는 와이어 키(UPPER_SNAKE). seminars 리소스 행에는 attendanceCode 포함(공개 Seminar 응답과 달리 임원 전용 조회이므로 노출).
+            description: 리소스별 행. 필드는 FE 화면 스키마(admin.data SCHEMAS)를 따르며 enum 필드는 와이어 키(UPPER_SNAKE). seminars 리소스 행에는 attendanceCode 키가 항상 있으나(공개 Seminar 응답과 달리 임원 전용 조회), 호출자에게 SEMINAR_READ 가 없으면 값이 null 이다. 내보내기(/api/admin/export/google-drive)는 항상 값을 싣는다.
         page: { type: integer }
         size: { type: integer }
         total: { type: integer }
