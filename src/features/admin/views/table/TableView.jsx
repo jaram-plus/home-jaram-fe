@@ -346,7 +346,7 @@ export function TableView({ resource: fixedResource, hideHeader = false }) {
       {detailRow && (resource === 'seminars'
         ? <SeminarDetailModal row={detailRow} onClose={closeDetail} onDone={showToast} />
         : resource === 'grad'
-          ? <GradDetailModal row={detailRow} onClose={closeDetail} onDone={showToast} />
+          ? <GradDetailModal row={detailRow} readOnly={readOnly} onClose={closeDetail} onDone={showToast} />
           : resource === 'studies'
             ? <StudyDetailModal row={detailRow} onClose={closeDetail} onDone={showToast} />
             : ['member', 'contrib', 'exec'].includes(resource)

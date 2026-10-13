@@ -13,8 +13,11 @@ import { useMemberDetail, useSaveGradDetail } from '../../admin.queries';
  *                          한 줄씩 더하고 지웁니다. 가장 최근 한 건이 표의 '현재 소속·직무' 가 됩니다.
  *
  * 표의 모아 저장과 달리 저장을 누르면 즉시 커밋합니다.
+ *
+ * 졸업생 정보 편집은 MEMBER_EDIT 의 몫입니다. readOnly(MEMBER_EDIT 없음)이면 졸업연도와
+ * 이력을 글자로만 보여 주고, 줄 추가·삭제와 '저장' 없이 '닫기' 만 둡니다.
  */
-export function GradDetailModal({ row, onClose, onDone }) {
+export function GradDetailModal({ row, readOnly = false, onClose, onDone }) {
   // 졸업생도 회원이라 상세는 회원 상세와 같은 계약을 씁니다(졸업연도·이력까지 담깁니다).
   const { data, isLoading, error } = useMemberDetail(row?.id);
 
@@ -50,7 +53,7 @@ export function GradDetailModal({ row, onClose, onDone }) {
           </p>
         )}
         {/* 편집 사본은 불러온 값에서 출발한다 — 값이 도착한 뒤에 붙여 초기화를 한 번에 끝낸다. */}
-        {data && <GradEditor detail={data} name={row?.name} onClose={onClose} onDone={onDone} />}
+        {data && <GradEditor detail={data} name={row?.name} readOnly={readOnly} onClose={onClose} onDone={onDone} />}
       </div>
     </div>
   );
@@ -58,7 +61,7 @@ export function GradDetailModal({ row, onClose, onDone }) {
 
 /* ── 편집부 ─────────────────────────────────────────────────────────── */
 
-function GradEditor({ detail, name, onClose, onDone }) {
+function GradEditor({ detail, name, readOnly, onClose, onDone }) {
   // 줄을 더하고 지워도 흔들리지 않는 React key 가 필요해 순번을 붙인다(저장할 때 뗀다).
   // 서버가 비워 보낸 칸(null)은 빈 문자열로 받아 둔다 — 입력이 통제 상태를 잃지 않도록.
   const [gradYear, setGradYear] = React.useState(String(detail.gradYear ?? ''));
@@ -80,7 +83,7 @@ function GradEditor({ detail, name, onClose, onDone }) {
   const dropCareer = (key) => setCareers((prev) => prev.filter((c) => c.key !== key));
 
   const submit = () => {
-    if (save.isPending) return;
+    if (readOnly || save.isPending) return;
     // 세 칸이 모두 빈 줄은 더하다 만 줄이라 저장하지 않는다.
     const cleaned = careers
       .map(({ at, org, job }) => ({ at: at.trim(), org: org.trim(), job: job.trim() }))
@@ -97,15 +100,21 @@ function GradEditor({ detail, name, onClose, onDone }) {
         <Field label="기수">{detail.gen}</Field>
       </div>
 
-      <div style={{ marginTop: 22, maxWidth: 200 }}>
-        <Input
-          label="졸업연도"
-          inputMode="numeric"
-          placeholder="2021"
-          value={gradYear}
-          onChange={(e) => setGradYear(e.target.value)}
-        />
-      </div>
+      {readOnly ? (
+        <div style={{ marginTop: 10 }}>
+          <Field label="졸업연도">{detail.gradYear}</Field>
+        </div>
+      ) : (
+        <div style={{ marginTop: 22, maxWidth: 200 }}>
+          <Input
+            label="졸업연도"
+            inputMode="numeric"
+            placeholder="2021"
+            value={gradYear}
+            onChange={(e) => setGradYear(e.target.value)}
+          />
+        </div>
+      )}
 
       <div style={{ marginTop: 28 }}>
         <p style={{ margin: '0 0 4px', fontSize: 11, fontWeight: 'var(--w-bold)', letterSpacing: '0.18em', color: 'var(--text-faint)' }}>CAREER</p>
@@ -129,7 +138,16 @@ function GradEditor({ detail, name, onClose, onDone }) {
             </div>
           ))}
 
-          {careers.map((c) => (
+          {readOnly && (detail.careers || []).map((c, i) => (
+            <div key={`career-${i}`} style={{ ...CAREER_GRID, minHeight: 44, borderBottom: '1px solid var(--border)' }}>
+              <ReadCell>{c.at}</ReadCell>
+              <ReadCell>{c.org}</ReadCell>
+              <ReadCell>{c.job}</ReadCell>
+              <span />
+            </div>
+          ))}
+
+          {!readOnly && careers.map((c) => (
             <div key={c.key} style={{ ...CAREER_GRID, minHeight: 44, borderBottom: '1px solid var(--border)' }}>
               <CareerInput value={c.at} placeholder="2021.03" onChange={(v) => setCareer(c.key, 'at', v)} aria-label="일시" />
               <CareerInput value={c.org} placeholder="네이버" onChange={(v) => setCareer(c.key, 'org', v)} aria-label="직장 이름" />
@@ -145,14 +163,16 @@ function GradEditor({ detail, name, onClose, onDone }) {
             </div>
           ))}
 
-          {terms.length === 0 && careers.length === 0 && (
+          {terms.length === 0 && (readOnly ? (detail.careers || []) : careers).length === 0 && (
             <p style={{ margin: 0, padding: '18px 14px', fontSize: 'var(--fs-sm)', color: 'var(--text-faint)' }}>{MESSAGES.noCareer}</p>
           )}
         </div>
 
-        <div style={{ marginTop: 12 }}>
-          <Button variant="secondary" size="sm" onClick={addCareer}>이력 추가</Button>
-        </div>
+        {!readOnly && (
+          <div style={{ marginTop: 12 }}>
+            <Button variant="secondary" size="sm" onClick={addCareer}>이력 추가</Button>
+          </div>
+        )}
       </div>
 
       {save.error && (
@@ -160,8 +180,10 @@ function GradEditor({ detail, name, onClose, onDone }) {
       )}
 
       <div style={{ marginTop: 26, display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
-        <Button variant="ghost" onClick={onClose} disabled={save.isPending}>취소</Button>
-        <Button onClick={submit} disabled={save.isPending}>{save.isPending ? '저장 중…' : '저장'}</Button>
+        <Button variant="ghost" onClick={onClose} disabled={save.isPending}>{readOnly ? '닫기' : '취소'}</Button>
+        {!readOnly && (
+          <Button onClick={submit} disabled={save.isPending}>{save.isPending ? '저장 중…' : '저장'}</Button>
+        )}
       </div>
     </>
   );
