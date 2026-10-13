@@ -1,5 +1,7 @@
 import React from 'react';
 import { Button, Input, Tag } from '@/design-system';
+import { useAuthStore } from '@/shared/auth/auth.store';
+import { hasPermission } from '@/shared/auth/roles';
 import { MESSAGES, TOAST } from '../../admin.data';
 import { validateRow } from '../../admin.validation';
 import {
@@ -22,11 +24,20 @@ const TABS = [
  *   출석 : 출석 코드 발급·출석 마감·참석자 명단. 표의 모아 저장과 달리 누르는 즉시
  *          서버에 반영됩니다 — 그 자리에서 효력이 생겨야 하는 일들입니다.
  *
+ * 보는 일(SEMINAR_READ)과 고치는 일은 권한이 갈립니다. 정보 탭은 SEMINAR_EDIT, 코드
+ * 생성·재발급·마감은 SEMINAR_ATTENDANCE_MANAGE, 참석자 추가·취소는 SEMINAR_ROSTER_EDIT
+ * 가 있어야 입력칸과 버튼이 나옵니다. 없으면 같은 내용을 글로만 보여 주고(코드 값과
+ * 마감 상태 포함) 저장·변경 요청은 보내지 않습니다. 수기 출석 후보 조회는 그대로입니다.
+ *
  * @param row    표의 행(서버 응답 그대로 + 표시용 일시). 저장에 version 을 씁니다.
  * @param onDone 토스트 문구를 올릴 콜백
  */
 export function SeminarDetailModal({ row, onClose, onDone }) {
   const [tab, setTab] = React.useState('info');
+  const user = useAuthStore((s) => s.user);
+  const canEdit = hasPermission(user, 'SEMINAR_EDIT');
+  const canManageCode = hasPermission(user, 'SEMINAR_ATTENDANCE_MANAGE');
+  const canEditRoster = hasPermission(user, 'SEMINAR_ROSTER_EDIT');
 
   return (
     <PickerModal onClose={onClose}>
@@ -51,15 +62,15 @@ export function SeminarDetailModal({ row, onClose, onDone }) {
       </div>
 
       {tab === 'info'
-        ? <InfoPane row={row} onClose={onClose} onDone={onDone} />
-        : <AttendPane row={row} onDone={onDone} />}
+        ? <InfoPane row={row} readOnly={!canEdit} onClose={onClose} onDone={onDone} />
+        : <AttendPane row={row} canManageCode={canManageCode} canEditRoster={canEditRoster} onDone={onDone} />}
     </PickerModal>
   );
 }
 
 /* ── 정보 ────────────────────────────────────────────────────────────── */
 
-function InfoPane({ row, onClose, onDone }) {
+function InfoPane({ row, readOnly, onClose, onDone }) {
   const [values, setValues] = React.useState({
     title: row.title || '',
     topic: row.topic || '',
@@ -80,10 +91,30 @@ function InfoPane({ row, onClose, onDone }) {
   });
 
   const submit = () => {
+    if (readOnly) return;
     const errs = validateRow('seminars', values);
     if (errs) { setErrors(errs); return; }
     save.mutate({ id: row.id, version: row.version, fields: values });
   };
+
+  if (readOnly) {
+    return (
+      <>
+        <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', marginTop: 18 }}>
+          <ReadOnly label="세미나명">{row.title}</ReadOnly>
+          <ReadOnly label="주제">{row.topic}</ReadOnly>
+          <ReadOnly label="상세 설명">{row.description}</ReadOnly>
+          <ReadOnly label="발표 자료">{row.materialUrl}</ReadOnly>
+          <ReadOnly label="발표자">{row.speaker}</ReadOnly>
+          <ReadOnly label="일시">{row.startsAt}</ReadOnly>
+          <ReadOnly label="장소">{row.place}</ReadOnly>
+        </div>
+        <Footer>
+          <Button variant="ghost" size="sm" onClick={onClose}>닫기</Button>
+        </Footer>
+      </>
+    );
+  }
 
   return (
     <>
@@ -111,7 +142,7 @@ function InfoPane({ row, onClose, onDone }) {
 
 /* ── 출석 ────────────────────────────────────────────────────────────── */
 
-function AttendPane({ row, onDone }) {
+function AttendPane({ row, canManageCode, canEditRoster, onDone }) {
   const [adding, setAdding] = React.useState(false);
   const roster = useSeminarAttendees(row.id);
   const list = roster.data?.list ?? [];
@@ -137,7 +168,7 @@ function AttendPane({ row, onDone }) {
   const attendanceCode = code.data?.attendanceCode ?? row.attendanceCode;
   const closed = !!(close.data || row.attendanceClosedAt);
 
-  if (adding) {
+  if (adding && canEditRoster) {
     return <AddAttendee attending={list} busy={add.isPending} onPick={(m) => add.mutate({ id: row.id, memberId: m.id, name: m.name })} onBack={() => setAdding(false)} />;
   }
 
@@ -149,9 +180,11 @@ function AttendPane({ row, onDone }) {
         <section style={{ border: '1px solid var(--border)', borderRadius: 12, background: 'var(--surface-raised)', padding: '14px 16px 16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
             <p style={{ margin: 0, fontSize: 11, fontWeight: 'var(--w-bold)', letterSpacing: 'var(--ls-label)', color: 'var(--text-faint)' }}>ATTENDANCE CODE</p>
-            <Button variant={attendanceCode ? 'secondary' : 'primary'} size="sm" onClick={() => code.mutate(row.id)} disabled={code.isPending}>
-              {code.isPending ? '발급하는 중…' : attendanceCode ? '재발급' : '코드 생성'}
-            </Button>
+            {canManageCode && (
+              <Button variant={attendanceCode ? 'secondary' : 'primary'} size="sm" onClick={() => code.mutate(row.id)} disabled={code.isPending}>
+                {code.isPending ? '발급하는 중…' : attendanceCode ? '재발급' : '코드 생성'}
+              </Button>
+            )}
           </div>
           {/* 한 번 눌러 코드 전체가 잡히게 한다 — 불러 주거나 옮겨 적는 자리라서.
               마감한 뒤의 코드는 효력이 없으므로 먹색을 한 단계 물린다. */}
@@ -172,7 +205,7 @@ function AttendPane({ row, onDone }) {
               <Tag tone="seal">마감됨</Tag>
               <span style={{ fontSize: 'var(--fs-sm)', color: 'var(--text-muted)', lineHeight: 1.6 }}>{MESSAGES.attendanceClosedNote}</span>
             </>
-          ) : (
+          ) : canManageCode ? (
             <>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <p style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 7, fontSize: 'var(--fs-sm)', fontWeight: 'var(--w-semibold)', color: 'var(--text-strong)' }}>
@@ -185,6 +218,8 @@ function AttendPane({ row, onDone }) {
                 {close.isPending ? '마감하는 중…' : '출석 마감'}
               </Button>
             </>
+          ) : (
+            <span style={{ fontSize: 'var(--fs-sm)', color: 'var(--text-muted)', lineHeight: 1.6 }}>{MESSAGES.attendanceOpen}</span>
           )}
         </div>
 
@@ -192,7 +227,7 @@ function AttendPane({ row, onDone }) {
           <p style={{ margin: 0, fontSize: 11, fontWeight: 'var(--w-bold)', letterSpacing: '0.14em', color: 'var(--text-faint)' }}>
             참석자 {list.length > 0 ? `${list.length}명` : ''}
           </p>
-          <Button variant="secondary" size="sm" onClick={() => setAdding(true)}>참석자 추가</Button>
+          {canEditRoster && <Button variant="secondary" size="sm" onClick={() => setAdding(true)}>참석자 추가</Button>}
         </div>
 
         <div style={{ border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden' }}>
@@ -200,18 +235,20 @@ function AttendPane({ row, onDone }) {
           {roster.isError && <PickerNote>명단을 불러오지 못했습니다.</PickerNote>}
           {!roster.isLoading && !roster.isError && list.length === 0 && <PickerNote>{MESSAGES.noAttendee}</PickerNote>}
           {list.map((a) => (
-            <div key={a.memberId} style={{ display: 'grid', gridTemplateColumns: '1fr 96px 52px 56px', alignItems: 'center', gap: 10, padding: '10px 14px', borderBottom: '1px solid var(--border)', fontFamily: 'var(--font-sans)' }}>
+            <div key={a.memberId} style={{ display: 'grid', gridTemplateColumns: canEditRoster ? '1fr 96px 52px 56px' : '1fr 96px 52px', alignItems: 'center', gap: 10, padding: '10px 14px', borderBottom: '1px solid var(--border)', fontFamily: 'var(--font-sans)' }}>
               <span style={{ fontSize: 'var(--fs-sm)', fontWeight: 600, color: 'var(--text-strong)' }}>{a.name || '탈퇴한 회원'}</span>
               <span style={{ fontSize: 12, color: 'var(--text-muted)', fontVariantNumeric: 'tabular-nums' }}>{a.sid}</span>
               <span style={{ fontSize: 12, color: 'var(--text-muted)', fontVariantNumeric: 'tabular-nums' }}>{a.at}</span>
-              <button
-                type="button"
-                onClick={() => remove.mutate({ id: row.id, memberId: a.memberId, name: a.name })}
-                disabled={remove.isPending}
-                style={{ fontFamily: 'var(--font-sans)', fontWeight: 600, fontSize: 12, padding: '5px 10px', borderRadius: 6, cursor: 'pointer', background: 'transparent', color: 'var(--text-muted)', border: '1px solid var(--border)' }}
-              >
-                취소
-              </button>
+              {canEditRoster && (
+                <button
+                  type="button"
+                  onClick={() => remove.mutate({ id: row.id, memberId: a.memberId, name: a.name })}
+                  disabled={remove.isPending}
+                  style={{ fontFamily: 'var(--font-sans)', fontWeight: 600, fontSize: 12, padding: '5px 10px', borderRadius: 6, cursor: 'pointer', background: 'transparent', color: 'var(--text-muted)', border: '1px solid var(--border)' }}
+                >
+                  취소
+                </button>
+              )}
             </div>
           ))}
         </div>
@@ -248,7 +285,7 @@ function ReadOnly({ label, children }) {
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '72px 1fr', gap: 12, padding: '9px 0', borderBottom: '1px solid var(--border)' }}>
       <span style={{ fontSize: 'var(--fs-sm)', color: 'var(--text-faint)' }}>{label}</span>
-      <span style={{ fontSize: 'var(--fs-sm)', color: 'var(--text-muted)' }}>{children || '—'}</span>
+      <span style={{ fontSize: 'var(--fs-sm)', color: 'var(--text-muted)', whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{children || '—'}</span>
     </div>
   );
 }
