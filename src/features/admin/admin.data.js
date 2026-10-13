@@ -51,6 +51,20 @@ export const RESOURCES = {
   seminarApprovals: { path: 'seminars', unit: '건' },
 };
 
+/**
+ * 상세를 열 때 필요한 권한. '상세' 행 동작과 모달 분기가 같은 표를 본다.
+ * 표에 없는 리소스(applications, seminarApprovals)는 상세 모달이 없다.
+ * exec 는 '상세' 동작이 없지만 ?detail= 로 회원 상세가 열리므로 표에 둔다.
+ */
+export const DETAIL_PERMISSION = {
+  member: 'MEMBER_READ',
+  contrib: 'MEMBER_READ',
+  exec: 'MEMBER_READ',
+  grad: 'MEMBER_READ',
+  seminars: 'SEMINAR_READ',
+  studies: 'STUDY_READ',
+};
+
 /** 인원 관리 상단 탭 (URL ?tab= 로 상태화). */
 export const PEOPLE_TABS = [
   { key: 'member', label: '회원' },
