@@ -3,15 +3,20 @@ import { Button, Input } from '@/design-system';
 import { useForm } from '../../useForm';
 import { toInfoForm, toUpdatePayload, validateInfo, updateErrorMessage } from '../../study.data';
 import { useStudyDetail, useUpdateStudy } from '../../study.queries';
+import { DefList } from '../parts';
 import { Note } from './common';
 
 /**
  * 개설할 때 적은 여덟 칸을 다시 적는다.
  *
  * 상태 판정은 서버가 한다 — 스터디장은 RECRUITING 에서만 통과하고(409
- * INVALID_STATE), STUDY_EDIT 임원은 종료 전까지 통과한다. 그래서 이 폼은 누가
- * 열었는지를 따지지 않는다. 화면이 같은 판정을 한 벌 더 두면 권한이 늘 때마다
+ * INVALID_STATE), STUDY_EDIT 임원은 종료 전까지 통과한다. 그래서 이 폼은 스터디장과
+ * 임원을 가르지 않는다. 화면이 같은 판정을 한 벌 더 두면 권한이 늘 때마다
  * 두 곳을 고쳐야 하고, 한쪽만 고쳐지는 날이 온다.
+ *
+ * 가르는 것은 하나뿐이다. `readOnly` 는 STUDY_EDIT 가 없는 열람자에게 부르는 쪽이
+ * 넘기며, 폼 대신 값만 보여 주고 저장 버튼을 두지 않는다. 기본값 false 라 안 넘기면
+ * 지금과 같다.
  *
  * `note` 는 부르는 쪽이 붙이는 한 줄이다. 스터디장에게는 "모집을 완료하면 잠긴다"가
  * 필요하지만 임원에게는 틀린 말이라, 여기서 정하지 않는다.
@@ -20,11 +25,32 @@ import { Note } from './common';
  * 생기게 해서 useForm 의 초기값으로 넘긴다 — 빈 폼이 먼저 떴다가 값이 덮어쓰는
  * 순간이 없어야, 사용자가 그 사이에 친 글자를 잃지 않는다.
  */
-export function InfoPane({ study, onToast, note }) {
+export function InfoPane({ study, onToast, note, readOnly = false }) {
   const q = useStudyDetail(study.id);
   if (q.isLoading) return <Note>불러오는 중…</Note>;
   if (q.isError) return <Note>스터디 정보를 불러오지 못했습니다.</Note>;
+  if (readOnly) return <InfoView detail={q.data} />;
   return <InfoForm study={study} detail={q.data} onToast={onToast} note={note} />;
+}
+
+function InfoView({ detail }) {
+  const v = toInfoForm(detail);
+  return (
+    <div style={{ marginTop: 22 }}>
+      <DefList
+        rows={[
+          ['제목', v.title || '—'],
+          ['카테고리', v.fields || '—'],
+          ['희망 인원', v.capacity || '—'],
+          ['일시', v.schedule || '—'],
+          ['장소', v.place || '—'],
+          ['진행 방식', v.mode || '—'],
+          ['문의 연락처', v.contact || '—'],
+          ['소개', <span style={{ whiteSpace: 'pre-wrap' }}>{v.intro || '—'}</span>],
+        ]}
+      />
+    </div>
+  );
 }
 
 function InfoForm({ study, detail, onToast, note }) {
