@@ -255,6 +255,7 @@ export const MESSAGES = {
   attendanceClosedNote: '마감했습니다. 새로운 출석은 받지 않습니다.',
   gradTermsReadonly: '자람에서의 임원 이력은 임원진 탭에서 관리되어 여기서는 고칠 수 없습니다.',
   noCareer: '아직 등록된 이력이 없습니다. 아래에서 한 줄씩 더해 주세요.',
+  noCareerReadonly: '아직 등록된 이력이 없습니다.',
 };
 
 export const TOAST = {

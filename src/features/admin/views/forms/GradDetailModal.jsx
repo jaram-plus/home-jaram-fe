@@ -164,7 +164,7 @@ function GradEditor({ detail, name, readOnly, onClose, onDone }) {
           ))}
 
           {terms.length === 0 && (readOnly ? (detail.careers || []) : careers).length === 0 && (
-            <p style={{ margin: 0, padding: '18px 14px', fontSize: 'var(--fs-sm)', color: 'var(--text-faint)' }}>{MESSAGES.noCareer}</p>
+            <p style={{ margin: 0, padding: '18px 14px', fontSize: 'var(--fs-sm)', color: 'var(--text-faint)' }}>{readOnly ? MESSAGES.noCareerReadonly : MESSAGES.noCareer}</p>
           )}
         </div>
 
