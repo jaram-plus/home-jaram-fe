@@ -10,8 +10,9 @@ import { PENDING_KIND_LABEL } from '../../admin.data';
  *
  * grants 는 임원진 표(assign 타입)에서만 씁니다 — 로그인한 임원이 줄 수 있는
  * (부서, 직책) 범위이며, 범위 밖의 행·값은 아예 읽기 전용으로 그립니다.
+ * readOnly 는 편집 권한이 없는 표 — text·select·multiselect 를 입력 없이 값만 보여 줍니다.
  */
-export function EditableCell({ col, row, dirty, onChange, onAction, grants }) {
+export function EditableCell({ col, row, dirty, onChange, onAction, grants, readOnly }) {
   const align = col.align || 'left';
   const value = row[col.key];
 
@@ -22,6 +23,11 @@ export function EditableCell({ col, row, dirty, onChange, onAction, grants }) {
     outline: 'none', textAlign: align,
   };
   const dirtyStyle = dirty ? { background: 'var(--brand-tint)', borderColor: 'var(--red-100)', fontWeight: 600, color: 'var(--red-600)' } : {};
+
+  if (readOnly && ['text', 'select', 'multiselect'].includes(col.type)) {
+    const shown = Array.isArray(value) ? value.join(', ') : value;
+    return <span style={{ fontSize: 'var(--fs-sm)', color: 'var(--text-strong)', display: 'block', padding: '7px 8px', textAlign: align }}>{shown}</span>;
+  }
 
   if (col.type === 'text') {
     return <input type="text" value={value ?? ''} onChange={(e) => onChange(e.target.value)} style={{ ...baseInput, ...dirtyStyle }} onFocus={focusOn} onBlur={focusOff} />;

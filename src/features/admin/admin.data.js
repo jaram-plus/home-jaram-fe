@@ -65,6 +65,19 @@ export const DETAIL_PERMISSION = {
   studies: 'STUDY_READ',
 };
 
+/**
+ * 표에서 칸을 고치고 행을 지우는 데 필요한 권한. 없으면 칸은 읽기 전용이 되고
+ * '삭제'·'기여자 해제'·'기여자 추가'는 사라진다. 표에 없는 리소스(exec, applications,
+ * seminarApprovals)는 원래 동작 그대로다 — exec 는 임원 지정 권한(grants)으로 따로 가른다.
+ */
+export const EDIT_PERMISSION = {
+  member: 'MEMBER_EDIT',
+  contrib: 'MEMBER_EDIT',
+  grad: 'MEMBER_EDIT',
+  seminars: 'SEMINAR_EDIT',
+  studies: 'STUDY_EDIT',
+};
+
 /** 인원 관리 상단 탭 (URL ?tab= 로 상태화). */
 export const PEOPLE_TABS = [
   { key: 'member', label: '회원' },

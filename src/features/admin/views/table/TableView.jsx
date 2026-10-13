@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { departmentKey, titleLabel } from '@/shared/member/enums';
 import { useAuthStore } from '@/shared/auth/auth.store';
 import { hasPermission } from '@/shared/auth/roles';
-import { SCHEMAS, DETAIL_PERMISSION, PEOPLE_TABS, RESOURCES, TOAST, MESSAGES,
+import { SCHEMAS, DETAIL_PERMISSION, EDIT_PERMISSION, PEOPLE_TABS, RESOURCES, TOAST, MESSAGES,
   APPLICATION_STATUS_LABEL, PENDING_KIND_LABEL } from '../../admin.data';
 import { useAdminStore, dirtyCount, mergeRows } from '../../admin.store';
 import { canAssign, grantsOf, titleOptions } from '../../exec.roles';
@@ -235,14 +235,21 @@ export function TableView({ resource: fixedResource, hideHeader = false }) {
 
   const unit = RESOURCES[resource]?.unit || '건';
   const empty = !isLoading && rows.length === 0;
-  // 상세 권한이 없으면 행의 '상세' 동작을 거른다.
-  const tableSchema = React.useMemo(() => (canDetail ? schema : {
-    ...schema,
-    cols: schema.cols.map((c) => (c.type === 'actions'
-      ? { ...c, actions: c.actions.filter((a) => a !== 'detail') } : c)),
-  }), [schema, canDetail]);
-  // 지정 권한이 없는 임원에게는 '임원 지정' 버튼 자체를 내주지 않는다.
-  const toolbarSchema = resource === 'exec' && !canAssign(grants) ? { ...schema, addLabel: '' } : schema;
+  // 편집 권한이 필요한 리소스에서 그 권한이 없으면 칸을 읽기 전용으로 두고,
+  // 편집 권한이 없거나 상세 권한이 없으면 해당 행 동작을 거른다.
+  const editPermission = EDIT_PERMISSION[resource];
+  const readOnly = !!editPermission && !hasPermission(authUser, editPermission);
+  const tableSchema = React.useMemo(() => {
+    const hidden = [...(canDetail ? [] : ['detail']), ...(readOnly ? ['delete', 'uncontrib'] : [])];
+    return hidden.length === 0 ? schema : {
+      ...schema,
+      cols: schema.cols.map((c) => (c.type === 'actions'
+        ? { ...c, actions: c.actions.filter((a) => !hidden.includes(a)) } : c)),
+    };
+  }, [schema, canDetail, readOnly]);
+  // 지정 권한이 없는 임원에게는 '임원 지정' 버튼, 편집 권한이 없으면 '기여자 추가' 등 추가 버튼 자체를 내주지 않는다.
+  const toolbarSchema = (resource === 'exec' && !canAssign(grants)) || (readOnly && resource === 'contrib')
+    ? { ...schema, addLabel: '' } : schema;
 
   return (
     <div>
@@ -296,6 +303,7 @@ export function TableView({ resource: fixedResource, hideHeader = false }) {
         onCellChange={onCellChange}
         onAction={onAction}
         grants={grants}
+        readOnly={readOnly}
       />
 
       {empty && <EmptyState searching={!!q || Object.keys(filters).length > 0} />}
