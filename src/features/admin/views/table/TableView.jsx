@@ -2,7 +2,8 @@ import React from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { departmentKey, titleLabel } from '@/shared/member/enums';
 import { useAuthStore } from '@/shared/auth/auth.store';
-import { SCHEMAS, PEOPLE_TABS, RESOURCES, TOAST, MESSAGES,
+import { hasPermission } from '@/shared/auth/roles';
+import { SCHEMAS, DETAIL_PERMISSION, EDIT_PERMISSION, PEOPLE_TABS, RESOURCES, TOAST, MESSAGES,
   APPLICATION_STATUS_LABEL, PENDING_KIND_LABEL } from '../../admin.data';
 import { useAdminStore, dirtyCount, mergeRows } from '../../admin.store';
 import { canAssign, grantsOf, titleOptions } from '../../exec.roles';
@@ -72,7 +73,9 @@ export function TableView({ resource: fixedResource, hideHeader = false }) {
    * 서버는 (부서, 직책) 조합만 검증하고 "누가 줄 수 있는가"는 보지 않으므로, 이 판정이
    * 화면에서의 유일한 관문이다. */
   const authUser = useAuthStore((s) => s.user);
-  const { data: me } = useMemberDetail(authUser?.id, { enabled: resource === 'exec' && !!authUser?.id });
+  const { data: me } = useMemberDetail(authUser?.id, {
+    enabled: resource === 'exec' && !!authUser?.id && hasPermission(authUser, 'MEMBER_READ'),
+  });
   const grants = React.useMemo(() => (resource === 'exec' ? grantsOf(me) : {}), [resource, me]);
 
   /* ── 로컬 편집 상태 ────────────────────────────────────────── */
@@ -105,11 +108,13 @@ export function TableView({ resource: fixedResource, hideHeader = false }) {
   };
 
   /* 상세 모달은 URL(?detail=)로 연다 — 뒤로가기로 닫히고, 링크로 그 행을 바로 열 수 있다.
-   * 표의 편집 상태와는 무관하다. 행이 목록에서 사라지면(삭제·필터) 모달도 함께 닫힌다. */
+   * 표의 편집 상태와는 무관하다. 행이 목록에서 사라지면(삭제·필터) 모달도 함께 닫힌다.
+   * 상세 권한이 없거나 상세가 없는 리소스면 ?detail= 가 있어도 행을 잡지 않는다 — 모달도 조회도 없다. */
+  const canDetail = hasPermission(authUser, DETAIL_PERMISSION[resource]);
   const detailRow = React.useMemo(() => {
     const id = sp.get('detail');
-    return id ? rows.find((r) => r.id === id) : null;
-  }, [sp, rows]);
+    return id && canDetail ? rows.find((r) => r.id === id) : null;
+  }, [sp, rows, canDetail]);
   const openDetail = (id) => {
     const next = new URLSearchParams(sp);
     next.set('detail', id);
@@ -230,8 +235,21 @@ export function TableView({ resource: fixedResource, hideHeader = false }) {
 
   const unit = RESOURCES[resource]?.unit || '건';
   const empty = !isLoading && rows.length === 0;
-  // 지정 권한이 없는 임원에게는 '임원 지정' 버튼 자체를 내주지 않는다.
-  const toolbarSchema = resource === 'exec' && !canAssign(grants) ? { ...schema, addLabel: '' } : schema;
+  // 편집 권한이 필요한 리소스에서 그 권한이 없으면 칸을 읽기 전용으로 두고,
+  // 편집 권한이 없거나 상세 권한이 없으면 해당 행 동작을 거른다.
+  const editPermission = EDIT_PERMISSION[resource];
+  const readOnly = !!editPermission && !hasPermission(authUser, editPermission);
+  const tableSchema = React.useMemo(() => {
+    const hidden = [...(canDetail ? [] : ['detail']), ...(readOnly ? ['delete', 'uncontrib'] : [])];
+    return hidden.length === 0 ? schema : {
+      ...schema,
+      cols: schema.cols.map((c) => (c.type === 'actions'
+        ? { ...c, actions: c.actions.filter((a) => !hidden.includes(a)) } : c)),
+    };
+  }, [schema, canDetail, readOnly]);
+  // 지정 권한이 없는 임원에게는 '임원 지정' 버튼, 편집 권한이 없으면 '기여자 추가' 등 추가 버튼 자체를 내주지 않는다.
+  const toolbarSchema = (resource === 'exec' && !canAssign(grants)) || (readOnly && resource === 'contrib')
+    ? { ...schema, addLabel: '' } : schema;
 
   return (
     <div>
@@ -273,7 +291,7 @@ export function TableView({ resource: fixedResource, hideHeader = false }) {
       />
 
       <DataTable
-        schema={schema}
+        schema={tableSchema}
         rows={rows}
         sort={sort}
         loading={isLoading}
@@ -285,6 +303,7 @@ export function TableView({ resource: fixedResource, hideHeader = false }) {
         onCellChange={onCellChange}
         onAction={onAction}
         grants={grants}
+        readOnly={readOnly}
       />
 
       {empty && <EmptyState searching={!!q || Object.keys(filters).length > 0} />}
@@ -323,14 +342,16 @@ export function TableView({ resource: fixedResource, hideHeader = false }) {
       )}
 
       {/* 상세 모달은 리소스마다 다르다 — 회원은 조회 전용이고, 졸업생은 졸업연도·
-          이력을, 스터디는 인원·정보·출석을 고치는 자리다. */}
+          이력을, 스터디는 인원·정보·출석을 고치는 자리다. 권한 없는 진입은 detailRow 가 막는다. */}
       {detailRow && (resource === 'seminars'
         ? <SeminarDetailModal row={detailRow} onClose={closeDetail} onDone={showToast} />
         : resource === 'grad'
-          ? <GradDetailModal row={detailRow} onClose={closeDetail} onDone={showToast} />
+          ? <GradDetailModal row={detailRow} readOnly={readOnly} onClose={closeDetail} onDone={showToast} />
           : resource === 'studies'
             ? <StudyDetailModal row={detailRow} onClose={closeDetail} onDone={showToast} />
-            : <MemberDetailModal row={detailRow} onClose={closeDetail} />)}
+            : ['member', 'contrib', 'exec'].includes(resource)
+              ? <MemberDetailModal row={detailRow} onClose={closeDetail} />
+              : null)}
 
       {assigning && (
         <ExecAssignModal

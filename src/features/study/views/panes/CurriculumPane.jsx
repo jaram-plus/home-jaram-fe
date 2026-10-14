@@ -16,8 +16,12 @@ import { inputStyle, rowStyle } from './styles';
  * 둘을 합치는 이유는 수정이 PUT 이기 때문이다. 제목만 보내면 서버가 content 를
  * null 로 덮어써, 제목을 고쳤을 뿐인데 그 주의 내용이 사라진다. 지금 값을 알아야
  * 그대로 돌려보낼 수 있다.
+ *
+ * `readOnly`(STUDY_EDIT 없는 열람자)면 주차 목록만 보이고 수정·삭제·추가는 없다.
+ * 이때 내용은 수정 때 쓰려던 값이므로 목록에 함께 적는다. 기본값 false 라 안 넘기면
+ * 지금과 같다.
  */
-export function CurriculumPane({ study, onToast }) {
+export function CurriculumPane({ study, onToast, readOnly = false }) {
   const q = useAttendanceBoard(study.id);
   const detailQ = useStudyDetail(study.id);
   const [title, setTitle] = useState('');
@@ -40,6 +44,21 @@ export function CurriculumPane({ study, onToast }) {
     <div style={{ marginTop: 24 }}>
       <div style={{ display: 'grid', gap: 10 }}>
         {weeks.map((w) => {
+          if (readOnly) {
+            const content = contentOf(w.weekNo);
+            return (
+              <div key={w.weekNo} style={{ ...rowStyle, display: 'block' }}>
+                <strong style={{ color: 'var(--text-strong)' }}>{w.weekNo}주차</strong>
+                <span style={{ marginLeft: 10 }}>{w.title}</span>
+                {content && (
+                  <p style={{ margin: '6px 0 0', color: 'var(--text-muted)', lineHeight: 'var(--lh-normal)', whiteSpace: 'pre-wrap' }}>
+                    {content}
+                  </p>
+                )}
+              </div>
+            );
+          }
+
           const isLast = last && w.weekNo === last.weekNo;
           const blocked = !!w.takenAt && !w.editable;
 
@@ -88,26 +107,30 @@ export function CurriculumPane({ study, onToast }) {
         })}
       </div>
 
-      <div style={{ display: 'flex', gap: 8, marginTop: 18 }}>
-        <input
-          id="new-week-title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="새 주차 제목"
-          style={inputStyle}
-        />
-        <Button
-          size="sm"
-          disabled={!title.trim() || addM.isPending}
-          onClick={() => addM.mutate({ studyId: study.id, title, content: null })}
-        >
-          + 주차 추가
-        </Button>
-      </div>
-      <p style={{ margin: '10px 0 0', fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-xs)', color: 'var(--text-faint)', lineHeight: 'var(--lh-normal)' }}>
-        제목과 내용은 언제든 고칩니다. 주차 자체는 맨 뒤에서만 늘리고 줄입니다 —
-        한 주 쉬면 뒤에 한 주를 더하고, 일찍 접으면 뒤에서 자릅니다.
-      </p>
+      {!readOnly && (
+        <>
+          <div style={{ display: 'flex', gap: 8, marginTop: 18 }}>
+            <input
+              id="new-week-title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="새 주차 제목"
+              style={inputStyle}
+            />
+            <Button
+              size="sm"
+              disabled={!title.trim() || addM.isPending}
+              onClick={() => addM.mutate({ studyId: study.id, title, content: null })}
+            >
+              + 주차 추가
+            </Button>
+          </div>
+          <p style={{ margin: '10px 0 0', fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-xs)', color: 'var(--text-faint)', lineHeight: 'var(--lh-normal)' }}>
+            제목과 내용은 언제든 고칩니다. 주차 자체는 맨 뒤에서만 늘리고 줄입니다 —
+            한 주 쉬면 뒤에 한 주를 더하고, 일찍 접으면 뒤에서 자릅니다.
+          </p>
+        </>
+      )}
     </div>
   );
 }

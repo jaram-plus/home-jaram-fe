@@ -13,3 +13,11 @@
 export function isAdmin(user) {
   return Boolean(user?.permissions?.length);
 }
+
+/**
+ * 사용자가 이 권한(예: 'MEMBER_READ')을 가졌는가. 화면이 진입점과 버튼을 가릴 때
+ * 직책 대신 이 함수로 묻습니다. 직책별 권한이 바뀌어도 화면이 서버를 따라갑니다.
+ */
+export function hasPermission(user, name) {
+  return Boolean(user?.permissions?.includes(name));
+}

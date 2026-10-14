@@ -5,7 +5,7 @@ import { EditableCell } from './EditableCell';
  * 제네릭 표 — 컬럼 스키마(admin.data SCHEMAS)로 구동. 헤더(정렬)+행(선택·인라인 편집).
  * 리소스마다 새 표를 만들지 않고 이 컴포넌트 하나를 재사용합니다 (기획.md §2).
  */
-export function DataTable({ schema, rows, sort, loading, allSelected, selected, onToggleAll, onToggleSelect, onSort, onCellChange, onAction, grants }) {
+export function DataTable({ schema, rows, sort, loading, allSelected, selected, onToggleAll, onToggleSelect, onSort, onCellChange, onAction, grants, readOnly }) {
   const gridCols = `40px ${schema.cols.map((c) => c.width).join(' ')}`;
   const [sortKey, sortDir] = (sort || '').split(',');
 
@@ -59,6 +59,7 @@ export function DataTable({ schema, rows, sort, loading, allSelected, selected, 
                   onChange={(v) => onCellChange(row, c, v)}
                   onAction={onAction}
                   grants={grants}
+                  readOnly={readOnly}
                 />
               </div>
             ))}
